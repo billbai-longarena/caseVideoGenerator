@@ -16,6 +16,7 @@ npm run render
 Detailed workflow:
 
 ```text
+PLAYBOOK.md
 output/budweiser_apac_story_video/VIDEO_PRODUCTION_WORKFLOW.md
 output/budweiser_apac_story_video/video_tool_selection.md
 ```

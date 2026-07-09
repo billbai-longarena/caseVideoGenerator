@@ -7,6 +7,7 @@ This repository is the dedicated workspace for generating case-story videos with
 Before changing or generating video assets, read:
 
 ```text
+PLAYBOOK.md
 output/budweiser_apac_story_video/VIDEO_PRODUCTION_WORKFLOW.md
 output/budweiser_apac_story_video/video_tool_selection.md
 ```
