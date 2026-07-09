@@ -50,7 +50,7 @@ case source/materials
 ## Narration Style
 
 - For Chinese case-video narration and subtitles, do not use the rhetorical contrast pattern `不是……而是……` or close variants such as `不是...而是...`.
-- Rewrite those contrasts as direct assertions, causal statements, or two short sentences. Example: use `软件上线改变了责任边界。` instead of `这不是工具上线，而是责任边界的改变。`
+- Rewrite those contrasts as direct assertions, causal statements, or two short sentences. Example: `软件上线改变了责任边界。`
 - When a case shares a category with a prior video, vary the narrative lens. Avoid repeating the same "sales discovers hidden need, upgrades the solution, wins a larger deal" arc if the source material supports a customer-transformation, internal-resistance, or organization-politics angle.
 
 ## TTS Rules
@@ -62,6 +62,8 @@ case source/materials
 - Unless the user explicitly asks for another voice or gender, use Azure Speech TTS male voice for generated case videos.
 - Preferred Azure voice names: male/default `zh-CN-Yunxiao:DragonHDFlashLatestNeural`; female `zh-CN-Xiaoxiao:DragonHDFlashLatestNeural`.
 - Use `AZURE_SPEECH_KEY`/`AZURE_SPEECH_REGION` or `AZURE_TTS_KEY`/`AZURE_TTS_REGION` when available. This workspace also accepts the verified legacy `.env` pair `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT`/`AZURE_DOCUMENT_INTELLIGENCE_KEY`; do not print secrets.
+- Screen subtitles may keep acronyms such as `IT`, `ERP`, `CRM`, `SKU`, and `CIO`; TTS text must read them letter by letter. The normalizer should emit spaced letters such as `I T`.
+- For shopping-festival labels such as `618 大促`, screen subtitles may keep digits; TTS text should use digit-by-digit reading such as `六一八大促`.
 - For short enumerations such as `年轻医生培养、学术水平和教学能力`, keep the screen/timeline unit stable but split TTS internally and insert a short inner pause. Do not renumber storyboard units just to fix prosody.
 - Use `AZURE_TTS_RATE` when the same voice regenerates too slowly or too quickly; keep it close to the default `+4%` and verify duration against the target video length.
 - Generate full narration with the unified TTS entrypoint:
