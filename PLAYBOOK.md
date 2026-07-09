@@ -11,7 +11,10 @@ output/budweiser_apac_story_video/video_tool_selection.md
 
 - Generate all case videos inside this repository.
 - If the user names a target duration or duration range, follow it.
-- If the user does not name a target duration, generate 4 to 7 minutes by default.
+- If the user does not name a target duration, generate single-case story videos within 4 to 7 minutes by default.
+- Duration rationale: 4 minutes is the floor and squeezes out drama elements (quotes, threat-escalation beats, pre-reveal pauses); 5 to 6 minutes often fits the full narrative skeleton comfortably; 12-minute single-case videos require padding and are a different format.
+- Narration pace is about 330 chars/min including pauses (measured across 6 finished videos, 306-357). Budget: target minutes x 330, minus about 60 chars for the fixed column intro/outro.
+- Source story md should be 3800-4500 chars for a 5-6 minute video, or 3100-3500 chars for 4 minutes (compression ratio 35-40%). Source files over 4000 chars forced into 4 minutes lose second-tier content (quotes, escalation beats).
 - For sales-case videos, use the recurring column name `销售不复杂` unless the user says otherwise.
 - Use Azure Speech TTS by default. CosyVoice is a historical fallback only when explicitly requested or Azure is unavailable.
 - Unless the user explicitly asks for another voice or gender, use Azure male voice: `zh-CN-Yunxiao:DragonHDFlashLatestNeural`.
