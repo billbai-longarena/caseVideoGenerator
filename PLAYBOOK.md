@@ -18,6 +18,8 @@ output/budweiser_apac_story_video/video_tool_selection.md
 - For sales-case videos, use the recurring column name `销售不复杂` unless the user says otherwise.
 - Use Azure Speech TTS by default. CosyVoice is a historical fallback only when explicitly requested or Azure is unavailable.
 - Unless the user explicitly asks for another voice or gender, use Azure male voice: `zh-CN-Yunxiao:DragonHDFlashLatestNeural`.
+- Azure TTS defaults to sentence-cache mode: each sentence is synthesized into `audio/tts_sentences/sentence_XXX.wav`, then assembled into `audio/narration_azure.wav`.
+- Sentence-cache mode sends each full sentence to Azure as plain punctuated text. Do not insert in-sentence SSML `<break>` tags by default; let Azure handle comma, colon, pause, and prosody naturally. Unit splitting is only for timeline/storyboard alignment.
 
 ## Narration Style
 
@@ -35,6 +37,47 @@ output/budweiser_apac_story_video/video_tool_selection.md
 - TTS must read those acronyms letter by letter. The normalizer should emit spaced letters such as `I T`, `E R P`, and `G M V`.
 - For shopping-festival labels such as `618 大促`, screen subtitles may keep digits; TTS text should use digit-by-digit reading such as `六一八大促`.
 - Do not use `818 大促` for the SaaS case unless the source or user explicitly reintroduces that date.
+- To fix a small TTS issue, regenerate only the affected sentence, for example `--only 12` or `--only 7-9`, instead of rebuilding the whole narration.
+
+## Local Update Workflow
+
+Full Azure narration generation:
+
+```bash
+python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
+  --engine azure \
+  --project output/<project_dir> \
+  --gender male
+```
+
+Partial TTS fix:
+
+1. Edit `narration.txt`.
+2. Find the affected sentence number in `narration.tts.plan.txt` or `audio/tts_sentences/manifest.json`.
+3. Regenerate only that cache slot:
+
+```bash
+python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
+  --engine azure \
+  --project output/<project_dir> \
+  --gender male \
+  --only 12
+```
+
+Use `--only 7-9` or `--only 3,8,12` for multiple sentences. Use `--force` only when the same text/voice/rate must be regenerated anyway.
+
+Fast video update:
+
+```bash
+cd output/budweiser_apac_story_video/remotion
+npm run render:video   # run when the picture layer changed, or once to create a reusable video-only layer
+npm run mux:audio      # replace the audio track from the current narration.timeline.json
+```
+
+- If only narration/TTS changed, run `npm run mux:audio` and avoid Remotion rerendering.
+- If only storyboard/visuals changed, run `npm run render:video`, then `npm run mux:audio`.
+- If the final mix must include Remotion BGM ducking or SFX, use `npm run render` for a full render.
+- If Azure sounds too rushed, prefer `--rate 0%` or a small `AZURE_TTS_RATE` change before adding manual pauses.
 
 ## QA Before Delivery
 
@@ -43,3 +86,4 @@ output/budweiser_apac_story_video/video_tool_selection.md
 - Run black-frame detection or extract representative frames.
 - Confirm subtitles, labels, headlines, keywords, and info cards do not overlap.
 - Confirm spoken numbers, years, money, percentages, ranges, acronyms, and promotion labels are correct.
+- If only narration changed and the picture layer is still valid, use the fast mux path to replace audio without a Remotion rerender.
