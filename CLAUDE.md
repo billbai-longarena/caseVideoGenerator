@@ -1,6 +1,6 @@
 # Case Video Production Notes
 
-Follow `PLAYBOOK.md` and `AGENTS.md` for the full workflow. Additional narration constraint:
+Follow `docs/README.md`, the matching file under `workflows/`, and `AGENTS.md` for the full workflow. `PLAYBOOK.md` is a compatibility entry. Additional narration constraints:
 
 - If the user does not name a target duration, generate case videos between 4 and 7 minutes. If the user names a target duration or duration range, follow that specification.
 - Unless the user explicitly asks for another voice or gender, use Azure Speech TTS male voice for case videos.

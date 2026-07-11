@@ -5,6 +5,7 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
 
 node_modules/
 dist/
@@ -31,6 +32,8 @@ output/**/audio/
 output/**/images/
 output/**/tts_ab_test/
 output/**/tts_azure_test/
+output/**/audio_ab_paragraph/
+output/**/voice_energy_test/
 output/**/sample_analysis/
 output/tmp_azure_tts_smoke/
 

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENGINE_ROOT="${CASE_VIDEO_ENGINE_ROOT:-$REPO_ROOT/output/budweiser_apac_story_video}"
+REMOTION_ROOT="$ENGINE_ROOT/remotion"
+PYTHON_BIN="$REPO_ROOT/.venv/bin/python"
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/case-video <command> <project> [options]
+
+Commands:
+  check         Validate project files and unit coverage
+  tts           Generate Azure narration and timeline
+  typecheck     Run Remotion TypeScript checks
+  preview       Open Remotion preview for the project
+  render        Render complete video to project/video/case_video.mp4
+  render-video  Render video-only layer to project/video/case_video_video_only.mp4
+  mux           Mux latest audio into the video-only layer
+  qa            Print ffprobe stream and duration information
+EOF
+}
+
+if [[ $# -lt 2 ]]; then
+  usage
+  exit 2
+fi
+
+COMMAND="$1"
+PROJECT_INPUT="$2"
+shift 2
+
+if [[ "$PROJECT_INPUT" = /* ]]; then
+  PROJECT_ROOT="$PROJECT_INPUT"
+else
+  PROJECT_ROOT="$REPO_ROOT/$PROJECT_INPUT"
+fi
+PROJECT_ROOT="$(cd "$PROJECT_ROOT" 2>/dev/null && pwd)" || {
+  echo "project directory not found: $PROJECT_INPUT" >&2
+  exit 1
+}
+
+if [[ ! -x "$PYTHON_BIN" ]]; then
+  PYTHON_BIN="$(command -v python3)"
+fi
+
+export VIDEO_PROJECT_DIR="$PROJECT_ROOT"
+mkdir -p "$PROJECT_ROOT/video"
+
+case "$COMMAND" in
+  check)
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/validate_case_project.py" "$PROJECT_ROOT"
+    ;;
+  tts)
+    "$PYTHON_BIN" "$ENGINE_ROOT/tts_compare/generate_tts.py" \
+      --engine azure --project "$PROJECT_ROOT" "$@"
+    ;;
+  typecheck)
+    npm --prefix "$REMOTION_ROOT" run typecheck -- "$@"
+    ;;
+  preview)
+    npm --prefix "$REMOTION_ROOT" run preview -- "$@"
+    ;;
+  render)
+    export VIDEO_OUTPUT="${VIDEO_OUTPUT:-$PROJECT_ROOT/video/case_video.mp4}"
+    npm --prefix "$REMOTION_ROOT" run render -- "$@"
+    ;;
+  render-video)
+    export VIDEO_LAYER_OUTPUT="${VIDEO_LAYER_OUTPUT:-$PROJECT_ROOT/video/case_video_video_only.mp4}"
+    npm --prefix "$REMOTION_ROOT" run render:video -- "$@"
+    ;;
+  mux)
+    export VIDEO_LAYER="${VIDEO_LAYER:-${VIDEO_LAYER_OUTPUT:-$PROJECT_ROOT/video/case_video_video_only.mp4}}"
+    export VIDEO_OUTPUT="${VIDEO_OUTPUT:-$PROJECT_ROOT/video/case_video_with_latest_audio.mp4}"
+    npm --prefix "$REMOTION_ROOT" run mux:audio -- "$@"
+    ;;
+  qa)
+    if [[ -n "${QA_VIDEO:-}" ]]; then
+      VIDEO_PATH="$QA_VIDEO"
+    elif [[ $# -gt 0 ]]; then
+      VIDEO_PATH="$1"
+    elif [[ -f "$PROJECT_ROOT/video/case_video_with_latest_audio.mp4" ]]; then
+      VIDEO_PATH="$PROJECT_ROOT/video/case_video_with_latest_audio.mp4"
+    else
+      VIDEO_PATH="$PROJECT_ROOT/video/case_video.mp4"
+    fi
+    if [[ ! -f "$VIDEO_PATH" ]]; then
+      echo "video not found: $VIDEO_PATH" >&2
+      exit 1
+    fi
+    ffprobe -v error -show_entries format=duration,size -show_streams -of json "$VIDEO_PATH"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

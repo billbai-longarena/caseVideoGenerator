@@ -1,5 +1,7 @@
 # Azure Speech TTS 调用说明
 
+> 定位说明：本文保留 Azure Speech 的历史调用细节。当前默认音色、profile、时间轴和生产命令以 `docs/knowledge-base/tts-and-timing.md` 与 `scripts/case-video` 为准。
+
 本文档用于其他项目复用 Azure Speech 文本转语音调用方式。默认使用 Azure Speech REST API，不依赖 Speech SDK。
 
 ## 1. 环境变量
@@ -22,7 +24,7 @@ AZURE_TTS_REGION="eastus"
 
 ```bash
 AZURE_TTS_GENDER="female"  # female 或 male
-AZURE_TTS_RATE="+4%"
+AZURE_TTS_PROFILE="dragon-broadcast"
 ```
 
 如果设置 `AZURE_TTS_VOICE`，完整 voice name 会覆盖 `AZURE_TTS_GENDER`。命令行 `--gender` 又会覆盖环境里的 `AZURE_TTS_VOICE`，方便部署端按用户选择切换男女声。
@@ -44,12 +46,14 @@ channels = mono
 codec = pcm_s16le
 ```
 
-已验证中文 HD Flash 音色：
+已验证中文 Dragon HD Latest 音色：
 
 ```text
-女声：zh-CN-Xiaoxiao:DragonHDFlashLatestNeural
-男声：zh-CN-Yunxiao:DragonHDFlashLatestNeural
+女声：zh-CN-Xiaochen:DragonHDLatestNeural
+男声：zh-CN-Yunfan:DragonHDLatestNeural
 ```
+
+默认采用 `B_broadcast.mp3` 对应配置：男声 `rate=+14%`、`pitch=+4%`；女声 `rate=+7%`、`pitch=+1%`；整段合成；段间静音 `0.45s`。
 
 ## 3. REST Endpoint
 
@@ -119,12 +123,12 @@ key = os.getenv("AZURE_SPEECH_KEY") or os.getenv("AZURE_TTS_KEY")
 if not key:
     raise RuntimeError("Missing AZURE_SPEECH_KEY or AZURE_TTS_KEY")
 
-voice = "zh-CN-Xiaoxiao:DragonHDFlashLatestNeural"
+voice = "zh-CN-Xiaochen:DragonHDLatestNeural"
 text = "这里是销售不复杂。帮你揭开销售的魔法秘密，让销售不再复杂。"
 
 ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="zh-CN">
   <voice name="{html.escape(voice)}">
-    <prosody rate="+4%">{html.escape(text)}</prosody>
+    <prosody rate="+7%" pitch="+1%">{html.escape(text)}</prosody>
   </voice>
 </speak>""".encode("utf-8")
 
@@ -159,55 +163,56 @@ ffprobe -v error -show_entries stream=codec_name,sample_rate,channels,duration -
 女声：
 
 ```xml
-<voice name="zh-CN-Xiaoxiao:DragonHDFlashLatestNeural">
-  <prosody rate="+4%">要合成的中文文本</prosody>
+<voice name="zh-CN-Xiaochen:DragonHDLatestNeural">
+  <prosody rate="+7%" pitch="+1%">要合成的中文文本</prosody>
 </voice>
 ```
 
 男声：
 
 ```xml
-<voice name="zh-CN-Yunxiao:DragonHDFlashLatestNeural">
-  <prosody rate="+4%">要合成的中文文本</prosody>
+<voice name="zh-CN-Yunfan:DragonHDLatestNeural">
+  <prosody rate="+14%" pitch="+4%">要合成的中文文本</prosody>
 </voice>
 ```
 
 语速建议：
 
 ```text
-默认：+4%
-更稳重：0% 或 -4%
-更紧凑：+6% 到 +10%
+默认广播档：男声 +14% / +4% pitch；女声 +7% / +1% pitch
+旧的全局 +4%：仅用于 legacy sentence 模式兼容
 ```
 
-不要一次把整篇长稿送入 TTS。建议按句子或语义单元逐段合成，再用静音拼接，以便控制断句、停顿和时间轴。
+不要一次提交整篇长稿。按空行分隔的完整段落合成；段内不手工插入句间静音，段间统一拼接 0.45 秒静音，并通过 Azure word boundary 生成 unit 时间轴。
 
 ## 7. 在 casevideo 项目中生成全片旁白
 
-推荐使用统一 TTS 入口，默认走 Azure Speech：
+推荐使用统一 TTS 入口，默认走 Azure Speech，并按空行分隔的段落交替使用 Yunfan 男声和 Xiaochen 女声：
 
 ```bash
-python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
+.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
+  --engine azure \
+  --project output/medical_device_case_video
+```
+
+需要女声先开场：
+
+```bash
+.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
   --engine azure \
   --project output/medical_device_case_video \
   --gender female
 ```
 
-男声：
-
-```bash
-python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
-  --engine azure \
-  --project output/medical_device_case_video \
-  --gender male
-```
+需要全片单一音色时，加 `--single-voice`。直接指定 `--voice` 也会使用单音色；同时提供 `--alternate-voice` 才会恢复双音色交替。
 
 需要直接指定完整 Azure voice name 时，也可以调用底层脚本：
 
 ```bash
-AZURE_TTS_RATE='+4%' python output/budweiser_apac_story_video/tts_compare/generate_azure_full.py \
+.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_azure_full.py \
   --project output/medical_device_case_video \
-  --voice 'zh-CN-Xiaoxiao:DragonHDFlashLatestNeural'
+  --voice 'zh-CN-Xiaochen:DragonHDLatestNeural' \
+  --single-voice
 ```
 
 脚本会生成：
