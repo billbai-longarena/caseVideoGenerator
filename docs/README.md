@@ -12,18 +12,24 @@
 ## 专题索引
 
 - `knowledge-base/production-principles.md`：生产原则、时长、栏目和数据源。
+- `knowledge-base/case-story-model.md`：销售案例的三类竞争、客户真相线、信息披露线、销售认知线和参数化生成模型。
 - `knowledge-base/narration.md`：案例改写、中文口播、栏目文案和时长预算。
 - `knowledge-base/tts-and-timing.md`：Azure Speech、数字归一化、音色和时间轴。
 - `knowledge-base/storyboard-and-visuals.md`：分镜 JSON、unit 锚点、布局和生图。
+- `knowledge-base/visual-asset-pool.md`：共享背景素材池、场景词表、多轴标签、检索和回流原则。
 - `knowledge-base/rendering.md`：Remotion、素材同步、渲染和快速换轨。
 - `knowledge-base/qa-and-delivery.md`：技术质检、视觉质检和交付门槛。
 - `knowledge-base/tooling-decisions.md`：工具选型及历史决策。
 - `knowledge-base/troubleshooting.md`：常见故障与处理顺序。
+- `architecture/visual-beat-system.md`：Visual Beat 分层编辑的数据合同、兼容策略、校验边界和验收标准。
 
 ## 工作流索引
 
+- `../workflows/generate-case-story.md`：从材料或参数生成销售案例模型和故事正文。
 - `../workflows/new-case-video.md`：从材料到成片。
 - `../workflows/revise-video.md`：旁白、画面和局部修订。
+- `../workflows/reuse-visual-assets.md`：从共享素材池检索、复核、checkout，并只为缺口生图。
+- `../workflows/improve-production-system.md`：按证据把复盘结论沉淀到正确层，并完成兼容回归。
 - `../workflows/README.md`：工作流使用规则与质量门。
 
 ## 历史资料

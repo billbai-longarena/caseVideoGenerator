@@ -14,6 +14,8 @@ workflows/new-case-video.md or workflows/revise-video.md
 
 Use `.agents/skills/produce-case-video/SKILL.md` for production, revision, rendering, and QA tasks. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
 
+For new narration or video generation, do not inspect or imitate old generated narration, timelines, storyboards, rendered videos, QA frames, or other completed `output/<project>/` artifacts as examples. Many historical outputs are known to be wrong. Read the production Skill and current source materials, then generate from the current workflow; only read an existing project's artifacts when the user explicitly asks to revise or audit that project.
+
 The replicated pipeline is:
 
 ```text
@@ -22,7 +24,7 @@ case source/materials
 -> numeric-normalized TTS script
 -> Azure Speech TTS narration wav + narration.timeline.json
 -> unit-anchored rich_storyboard.json
--> generated AI narrative illustration/background assets
+-> shared-pool checkout plus generated visual gaps
 -> Remotion motion-graphics render
 -> ffprobe/ffmpeg visual QA
 ```
@@ -31,6 +33,7 @@ case source/materials
 
 - Keep `rich_storyboard.json` or the equivalent storyboard JSON as the source of truth for scenes, layouts, subtitles, keyword timing, and background cues.
 - Keep `narration.timeline.json` as the only timing baseline.
+- Keep `assets/visual-pool/taxonomy.json` as the shared visual-label source and `asset_pool_usage.json` as project-local checkout provenance.
 - Do not hard-code scene timing or scene data into Remotion components when JSON-driven data exists.
 - Use narration unit numbers (`atUnit`, `units`) instead of handwritten seconds.
 
@@ -85,7 +88,7 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 
 ## Image Generation
 
-- Azure OpenAI credentials are read from this repository's `.env` first, then from `output/budweiser_apac_story_video/.env` if present.
+- Azure OpenAI credentials are read from this repository's `.env` first, then from the case project's `.env` if present.
 - Do not print secrets or commit `.env`.
 - Use abstract visual prompts. Do not send restricted PDF source text, long excerpts, or sample-video voice data to external providers.
 - Sales videos use the approved blue/yellow watercolor family: bright cobalt/sky blue, cadmium yellow highlights, high contrast, cream paper, translucent watercolor/gouache washes, dry-brush edges, clear foreground subject, and semi-abstract low-detail background.
@@ -93,14 +96,17 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 - Keep generated background prompts free of logos, readable text, numerals, letters, watermarks, UI screenshots, and source-document screenshots. Numbers, percentages, money, and acronyms belong in Remotion text layers, not in generated background art.
 - Final backgrounds must be AI-generated or curated narrative illustrations. Do not use PIL/Canvas/SVG/programmatic diagrams, icon sets, flowcharts, dashboards, or placeholders as final video backgrounds.
 - If image generation fails, fix the Azure image deployment/configuration or stop for review; do not fall back to programmatic images.
-- Main flow must align storyboard scene count, `image_prompts.json` prompt files, primary background refs, and actual image files. Reusing an earlier image is only an explicit fallback marked with `reuse`/`allowBackgroundReuse`; it must not hide missing generated images.
+- Search and visually review the shared pool before generating new backgrounds. Checkout selected assets into `output/<project>/images/pool/`; never reference the shared canonical path directly from a storyboard.
+- Main flow must align storyboard refs with project-local files. Generated images are declared by `image_prompts.json`; pool images are declared by `asset_pool_usage.json`.
+- Cross-project pool reuse is normal. Repeating the same image within one video requires an intentional callback, comparison, evidence reveal, or explicit fallback marked with `reuse`/`allowBackgroundReuse`; it must not hide a visual gap.
+- After newly generated images pass QA, rebuild and audit the pool so they become reusable.
 
 ## Remotion
 
-The current Remotion engine lives in:
+The shared Remotion engine lives in:
 
 ```text
-output/budweiser_apac_story_video/remotion/
+engine/remotion/
 ```
 
 Common commands:
@@ -111,7 +117,7 @@ scripts/case-video preview output/<project>
 scripts/case-video render output/<project>
 ```
 
-`npm run preview` and `npm run render` automatically call `scripts/sync_assets.sh`, which copies storyboard/timeline JSON, images, audio, SFX, and optional BGM into Remotion.
+`npm run preview` and `npm run render` automatically call `engine/scripts/sync_assets.sh`, which copies storyboard/timeline JSON, images, audio, SFX, and optional BGM into Remotion. `VIDEO_PROJECT_DIR` must point at the case project (set automatically by `scripts/case-video`).
 
 ## QA
 
@@ -127,3 +133,14 @@ After rendering, run ffprobe and extract a contact sheet or key frames. Check:
 ## Locality
 
 All future generated videos should be produced inside this repository. The old CeibsSalesTouch project is only a historical reference unless the user explicitly asks to inspect it.
+
+## Termite Protocol / Blackboard Collaboration
+
+This repository adopts the local, offline mode of [TERMITE_PROTOCOL.md](TERMITE_PROTOCOL.md) v5.1. The protocol governs agent collaboration and handoff; it does not replace the video-production workflow above.
+
+- At the start of each substantive task, or when the user says `白蚁协议`, run `scripts/field-arrive.sh "<task summary>"`, then read `.birth`, `BLACKBOARD.md`, and any matching `ALARM.md`/`WIP.md` before making changes.
+- Treat `BLACKBOARD.md` as the human-readable shared state, `signals/active/*.yaml` as actionable work signals, and `DECISIONS.md` as the durable record of choices. Trust the repository and verification output over stale blackboard text; correct drift when found.
+- Select a role before acting: scout for investigation/review, worker for planned implementation, soldier for an alarm or failing build/test, and nurse for documentation or test maintenance. Work only within that role's permissions.
+- Human instructions take priority. For material work, leave a durable trace: update the relevant signal/blackboard or decision record, and use a clear commit message. If work is incomplete, write `WIP.md`; if changes exceed 50 lines, make a `[WIP]` commit before continuing when appropriate.
+- Stop and read `ALARM.md` before touching an affected area. Do not silently delete protocol, blackboard, decision, or other Markdown control files.
+- Runtime files (`.birth*`, `.field-breath`, `.pheromone`, optional `.termite.db*`) stay local and are ignored. This project does not enable external telemetry or audit export unless the user explicitly asks.

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 from pathlib import Path
 
@@ -18,6 +19,137 @@ def display_text(text: str, replacements: dict[str, str]) -> str:
 
 def bounded_unit(first: int, last: int, offset: int) -> int:
     return min(last, max(first, first + int(offset)))
+
+
+def relative_unit(first: int, last: int, offset: object, label: str) -> int:
+    try:
+        unit = first + int(offset)
+    except (TypeError, ValueError) as exc:
+        raise SystemExit(f"{label} offset must be an integer: {offset!r}") from exc
+    if unit < first or unit > last:
+        raise SystemExit(
+            f"{label} offset resolves to unit {unit}, outside scene units [{first}, {last}]"
+        )
+    return unit
+
+
+def absolute_or_relative_unit(
+    value: dict,
+    *,
+    first: int,
+    last: int,
+    absolute_key: str,
+    relative_key: str,
+    label: str,
+    default_offset: int | None = None,
+) -> int | None:
+    if absolute_key in value and relative_key in value:
+        raise SystemExit(f"{label} cannot define both {absolute_key} and {relative_key}")
+    if absolute_key in value:
+        unit = value[absolute_key]
+        if not isinstance(unit, int):
+            raise SystemExit(f"{label} {absolute_key} must be an integer")
+        if unit < first or unit > last:
+            raise SystemExit(
+                f"{label} {absolute_key}={unit} is outside scene units [{first}, {last}]"
+            )
+        return unit
+    if relative_key in value:
+        return relative_unit(first, last, value[relative_key], label)
+    if default_offset is not None:
+        return relative_unit(first, last, default_offset, label)
+    return None
+
+
+def build_visual_beats(
+    spec: dict,
+    *,
+    scene_id: str,
+    first: int,
+    last: int,
+) -> list[dict]:
+    raw_beats = spec.get("visualBeats")
+    if raw_beats is None:
+        return []
+    if not isinstance(raw_beats, list) or not raw_beats:
+        raise SystemExit(f"scene {scene_id} visualBeats must be a non-empty list")
+
+    beats: list[dict] = []
+    for beat_position, raw_beat in enumerate(raw_beats, start=1):
+        if not isinstance(raw_beat, dict):
+            raise SystemExit(f"scene {scene_id} visual beat {beat_position} must be an object")
+        beat = deepcopy(raw_beat)
+        beat_label = f"scene {scene_id} visual beat {beat_position}"
+        beat["id"] = beat.get("id", f"{scene_id}-b{beat_position:02d}")
+        beat["atUnit"] = absolute_or_relative_unit(
+            beat,
+            first=first,
+            last=last,
+            absolute_key="atUnit",
+            relative_key="offset",
+            label=beat_label,
+            default_offset=0,
+        )
+        beat.pop("offset", None)
+
+        raw_layers = beat.get("layers", [])
+        if not isinstance(raw_layers, list):
+            raise SystemExit(f"{beat_label} layers must be a list")
+        layers: list[dict] = []
+        for layer_position, raw_layer in enumerate(raw_layers, start=1):
+            if not isinstance(raw_layer, dict):
+                raise SystemExit(f"{beat_label} layer {layer_position} must be an object")
+            layer = deepcopy(raw_layer)
+            layer_label = f"{beat_label} layer {layer_position}"
+            layer["id"] = layer.get("id", f"{beat['id']}-l{layer_position:02d}")
+            reveal = absolute_or_relative_unit(
+                layer,
+                first=first,
+                last=last,
+                absolute_key="revealAtUnit",
+                relative_key="revealOffset",
+                label=layer_label,
+            )
+            exit_unit = absolute_or_relative_unit(
+                layer,
+                first=first,
+                last=last,
+                absolute_key="exitAtUnit",
+                relative_key="exitOffset",
+                label=layer_label,
+            )
+            layer.pop("revealOffset", None)
+            layer.pop("exitOffset", None)
+            if reveal is not None:
+                layer["revealAtUnit"] = reveal
+            if exit_unit is not None:
+                layer["exitAtUnit"] = exit_unit
+            # Nested reveal timings inside data-driven layers (bar-compare bars,
+            # network nodes/links) accept the same offset->unit conversion.
+            for nested_key in ("bars", "nodes", "links"):
+                nested_items = layer.get(nested_key)
+                if not isinstance(nested_items, list):
+                    continue
+                for nested_position, nested in enumerate(nested_items, start=1):
+                    if not isinstance(nested, dict):
+                        raise SystemExit(
+                            f"{layer_label} {nested_key} item {nested_position} must be an object"
+                        )
+                    nested_reveal = absolute_or_relative_unit(
+                        nested,
+                        first=first,
+                        last=last,
+                        absolute_key="revealAtUnit",
+                        relative_key="revealOffset",
+                        label=f"{layer_label} {nested_key} item {nested_position}",
+                    )
+                    nested.pop("revealOffset", None)
+                    if nested_reveal is not None:
+                        nested["revealAtUnit"] = nested_reveal
+            layers.append(layer)
+        beat["layers"] = layers
+        beats.append(beat)
+    return beats
 
 
 def main() -> None:
@@ -67,8 +199,9 @@ def main() -> None:
         else:
             background["image"] = spec["background"]
 
-        scenes.append({
-            "id": spec.get("id", f"s{position:02d}"),
+        scene_id = spec.get("id", f"s{position:02d}")
+        scene = {
+            "id": scene_id,
             "chapter": spec.get("chapter", f"{position:02d}"),
             "kicker": spec["kicker"],
             "layout": spec["layout"],
@@ -82,7 +215,21 @@ def main() -> None:
             ],
             "backgrounds": [background],
             "props": props,
-        })
+        }
+        if "allowBackgroundReuse" in spec:
+            scene["allowBackgroundReuse"] = bool(spec["allowBackgroundReuse"])
+        visual_beats = build_visual_beats(
+            spec,
+            scene_id=scene_id,
+            first=first,
+            last=last,
+        )
+        if visual_beats:
+            scene["visualMode"] = spec.get("visualMode", "editorial")
+            scene["visualBeats"] = visual_beats
+        elif "visualMode" in spec:
+            scene["visualMode"] = spec["visualMode"]
+        scenes.append(scene)
 
     storyboard = {
         **plan["project"],
@@ -94,6 +241,8 @@ def main() -> None:
         "duration": timeline["duration"],
         "scenes": scenes,
     }
+    if "visualAssets" in plan:
+        storyboard["visualAssets"] = deepcopy(plan["visualAssets"])
     output = project / "rich_storyboard.json"
     output.write_text(json.dumps(storyboard, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {output} scenes={len(scenes)} units={len(units)}")

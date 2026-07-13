@@ -1,0 +1,15 @@
+{
+  "name": "dragon-broadcast",
+  "sourceSample": "B_broadcast.mp3",
+  "synthesisUnit": "paragraph",
+  "startGender": "male",
+  "maleVoice": "zh-CN-Yunfan:DragonHDLatestNeural",
+  "femaleVoice": "zh-CN-Xiaochen:DragonHDLatestNeural",
+  "maleRate": "+14%",
+  "femaleRate": "+7%",
+  "openerMaleRate": "+10%",
+  "openerFemaleRate": "+4%",
+  "malePitch": "+4%",
+  "femalePitch": "+1%",
+  "paragraphPauseSeconds": 0.45
+}

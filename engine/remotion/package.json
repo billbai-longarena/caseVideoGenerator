@@ -1,0 +1,35 @@
+{
+  "name": "remotion",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "sync": "bash ../scripts/sync_assets.sh",
+    "prepreview": "npm run sync",
+    "preview": "remotion preview src/index.ts",
+    "prerender": "npm run sync",
+    "render": "remotion render src/index.ts CaseVideo ${VIDEO_OUTPUT:-../video/case_video.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6}",
+    "prerender:video": "npm run sync",
+    "render:video": "remotion render src/index.ts CaseVideoVideoOnly ${VIDEO_LAYER_OUTPUT:-../video/case_video_video_only.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6}",
+    "mux:audio": "bash ../scripts/mux_audio.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@remotion/cli": "4.0.487",
+    "@remotion/media-utils": "4.0.487",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "remotion": "4.0.487",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.3"
+  }
+}

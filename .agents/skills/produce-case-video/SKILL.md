@@ -1,6 +1,6 @@
 ---
 name: produce-case-video
-description: Produce, revise, render, and quality-check Chinese case-story videos in this repository. Use when turning case source material into narration, Azure Speech TTS, narration.timeline.json, rich_storyboard.json, generated visuals, Remotion video, or ffmpeg QA; also use when repairing narration, timing, storyboard, assets, or final delivery for an existing case-video project.
+description: Model, produce, revise, render, and quality-check Chinese sales and sales-management case stories and videos in this repository. Use for case-story generation, narration and TTS, unit-anchored storyboards and Visual Beats, generated assets, Remotion rendering, delivery QA, or reusable production-system improvements.
 ---
 
 # Produce Case Video
@@ -9,50 +9,53 @@ description: Produce, revise, render, and quality-check Chinese case-story video
 
 1. Read `../../../docs/README.md` for the knowledge map.
 2. Read the workflow matching the task in `../../../workflows/`.
-3. Treat the target directory under `output/` as case data, not reusable engine code.
-4. Use `../../../scripts/case-video` instead of memorizing paths inside the Budweiser project.
-
-Read `references/project-contract.md` before creating or validating a project. Read `references/commands.md` before running TTS, rendering, muxing, or QA commands.
+3. Read `references/project-contract.md` before creating or validating project artifacts.
+4. Read `references/commands.md` before TTS, rendering, muxing, or QA.
+5. Treat `output/<project>/` as case data. The shared engine lives in `engine/`; change it only for reusable behavior.
 
 ## Route The Task
 
-- **Create a complete video**: Follow `../../../workflows/new-case-video.md` from source review through delivery.
+- **Generate or reconstruct a case story**: Follow `../../../workflows/generate-case-story.md` and its linked case-model knowledge.
+- **Create a complete video**: Follow `../../../workflows/new-case-video.md`; run the case-story workflow first when the story is not already approved.
 - **Change narration or timing**: Follow the audio path in `../../../workflows/revise-video.md`; regenerate the timeline before changing visual timing.
 - **Change storyboard or visuals**: Follow the visual path in `../../../workflows/revise-video.md`; preserve narration unit anchors.
+- **Find, reuse, or replenish shared visual assets**: Follow `../../../workflows/reuse-visual-assets.md`; search and visually review background and character pools before generating gaps. Treat weak semantic, character, style, or composition fit as a real gap, then return accepted new assets to the appropriate pool after QA.
 - **Render or deliver**: Run project validation, typecheck, render, ffprobe, and visual QA in that order.
+- **Improve the Skill, workflow, validator, or shared engine**: Follow `../../../workflows/improve-production-system.md` and classify the learning before editing a reusable layer.
 - **Change reusable pipeline code**: Work in the current engine implementation only after confirming the change benefits multiple case projects.
 
 ## Enforce Sources Of Truth
 
+- Use the conditional case-story artifacts required by `references/project-contract.md`; do not turn assumptions into source facts.
 - Keep human-readable speech in `narration.txt`.
-- Generate spoken text through the shared TTS normalizer; do not hand-maintain `narration.tts.txt` as an independent source.
+- Generate spoken text through the shared TTS normalizer.
 - Keep `narration.timeline.json` as the only timing baseline.
-- Keep `rich_storyboard.json` as the only source for scenes, subtitles, keyword cues, layouts, and backgrounds.
-- Express timing with narration units such as `units` and `atUnit`; do not introduce handwritten seconds when unit timing exists.
+- Keep `rich_storyboard.json` as the source of truth for scenes, subtitles, layouts, backgrounds, assets, and Visual Beats.
+- Checkout shared assets into the case project and preserve `asset_pool_usage.json` provenance; never make a storyboard depend directly on the pool's canonical path.
+- Use the shared pool before generating missing backgrounds, while keeping generated-image prompts and checked-out provenance as separate declarations.
+- Express authored visual timing with narration units, not handwritten seconds.
+- Write the visual script before the storyboard data: every Visual Beat answers "what visible change does the viewer see", and key numbers, decision networks, and quoted speech use the semantic layer kinds (`counter`, `bar-compare`, `network`, `dialogue`, `annotate`) instead of static text captions.
 - Keep reusable implementation out of case directories whenever a shared command or engine change is appropriate.
 
 ## Apply Production Gates
 
-Stop and fix the current phase before continuing when a gate fails:
+Use the selected workflow's gates. Do not advance when its current gate fails. At minimum preserve source boundaries, causal consistency, timing integrity, asset validity, render correctness, and delivery QA. The workflow, knowledge base, contract, and validator define the task-specific checks.
 
-1. **Source gate**: Confirm usage boundaries and avoid sending restricted source text to external providers.
-2. **Narration gate**: Confirm target duration, natural spoken Chinese, fixed column opener/closer when applicable, and prohibited contrast-pattern removal.
-3. **TTS gate**: Confirm normalized numbers/acronyms, female single-voice profile, timeline generation, and listening quality.
-4. **Storyboard gate**: Confirm continuous unit coverage, semantic reveal timing, valid layouts, and subtitle safety.
-5. **Asset gate**: Confirm story-specific prompts, the approved blue/yellow watercolor family for sales cases and the local warm manager-silhouette family for sales-management cases, no unwanted color/style drift, no logos/readable text/numerals/letters/watermarks, and no programmatic/diagram/placeholder backgrounds.
-6. **Render gate**: Confirm project validation and Remotion typecheck before a full render.
-7. **Delivery gate**: Confirm video/audio streams, dimensions, frame rate, duration, contact sheet, key frames, and spoken numeric accuracy.
+## Preserve Creative Freedom
 
-## Preserve Current Defaults
+- Apply current defaults and methods from `../../../docs/knowledge-base/`; do not duplicate their detailed values here.
+- Choose `layout`, `editorial`, or `hybrid` scene by scene according to the communication need.
+- Treat pacing ranges and composition patterns as planning aids unless the contract or validator marks a rule as invariant.
+- Do not encode a fixed shot count, cut interval, narrative twist, case outcome, or single-case style recipe in this Skill.
 
-- Use a 4–7 minute duration when the user does not specify one.
-- Use the `销售不复杂` opener, closer, brand, and subtitle label for sales-case videos unless told otherwise.
-- Use Azure Speech with the approved Dragon HD female single-voice broadcast profile by default.
-- Use male/female alternation only when the user explicitly requests it.
-- Use Remotion for motion graphics and ffmpeg/ffprobe for muxing and QA.
-- Avoid the Chinese rhetorical pattern `不是……而是……` and close variants.
-- Use AI-generated or curated narrative illustration backgrounds for final delivery: sales cases use the approved blue/yellow watercolor family, while sales-management cases use the local warm manager-silhouette motion-graphics family unless the user approves another reference. Keep storyboard scene count, prompt files, primary background refs, and actual image files aligned; reuse prior images only as an explicit fallback. If Azure image generation fails, fix the image configuration or stop; do not substitute PIL/Canvas/SVG/programmatic diagrams or icon-style placeholders.
+## Improve Deliberately
 
-## Record Durable Changes
+After production or QA, classify each reusable finding before changing the system:
 
-Update the appropriate file under `../../../docs/knowledge-base/` when a reusable rule changes. Update a workflow only when task order or a gate changes. Keep case-specific observations inside the relevant `output/<project>/` directory.
+- case-specific choice → `output/<project>/`
+- reusable method → `docs/knowledge-base/`
+- ordered step or quality gate → `workflows/`
+- deterministic invariant → schema, builder, validator, and tests
+- task routing or cross-stage guardrail → this Skill
+
+Promote findings to the Skill only when they are stable across tasks and materially change routing or safety. Use `../../../workflows/improve-production-system.md` for evidence, regression checks, and rollback criteria.

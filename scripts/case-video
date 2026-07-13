@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENGINE_ROOT="${CASE_VIDEO_ENGINE_ROOT:-$REPO_ROOT/output/budweiser_apac_story_video}"
+ENGINE_ROOT="${CASE_VIDEO_ENGINE_ROOT:-$REPO_ROOT/engine}"
 REMOTION_ROOT="$ENGINE_ROOT/remotion"
 PYTHON_BIN="$REPO_ROOT/.venv/bin/python"
 
@@ -80,10 +80,10 @@ case "$COMMAND" in
       VIDEO_PATH="$QA_VIDEO"
     elif [[ $# -gt 0 ]]; then
       VIDEO_PATH="$1"
-    elif [[ -f "$PROJECT_ROOT/video/case_video_with_latest_audio.mp4" ]]; then
-      VIDEO_PATH="$PROJECT_ROOT/video/case_video_with_latest_audio.mp4"
-    else
+    elif [[ -f "$PROJECT_ROOT/video/case_video.mp4" ]]; then
       VIDEO_PATH="$PROJECT_ROOT/video/case_video.mp4"
+    else
+      VIDEO_PATH="$PROJECT_ROOT/video/case_video_with_latest_audio.mp4"
     fi
     if [[ ! -f "$VIDEO_PATH" ]]; then
       echo "video not found: $VIDEO_PATH" >&2

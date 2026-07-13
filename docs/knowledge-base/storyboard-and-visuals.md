@@ -10,6 +10,27 @@
 
 标题可以先建立主题，支持标题的事实和结论必须等对应旁白单元再出现。固定帧延迟只用于触发后的装饰动画。
 
+需要在一个 scene 内按人物、证据、机制或后果继续换画面时，使用 `visualAssets`、`visualMode` 和 `visualBeats`。字段合同和兼容策略见 `../architecture/visual-beat-system.md`。
+
+## Visual Beat 叙事语法
+
+Visual Beat 先定义当前画面承担的叙事职责，再选择素材和构图。常用职责包括：
+
+- `establish`：建立时间、地点、组织和局势。
+- `identify`：让关键人物、角色关系或立场进入画面。
+- `evidence`：呈现数字、文件、库存、现场观察或其他事实支点。
+- `explain`：把因果、机制、决策结构或方案逻辑讲清楚。
+- `escalate`：让冲突、风险和时间压力继续上升。
+- `consequence`：展示选择造成的业务或组织后果。
+- `callback`：有意召回前面的素材或线索，形成验证与回响。
+- `reset`：在章节转向时清空信息密度，建立新的视觉问题。
+
+同一场景不必机械集齐所有职责。优先围绕旁白中的状态变化、证据出现、认知修正和决策转折设置拍点。
+
+视觉丰富度主要来自角色轮换，而不是堆转场：环境全景、人物关系、证据特写、机制拆解、后果画面和短暂留白可以交替出现。转场通常保持克制，局部文字、裁切、推拉和色彩处理负责二级变化。
+
+构图应服务当前信息：人物冲突可用左右分置，证据可用 document-focus 或 evidence-collage，机制对照可用 split，连续线索可用 triptych。数字、金额、百分比和英文缩写继续由 Remotion 文字层呈现，不写入生成图片。
+
 ## 视觉家族
 
 - 销售案例优先使用蓝黄水彩：亮钴蓝、天蓝、暖黄、高对比、留白、透明水彩与水粉叠色、商业杂志插画感。
@@ -18,9 +39,11 @@
 - 最终背景必须是 AI 生成或人工挑选的叙事插画。禁止使用 PIL、Canvas、SVG、程序化几何图、图标集、流程图、仪表盘图或占位图作为最终背景；经理剪影风格中的剪纸/丝网印刷感是允许的视觉语言，不等同于程序图。
 - 如果 AI 生图失败，必须修复生图配置或停止交付，不能用程序图 fallback。
 - 单条视频保持一个视觉家族，但场景空间、人物关系和镜头角度必须变化。
+- `storyboard.visualStyle` 同时约束图片和 Remotion 叠加层。标签、进度条、图表、转场和 Visual Beat 滤镜使用语义色并按视觉家族解析；销售蓝黄水彩不得被固定红色或翻转色相的滤镜改造成红橙画面，经理剪影案例则可保留焦橙强调。
 
 ## 生图提示词
 
+- 新项目先按 `visual-asset-pool.md` 和 `../../workflows/reuse-visual-assets.md` 检索共享池；以下提示词规则只用于没有合格候选的视觉缺口。
 - 写清事件、空间、人物关系、情绪压力、镜头角度和文字留白。
 - 每张图服务一个旁白信息点，不做无关抽象装饰。
 - 禁止 logo、可读文字、数字、字母、水印、名牌、证书字样、投影文字和屏幕文字。数字、百分比、金额和英文缩写只在字幕/图层里呈现，不写进背景图。
@@ -28,16 +51,35 @@
 
 ## 生图执行
 
-- `generate_impressionist_backgrounds.py` 支持 `--concurrency` 并发请求。默认值保持 `1`；批量重生时优先用 `2` 或 `3`，需要更高并发时先确认 Azure 配额。
+- `engine/scripts/generate_images.py` 支持 `--concurrency` 并发请求。默认值保持 `1`；批量重生时优先用 `2` 或 `3`，需要更高并发时先确认 Azure 配额。
 - Azure 图片请求默认按 `--requests-per-minute 12` 全局限速，所有并发线程共享同一个 60 秒窗口。遇到 429 会自动等待并重试，优先遵守 Azure `Retry-After`，否则等待一个请求窗口。
 - 并发不会改变单张图的模型、prompt、尺寸或质量设置，因此不影响画面效果；主要风险是 Azure 429、超时或本地网络抖动导致等待变长。
 - 同一个项目不要用多个外层进程同时生成并写 `prompts.json`。需要并发时使用脚本内置 `--concurrency`，由脚本统一按原顺序写元数据。
 
+## 共享素材池
+
+- 空间、行为、参与者、叙事职责、物件、情绪、行业和视觉家族分开标记。不要用一个“会议图”“工厂图”标签替代完整视觉意图。
+- 使用 `scripts/visual-assets search` 召回候选，人工检查人物关系、构图、文字留白和前后镜头变化，再使用 `checkout` 复制到项目。
+- checkout 的图片由 `asset_pool_usage.json` 记录内容哈希和池中 ID；storyboard `visualAssets` 使用项目本地 `src`、`origin: "curated"` 和 `poolAssetId`。
+- `image_prompts.json` 只覆盖项目新生成图片。池中素材和新生成素材可以在同一分镜中并存。
+- 素材池的场景词表、数据职责和演进规则见 `visual-asset-pool.md`。
+
+### 人物头像池
+
+- 可复用人物头像位于 `assets/character-portraits/`，与叙事背景池分开维护。头像按稳定 ID、画风、性别、年龄段、朝向和建议摆位检索。
+- 使用 `scripts/character-portraits search` 选择人物，再用 `checkout` 复制到案例的 `images/characters/`。Remotion 中登记为 `role: "person"`、`origin: "curated"`，并保留 `poolAssetId`。
+- 对话构图优先让人物视线朝内：`screen-right` 放左侧，`screen-left` 放右侧；`front` 用于人物出场、角色卡或居中陈述。
+- 同一案例中的角色 ID 一经确定应保持稳定。人物职务、立场和关系由 storyboard 文本层表达，不把姓名、公司、数字或职位生成到头像里。
+- 检索有结果但人物年龄、身份气质、朝向或视觉家族不合格时，按真实缺口扩展 `specs.json`，生成、看图、`finalize --reviewed` 并 `audit` 后再 checkout。可选 `styles` 字段用于只补指定视觉家族；人物池应随案例需求扩展，不能为了复用而牺牲角色准确性。
+
 ## 背景节奏
 
-- 背景按语义段落切换，常见停留约 6–8 秒。
+- 背景和 Visual Beat 按语义变化切换。约 6–8 秒一次强变化可作为普通案例的起始参考，证据密集段可更快，情绪和结论段可更慢。
 - 使用推拉、横移和转场维持运动，不机械地按固定秒数换图。
 - 背景路径、切换 unit 和布局都写入 storyboard，不写死在 React 组件中。
-- 主流程必须保持 `rich_storyboard.json` 场景数、主背景引用、`image_prompts.json` prompt 文件数和实际图片文件对齐。不能用固定 8 张图或 `min(index, 8)` 这类写法覆盖后续场景。
-- 如果确实需要复用前面图片，只能作为显式兜底：在对应 scene 或 background cue 上标记 `allowBackgroundReuse`/`reuse`，并确认它不是图片数量不足造成的主流程缺口。
-- 质检时优先排查 storyboard、prompt、图片文件和 Remotion 同步是否一致；复用图片只能在主流程对齐后处理临时失败的个别图。
+- Visual Beat 的第一拍应覆盖 scene 起点；后续拍点由下一拍或 scene 结束自动收束。局部 layer 同样使用 unit 锚点，不写手工秒数。
+- 连续拍点如果重复同一素材，应有 callback、对照、放大证据等明确意图；单纯因为素材不足而重复属于生产缺口。
+- 主流程必须保持 `rich_storyboard.json` 的素材引用与项目实际文件一致。新生成图片由 `image_prompts.json` 声明，素材池图片由 `asset_pool_usage.json` 声明；两类声明合并后应覆盖分镜所需资产。
+- 跨项目素材池复用是默认选项。若同一条视频多个主场景重复同一项目本地图片，在对应 scene 或 background cue 上标记 `allowBackgroundReuse`/`reuse`，并确认它不是图片数量不足造成的机械重复。
+- 质检时优先排查 storyboard、prompt、素材池来源记录、图片文件和 Remotion 同步是否一致。不能用固定 8 张图或 `min(index, 8)` 这类写法覆盖后续场景。
+- 成片关键帧 QA 同时检查原图与模板叠加结果。池中素材本身合格，但被 UI 强调色、滤镜或转场破坏视觉家族时，仍视为成片不合格；应修复风格路由，而不是把正确素材误判为需重生。

@@ -2,7 +2,7 @@
 
 ## 引擎边界
 
-当前共享 Remotion 工程位于 `output/budweiser_apac_story_video/remotion/`。操作者应使用根命令 `scripts/case-video`，避免新文档和新流程继续绑定该历史路径。
+共享 Remotion 工程位于 `engine/remotion/`。操作者应使用根命令 `scripts/case-video`，不直接绑定引擎内部路径。
 
 ## 素材同步
 

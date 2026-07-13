@@ -1,4 +1,4 @@
 interface:
-  display_name: "案例视频生产"
-  short_description: "Standardize case-video production, revision, rendering, and QA"
-  default_prompt: "Use $produce-case-video to produce or revise a case-story video through narration, TTS, storyboard, Remotion, and QA."
+  display_name: "销售案例与视频生产"
+  short_description: "Model sales cases and produce, revise, render, and QA videos"
+  default_prompt: "Use $produce-case-video to model a sales case from customer truth and seller beliefs, then produce or revise its narration, storyboard, render, and QA."

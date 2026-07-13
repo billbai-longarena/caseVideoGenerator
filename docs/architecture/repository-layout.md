@@ -8,7 +8,8 @@ caseVideoGenerator/
 ├── docs/                       # 长期知识、架构与决策
 ├── workflows/                  # 可执行流程和质量门
 ├── scripts/                    # 面向操作者的统一命令
-├── engine/                     # 可复用引擎边界与迁移说明
+├── assets/visual-pool/         # 跨案例视觉素材索引、去重文件和浏览视图
+├── engine/                     # 共享 TTS、生图与 Remotion 渲染实现
 ├── input/                      # 待生产的案例材料
 └── output/<project>/           # 单个案例的源数据、生成物和交付物
 ```
@@ -19,8 +20,9 @@ caseVideoGenerator/
 - `docs/`：存放跨案例长期有效的规则。不要写单个案例的剧情、成片参数或临时实验结论。
 - `workflows/`：存放按顺序执行的任务清单。知识解释放到 `docs/`，工作流只保留动作、输入、输出和质量门。
 - `scripts/`：隐藏历史目录和底层命令差异，提供稳定入口。
-- `output/<project>/`：一个案例一个目录。这里可以有案例脚本、分镜、图片、音频、视频和案例专属构建脚本。
-- `output/budweiser_apac_story_video/`：当前共享 TTS 与 Remotion 引擎的历史宿主，也是百威案例目录。通过根命令访问，不让新工作继续依赖其内部路径。
+- `assets/visual-pool/`：保存跨案例素材的受控词表、机器目录、内容哈希去重文件、浏览视图和覆盖报告。它不承担单条视频的选图与时间编排。
+- `output/<project>/`：一个案例一个目录。这里可以有案例脚本、分镜、项目本地图片、素材池取用记录、音频、视频和案例专属构建脚本。
+- `engine/`：共享 TTS、素材同步、生图和 Remotion 渲染实现。引擎不持有案例数据，仅通过 `scripts/case-video` 访问。
 
 ## 变更判断
 
@@ -29,13 +31,14 @@ caseVideoGenerator/
 - 规则适用于两个及以上案例。
 - 命令每次都需要从百威目录复制或记忆。
 - 修复涉及 TTS、时间轴、Remotion 组件或 QA 的通用行为。
+- 场景标签、素材检索或去重行为需要在多个案例间一致。
 
 只在 `output/<project>/` 修改以下内容：
 
 - 案例事实、剧情、旁白和字幕。
-- 案例专属分镜、视觉提示词和素材。
+- 案例专属分镜、视觉提示词、从共享池 checkout 的本地副本和新生成素材。
 - 案例专属发音覆盖、布局参数或交付版本。
 
 ## 迁移原则
 
-当前阶段先稳定入口与知识边界，不直接移动正在使用的引擎代码。后续把共享实现迁入独立 `engine/` 时，应保持 `scripts/case-video` 命令不变，并通过 `CASE_VIDEO_ENGINE_ROOT` 完成平滑切换。
+共享实现已迁入独立 `engine/`。`scripts/case-video` 命令保持不变，实验性引擎可通过 `CASE_VIDEO_ENGINE_ROOT` 切换。

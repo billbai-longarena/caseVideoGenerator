@@ -24,6 +24,14 @@ output/**/remotion/public/
 output/**/remotion/src/generated/
 output/**/remotion/src/data/generated/
 
+# Shared engine local artifacts.
+engine/tts_compare/envs/
+engine/tts_compare/CosyVoice/
+engine/remotion/node_modules/
+engine/remotion/public/
+engine/remotion/src/generated/
+engine/remotion/src/data/generated/
+
 # Generated media and QA outputs are local artifacts.
 output/**/video/
 output/**/qa/
@@ -37,9 +45,25 @@ output/**/voice_energy_test/
 output/**/sample_analysis/
 output/tmp_azure_tts_smoke/
 
+# Shared visual pool binaries and browse views are reproducible local artifacts.
+assets/visual-pool/files/
+assets/visual-pool/views/
+assets/character-portraits/files/
+assets/character-portraits/contact-sheets/
+
 *.mp4
 *.mov
 *.m4v
 *.wav
 *.aiff
 !output/**/sfx/*.wav
+
+# Termite Protocol runtime state. The Markdown/YAML blackboard is versioned;
+# per-session birth/breath files and the optional SQLite runtime are local.
+.birth
+.birth.*
+.field-breath
+.pheromone
+.termite.db
+.termite.db-wal
+.termite.db-shm
