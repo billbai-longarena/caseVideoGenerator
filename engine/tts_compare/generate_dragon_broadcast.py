@@ -42,6 +42,23 @@ def build_ssml(azure, text: str, voice: str, rate: str, pitch: str) -> str:
 </speak>'''
 
 
+def synthesize_with_retry(azure, ssml: str, voice: str, region: str, api_key: str, *, attempts: int = 4):
+    """Retry transient Azure streaming timeouts without changing synthesis inputs."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return azure.synthesize_ssml_with_word_boundaries(ssml, voice, region, api_key)
+        except RuntimeError as exc:
+            if "Timeout while synthesizing" not in str(exc) or attempt == attempts:
+                raise
+            delay = min(2 ** attempt, 8)
+            print(
+                f"Azure TTS timeout; retrying paragraph in {delay}s "
+                f"(attempt {attempt + 1}/{attempts})",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+
+
 def load_paragraph_overrides(project_root: Path) -> dict[str, dict]:
     path = project_root / "tts_overrides.json"
     if not path.exists():
@@ -143,7 +160,7 @@ def main() -> None:
             action = "reuse"
         else:
             ssml = build_ssml(azure, synthesis_text, voice, rate, pitch)
-            pcm, boundaries = azure.synthesize_ssml_with_word_boundaries(ssml, voice, region, api_key)
+            pcm, boundaries = synthesize_with_retry(azure, ssml, voice, region, api_key)
             azure.write_pcm_wav(wav_path, pcm)
             meta_path.write_text(
                 json.dumps(
