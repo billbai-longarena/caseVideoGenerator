@@ -59,3 +59,9 @@ After production or QA, classify each reusable finding before changing the syste
 - task routing or cross-stage guardrail → this Skill
 
 Promote findings to the Skill only when they are stable across tasks and materially change routing or safety. Use `../../../workflows/improve-production-system.md` for evidence, regression checks, and rollback criteria.
+
+## Compose Covers For Center Crops
+
+- Place the complete essential cover-copy group—kicker, title, and required subtitle—at the frame's geometric center, use centered text alignment, and keep it inside the centered crop-safe area. Do not anchor essential cover text to the left or right.
+- If contrast requires a black scrim, fit it to the text block plus modest padding and keep it translucent. Do not use a full-frame, full-height, or wide black panel; preserve clearly visible background around all four sides.
+- QA exact frame 0 at full 16:9 and in a centered 1:1 crop. Reject the cover if essential text is clipped or off-center, or if the scrim visually dominates the background.
