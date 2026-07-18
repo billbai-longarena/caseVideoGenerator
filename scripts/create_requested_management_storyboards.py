@@ -6,7 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from create_priority_and_management_storyboards import MANAGEMENT_STYLE, S, bar, build_project, metric
+from create_priority_and_management_storyboards import MANAGEMENT_STYLE, S, V, bar, build_project, metric
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +18,8 @@ PORTRAIT_STYLE = (
     "burnt-orange rim light, warm cream paper grain, flat cut-paper and screen-print feel. "
     "No detailed face, no props, no readable text, no letters, no numbers, no logos, no watermark, no border. "
 )
+
+VARIANT_TARGETS = ["point-2", "dialogue", "comparison", "relationship", "metric-1"]
 
 
 def P(person: str, file_name: str, description: str) -> dict[str, str]:
@@ -43,6 +45,44 @@ def C(
         "generatedPortraits": portraits,
         "scenes": scenes,
     }
+
+
+def _cycle_links() -> list[dict[str, Any]]:
+    return [
+        {"from": 1, "to": 2, "label": "引出"},
+        {"from": 2, "to": 3, "label": "推高"},
+        {"from": 3, "to": 4, "label": "形成"},
+        {"from": 4, "to": 1, "label": "反推"},
+    ]
+
+
+def _hub_links() -> list[dict[str, Any]]:
+    return [
+        {"from": 1, "to": 2, "label": "牵动"},
+        {"from": 1, "to": 3, "label": "牵动"},
+        {"from": 1, "to": 4, "label": "牵动"},
+    ]
+
+
+def add_network_variety(scenes: list[dict[str, Any]]) -> None:
+    relationship_cycle = False
+    relationship_hub = False
+    mechanism_cycle = False
+    for scene in scenes:
+        if len(scene.get("nodes", [])) < 4 or not scene.get("links"):
+            continue
+        role = str(scene.get("role", "context"))
+        if role in {"map", "metaphor"}:
+            if not mechanism_cycle:
+                scene["links"] = _cycle_links()
+                mechanism_cycle = True
+            continue
+        if not relationship_cycle:
+            scene["links"] = _cycle_links()
+            relationship_cycle = True
+        elif not relationship_hub:
+            scene["links"] = _hub_links()
+            relationship_hub = True
 
 
 PROJECTS: dict[str, dict[str, Any]] = {
@@ -325,6 +365,38 @@ def prepare_config(slug: str) -> dict[str, Any]:
     title = load_project_title(slug)
     config["title"] = title
     config["coverTitle"] = title
+    for scene in config["scenes"][: min(5, len(config["scenes"]))]:
+        if scene.get("visualVariants"):
+            continue
+        scene["visualVariants"] = [
+            V(
+                "gesture-detail",
+                "Alternate camera angle of the same sales-management moment, closer focus on one decisive human gesture, "
+                "a blank folder, table edge or doorway in the foreground, secondary silhouettes simplified in the background, "
+                "same warm manager-silhouette palette and clean negative space, no readable text, no letters, no numbers. "
+                f"Scene context: {scene['prompt']}",
+                VARIANT_TARGETS,
+            )
+        ]
+    for scene in config["scenes"]:
+        if scene.get("links"):
+            continue
+        cards = list(scene.get("cards", []))
+        if len(cards) < 3:
+            continue
+        if scene.get("person") and scene.get("speaker"):
+            labels = [scene["speaker"], *cards[:3]]
+        else:
+            labels = cards[:3]
+        scene["nodes"] = labels[:4]
+        links = [
+            {"from": 1, "to": 2, "label": "触发"},
+            {"from": 2, "to": 3, "label": "推动"},
+        ]
+        if len(labels) >= 4:
+            links.append({"from": 3, "to": 4, "label": "形成"})
+        scene["links"] = links
+    add_network_variety(config["scenes"])
     return config
 
 
