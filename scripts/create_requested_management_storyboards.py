@@ -365,7 +365,7 @@ def prepare_config(slug: str) -> dict[str, Any]:
     title = load_project_title(slug)
     config["title"] = title
     config["coverTitle"] = title
-    for scene in config["scenes"][: min(5, len(config["scenes"]))]:
+    for scene in config["scenes"][: min(10, len(config["scenes"]))]:
         if scene.get("visualVariants"):
             continue
         scene["visualVariants"] = [
