@@ -3,8 +3,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
+import re
 from typing import Any
+
+try:
+    from scripts.visual_beat_planning import (
+        BeatCandidate,
+        schedule_visual_beats,
+        text_alignment_score,
+    )
+except ModuleNotFoundError:  # Direct execution: scripts/ is sys.path[0].
+    from visual_beat_planning import BeatCandidate, schedule_visual_beats, text_alignment_score
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,23 +46,6 @@ JAPANESE_PORTRAIT_STYLE = (
     "natural professional posture, recognizable but softly painted facial features, crisp foreground silhouette, cream paper texture only inside the figure, "
     "no props, no text, no letters, no numerals, no logos, no watermark, no border. "
 )
-
-LAYOUTS = [
-    "hook-alert",
-    "subject-reveal",
-    "split-data",
-    "insight-split",
-    "focus-ring",
-    "decision-board",
-    "performance-ladder",
-    "closing-idea",
-]
-MOTIONS = ["breathe", "drift", "left", "right", "lift", "center"]
-TRANSITIONS = ["wash", "paper", "ink", "push"]
-CAMERAS = ["breathe", "push-in", "pan-left", "pan-right", "drift", "pull-out"]
-PURPOSES = ["establish", "identify", "evidence", "explain", "escalate", "consequence", "reset"]
-PHASES = ["线索", "证据", "阻力", "转折", "行动", "结果", "启示"]
-
 
 def metric(
     label: str,
@@ -84,6 +78,20 @@ def bar(label: str, value: float, suffix: str = "", tone: str = "neutral", maxim
     return item
 
 
+def V(name: str, prompt: str, candidate_keys: list[str]) -> dict[str, Any]:
+    """Declare a semantic background variant for selected Visual Beat candidates."""
+
+    if not re.fullmatch(r"[a-z0-9-]+", name):
+        raise ValueError(f"visual variant name must be lowercase kebab-case: {name!r}")
+    if not candidate_keys:
+        raise ValueError(f"visual variant {name!r} must target at least one candidate key")
+    return {
+        "name": name,
+        "prompt": prompt,
+        "candidateKeys": candidate_keys,
+    }
+
+
 def S(
     paragraphs: list[int],
     headline: str,
@@ -97,8 +105,11 @@ def S(
     metrics: list[dict[str, Any]] | None = None,
     bars: list[dict[str, Any]] | None = None,
     nodes: list[str] | None = None,
+    links: list[dict[str, Any]] | None = None,
+    network_layout: str | None = None,
     role: str = "context",
     treatment: str = "natural",
+    visual_variants: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "paragraphs": paragraphs,
@@ -112,9 +123,63 @@ def S(
         "metrics": metrics or [],
         "bars": bars or [],
         "nodes": nodes or [],
+        "links": links or [],
+        "networkLayout": network_layout,
         "role": role,
         "treatment": treatment,
+        "visualVariants": visual_variants or [],
     }
+
+
+def select_scene_layout(
+    scene: dict[str, Any],
+    *,
+    is_first: bool,
+    is_last: bool,
+) -> str:
+    """Choose the scene fallback layout from narrative meaning, never scene index."""
+
+    if is_first:
+        return "hook-alert"
+    if is_last:
+        return "closing-idea"
+    if scene.get("nodes") or scene.get("links"):
+        return "decision-board"
+    if scene.get("bars"):
+        return "performance-ladder"
+    if scene.get("metrics"):
+        return "split-data"
+    if scene.get("person"):
+        return "subject-reveal"
+    return "insight-split"
+
+
+def select_scene_transition(scene: dict[str, Any]) -> str:
+    """Use transition weight to signal story function rather than periodic variety."""
+
+    if scene.get("treatment") == "crisis":
+        return "ink"
+    if scene.get("role") == "evidence":
+        return "paper"
+    if scene.get("nodes") or scene.get("links"):
+        return "push"
+    return "wash"
+
+
+def select_scene_motion(scene: dict[str, Any], *, is_last: bool) -> str:
+    """Choose restrained background motion from scene emphasis."""
+
+    if is_last:
+        return "breathe"
+    if scene.get("treatment") == "crisis":
+        return "lift"
+    if scene.get("role") == "evidence" or scene.get("bars") or scene.get("metrics"):
+        return "center"
+    if scene.get("nodes") or scene.get("links"):
+        return "left"
+    if scene.get("person"):
+        return "drift"
+    return "breathe"
 
 
 PROJECTS: dict[str, dict[str, Any]] = {
@@ -209,15 +274,202 @@ PROJECTS: dict[str, dict[str, Any]] = {
         "visualStyle": "warm-manager-silhouette-motion-graphics",
         "style": MANAGEMENT_STYLE,
         "scenes": [
-            S([1, 3], "关系一共享\n效率就能翻倍？", "协作目标", "Medical-device sales teams from two specialties stand on opposite sides of a hospital corridor, each holding different customer relationships while a new product opportunity waits between them.", ["跨科室联动", "共享客户关系", "推广效率翻倍"], person="he-chen", speaker="何晨", quote="一个人的关系，可以变成两个人的机会。", nodes=["心内科销售", "骨科销售", "医院关系", "新产品机会"]),
-            S([4, 6], "口号很响\n行动为零", "动员失效", "A manager delivers an energetic teamwork speech and external training, followed by a posed group photo that dissolves into an empty office with no connections forming between desks.", ["团队精神动员", "专题培训", "什么都没发生"], person="he-chen", speaker="何晨", quote="大家一起赢。", nodes=["动员", "培训", "合照", "零行动"], treatment="desaturated"),
-            S([7, 11], "线索就在手里\n王琦却不开口", "个人选择", "Two medical sales representatives sit near each other but are divided by an invisible dark wall, one knows a hospital opportunity while his own crowded target board and travel schedule pull him away.", ["知道骨科更新线索", "季度还差120万", "时间已经排满"], person="wang-qi", speaker="王琦", quote="我这个季度还差一百二十万。", metrics=[metric("指标缺口", 120, "万", tone="bad")], nodes=["王琦掌握线索", "帮助赵明", "占用自己时间", "自己指标承压"], treatment="crisis"),
-            S([12, 15], "帮别人签80万\n自己的提成为零", "高铁真话", "Inside a high-speed train, a regional manager appears to rest while two veteran salespeople nearby speak candidly about unrewarded help, lost visits and disputed deal ownership.", ["协助成交80万", "个人提成为零", "还损失拜访时间"], person="he-chen", speaker="老销售", quote="帮别人，月底我的报表看不到。", metrics=[metric("协助成交", 80, "万"), metric("协助提成", 0, "元", tone="bad")], role="evidence"),
-            S([16, 16], "谁签单算谁的\n帮忙等于惩罚自己", "制度信号", "A stark incentive balance: a signed deal lifts one salesperson while a helper carries extra work, ownership conflict and no visible reward, all under the shadow of a rigid commission rule.", ["签单者拿全部业绩", "帮助者承担成本", "归属争议增加风险"], nodes=["帮助同事", "投入时间", "收益归别人", "理性地不帮"], role="metaphor", treatment="crisis"),
-            S([17, 18], "全年只协助7次\n4次来自新人", "行为证据", "A manager reviews a sparse annual trail of collaboration moments, with a few bright connections clustered around newly hired salespeople before fading as they learn the incentive system.", ["全年主动协助7次", "其中4次在入职前三个月", "培训曲线上没有痕迹"], metrics=[metric("全年协助", 7, "次", tone="bad"), metric("新人贡献", 4, "次")], bars=[bar("全年主动协助", 7, "次", "bad", 12), bar("新人前三个月", 4, "次", "neutral", 12)], role="evidence"),
-            S([19, 20], "成交额10%\n计入协同贡献", "机制改造", "A regional manager learns a simple collaboration-credit mechanism from another team, represented by two salespeople jointly serving a hospital while a quick approval handoff moves smoothly between them.", ["成交额10%计入考核", "80万变8万贡献分", "审批不超过5分钟"], person="he-chen", speaker="何晨", quote="让帮助别人，也能帮助自己。", metrics=[metric("协同贡献", 10, "%", tone="good"), metric("审批时间", 5, "分钟", tone="good")], role="evidence"),
-            S([21, 23], "三十天\n协助从0到11", "行为改变", "Medical salespeople now introduce colleagues to hospital decision makers, exchange leads across specialties and jointly visit customers, with warm connection lines multiplying through the corridor.", ["30天", "主动协助0到11次", "线索开始双向流动"], person="wang-qi", speaker="王琦", quote="这条线索，我和赵明一起跟。", metrics=[metric("主动协助", 11, "次", from_value=0, tone="good")], bars=[bar("规则前", 0, "次", "bad", 12), bar("规则后", 11, "次", "good", 12)], role="evidence"),
-            S([24, 24], "制度是无声的\n二十四小时管理者", "管理启示", "A silent incentive system appears as a large warm shadow guiding daily choices across a sales team, while the manager opens a commission table and sees which behaviors the rules actually reward.", ["制度每天都在说话", "奖励决定行为", "抱怨前先看提成表"], person="he-chen", speaker="何晨", quote="先看看制度在奖励什么。", role="metaphor"),
+            S(
+                [1, 3],
+                "关系一共享\n效率就能翻倍？",
+                "协作目标",
+                "A symmetrical hospital corridor with medical-device sales teams from two specialties placed near the outer thirds, each holding different customer relationships. A promising shared product opportunity glows in the uncluttered center, leaving clean central negative space for a title.",
+                ["跨科室联动", "共享客户关系", "推广效率翻倍"],
+                person="he-chen",
+                speaker="何晨",
+                quote="一个人的关系，可以变成两个人的机会。",
+                nodes=["心内科销售", "骨科销售", "医院关系", "新产品机会"],
+                links=[{"from": 1, "to": 3, "label": "共享"}, {"from": 2, "to": 3, "label": "共享"}, {"from": 3, "to": 4, "label": "转化"}],
+                network_layout="grid",
+                visual_variants=[
+                    V(
+                        "relationship-handoff",
+                        "Two medical-device salespeople from different specialties make a deliberate warm handoff to a hospital decision maker at a corridor intersection, one introducing the other while a product case sits between them. The human connection is clear through gesture and eyeline, with no diagrams or visible text.",
+                        ["point-2", "point-3", "relationship"],
+                    )
+                ],
+            ),
+            S(
+                [4, 6],
+                "口号很响\n行动为零",
+                "动员失效",
+                "A regional manager gives an energetic teamwork speech to rows of medical salespeople in a warm training room, while the audience remains formally attentive rather than genuinely connected. Keep presentation surfaces blank and leave open space around the speaker.",
+                ["团队精神动员", "专题培训", "什么都没发生"],
+                person="he-chen",
+                speaker="何晨",
+                quote="大家一起赢。",
+                nodes=["动员", "培训", "合照", "零行动"],
+                links=[{"from": 1, "to": 2, "label": "追加"}, {"from": 2, "to": 3, "label": "完成"}, {"from": 3, "to": 4, "label": "未转化"}],
+                network_layout="row",
+                treatment="desaturated",
+                visual_variants=[
+                    V(
+                        "posed-training-photo",
+                        "A carefully posed medical sales team photo after an external collaboration workshop, everyone smiling formally under warm light but standing in separate rigid rows, suggesting surface-level unity. No banners, certificates, logos or readable signs.",
+                        ["point-2"],
+                    ),
+                    V(
+                        "empty-office-afterwards",
+                        "The same sales office later sits quiet and compartmentalized: separate desks, unused chairs and isolated silhouettes working alone, with no one crossing the central aisle. The training energy has vanished and no collaboration is happening.",
+                        ["point-3", "relationship"],
+                    ),
+                ],
+            ),
+            S(
+                [7, 11],
+                "线索就在手里\n王琦却不开口",
+                "个人选择",
+                "A medical-device salesperson notices a valuable orthopedic equipment opportunity while passing a hospital department doorway, but keeps the knowledge to himself as another specialty colleague walks away in the distance. Use body language and spatial separation, no signs or readable department labels.",
+                ["知道骨科更新线索", "季度还差120万", "时间已经排满"],
+                person="wang-qi",
+                speaker="王琦",
+                quote="我这个季度还差一百二十万。",
+                metrics=[metric("指标缺口", 120, "万", tone="bad")],
+                nodes=["王琦掌握线索", "帮助赵明", "占用自己时间", "自己指标承压"],
+                links=[{"from": 1, "to": 2, "label": "可选择"}, {"from": 2, "to": 3, "label": "需要"}, {"from": 3, "to": 4, "label": "加重"}],
+                network_layout="row",
+                treatment="crisis",
+                visual_variants=[
+                    V(
+                        "target-pressure",
+                        "A pressured medical sales representative alone at a desk, surrounded by a crowded travel bag, phone, appointment folders and a looming abstract target shadow. He grips his calendar while the chance to help a colleague remains outside the light. All papers and screens are blank.",
+                        ["point-2", "dialogue", "metric-1"],
+                    ),
+                    V(
+                        "schedule-overload",
+                        "A fast-moving week of hospital visits shown through one exhausted salesperson crossing multiple corridors and transit spaces, carrying samples and rushing past a colleague who needs help. Convey a completely full schedule without calendars, clocks, text or numbers.",
+                        ["point-3", "relationship"],
+                    ),
+                ],
+            ),
+            S(
+                [12, 14],
+                "帮别人签80万\n自己的提成为零",
+                "高铁真话",
+                "Inside a Chinese high-speed train, a regional manager appears to rest by the window while two veteran medical salespeople in the adjacent row speak candidly in low voices. Passing light and reflected silhouettes create a private, revealing moment; no visible signage or screen text.",
+                ["协助成交80万", "个人提成为零", "还损失拜访时间"],
+                person="he-chen",
+                speaker="老销售",
+                quote="帮别人，月底我的报表看不到。",
+                metrics=[metric("协助成交", 80, "万"), metric("协助提成", 0, "元", tone="bad")],
+                role="evidence",
+                visual_variants=[
+                    V(
+                        "manager-realization",
+                        "The regional manager sits silently beside the train window after overhearing the conversation, eyes lowered in thought as two reflected paths appear in the glass: helping a colleague versus protecting one's own target. Keep the metaphor subtle and free of text, numbers or diagrams.",
+                        ["point-2", "point-3", "metric-2"],
+                    )
+                ],
+            ),
+            S(
+                [15, 15],
+                "谁签单算谁的\n帮忙等于惩罚自己",
+                "制度信号",
+                "A stark incentive imbalance in a sales office: the salesperson signing a hospital deal stands elevated in warm light while a helper below carries extra samples, travel burden and paperwork in shadow. Show the unequal outcome through staging, not charts or text.",
+                ["签单者拿全部业绩", "帮助者承担成本", "归属争议增加风险"],
+                nodes=["帮助同事", "投入时间", "收益归别人", "理性地不帮"],
+                links=[{"from": 1, "to": 2, "label": "增加"}, {"from": 2, "to": 3, "label": "换不来"}, {"from": 3, "to": 4, "label": "促成"}],
+                network_layout="row",
+                role="metaphor",
+                treatment="crisis",
+                visual_variants=[
+                    V(
+                        "ownership-conflict",
+                        "Two medical salespeople stand on opposite sides of the same hospital opportunity folder, each reaching for ownership while a third helper withdraws from the argument. A rigid overhead shadow suggests an unfair commission rule; no labels, charts, arrows or text.",
+                        ["point-3", "relationship"],
+                    )
+                ],
+            ),
+            S(
+                [16, 16],
+                "全年只协助7次\n4次来自新人",
+                "行为证据",
+                "A manager at night reviews an extremely sparse annual trail of real collaboration moments across a large dark office wall, with only a handful of warm human handoffs separated by long empty stretches. Keep every document and screen abstract and unreadable.",
+                ["全年主动协助7次", "其中4次在入职前三个月", "培训曲线上没有痕迹"],
+                metrics=[metric("全年协助", 7, "次", tone="bad"), metric("新人贡献", 4, "次")],
+                bars=[bar("全年主动协助", 7, "次", "bad", 12), bar("新人前三个月", 4, "次", "neutral", 12)],
+                role="evidence",
+                visual_variants=[
+                    V(
+                        "newcomer-fading",
+                        "Several newly hired medical salespeople enthusiastically introduce colleagues during their first weeks, but the warm connection gradually dims as they observe experienced staff working alone under the existing incentive system. Show a human before-and-after progression without charts or labels.",
+                        ["point-2", "point-3", "comparison"],
+                    )
+                ],
+            ),
+            S(
+                [17, 18],
+                "成交额10%\n计入协同贡献",
+                "机制改造",
+                "A regional manager visits a better-performing peer team and listens closely as another manager explains a simple collaboration-credit practice around a blank tabletop. The atmosphere is practical and credible, with no presentation text or visible numbers.",
+                ["成交额10%计入考核", "80万变8万贡献分", "审批不超过5分钟"],
+                person="he-chen",
+                speaker="何晨",
+                quote="让帮助别人，也能帮助自己。",
+                metrics=[metric("协同贡献", 10, "%", tone="good"), metric("审批时间", 5, "分钟", tone="good")],
+                role="evidence",
+                visual_variants=[
+                    V(
+                        "joint-hospital-service",
+                        "Two medical-device salespeople jointly serve one hospital decision maker, each contributing distinct expertise while both remain visibly included in the successful handoff. Warm backlight joins the trio; no diagrams, text, numerals or paperwork details.",
+                        ["point-1", "point-2", "metric-1", "dialogue"],
+                    ),
+                    V(
+                        "quick-approval-handoff",
+                        "A concise approval handoff moves smoothly from a collaborating salesperson to a calm regional manager and back to the team, shown through one small blank form and decisive gestures. Convey speed and low friction without clocks, UI, text or numbers.",
+                        ["point-3", "metric-2"],
+                    ),
+                ],
+            ),
+            S(
+                [19, 20],
+                "三十天\n协助从0到11",
+                "行为改变",
+                "After the rule change, medical salespeople from different specialties now introduce one another to hospital decision makers and exchange leads in a lively corridor. Warm connections multiply through real gestures and eye contact, without drawn lines, labels or diagrams.",
+                ["30天", "主动协助0到11次", "线索开始双向流动"],
+                person="wang-qi",
+                speaker="王琦",
+                quote="这条线索，我和赵明一起跟。",
+                metrics=[metric("主动协助", 11, "次", from_value=0, tone="good")],
+                bars=[bar("规则前", 0, "次", "bad", 12), bar("规则后", 11, "次", "good", 12)],
+                role="evidence",
+                visual_variants=[
+                    V(
+                        "joint-customer-visit",
+                        "Wang Qi and another specialist arrive together for a hospital customer visit, share product samples and enter the meeting side by side while colleagues exchange useful introductions nearby. The scene feels active, reciprocal and newly normal; no visible text or logos.",
+                        ["point-2", "point-3", "dialogue", "comparison"],
+                    )
+                ],
+            ),
+            S(
+                [21, 24],
+                "制度是无声的\n二十四小时管理者",
+                "管理启示",
+                "A regional manager opens an abstract commission workbook on a desk and studies which daily behaviors the system rewards, while the sales team continues making choices in the background. Every page and screen is blank, with a large warm institutional shadow shaping the room.",
+                ["制度每天都在说话", "奖励决定行为", "抱怨前先看提成表"],
+                person="he-chen",
+                speaker="何晨",
+                quote="先看看制度在奖励什么。",
+                metrics=[metric("制度管理", 24, "小时/天")],
+                role="metaphor",
+                visual_variants=[
+                    V(
+                        "silent-manager-shadow",
+                        "Across morning, afternoon and evening, the same sales team repeatedly chooses between helping colleagues and protecting individual targets while a single silent system shadow remains over every scene. Use changing light and body language only, with no clocks, text, numbers or diagrams.",
+                        ["point-1", "point-2", "metric-1"],
+                    ),
+                    V(
+                        "incentive-review",
+                        "The manager turns away from blaming individual personalities and calmly reviews the incentive arrangement with the team around a clean table, pointing to a blank commission sheet while colleagues recognize the real cause. Leave generous negative space for the closing message.",
+                        ["point-3", "dialogue"],
+                    ),
+                ],
+            ),
         ],
     },
     "sales_management_case09_video": {
@@ -283,56 +535,14 @@ def scene_bounds(bounds: dict[int, tuple[int, int]], paragraphs: list[int]) -> t
     return bounds[first_paragraph][0], bounds[last_paragraph][1]
 
 
-def choose_beat_units(unit_by_index: dict[int, dict[str, Any]], first: int, last: int) -> list[int]:
-    result = [first]
-    current = first
-    scene_end = float(unit_by_index[last]["end"])
-    while scene_end - float(unit_by_index[current]["start"]) > 10.25 and current < last:
-        target = float(unit_by_index[current]["start"]) + 8.25
-        candidates = [
-            index
-            for index in range(current + 1, last + 1)
-            if float(unit_by_index[index]["start"]) <= target
-        ]
-        next_unit = candidates[-1] if candidates else current + 1
-        if next_unit <= current:
-            break
-        result.append(next_unit)
-        current = next_unit
-    return result
-
-
-def internal_reveal_unit(
-    unit_by_index: dict[int, dict[str, Any]],
-    beat_unit: int,
-    next_beat_unit: int | None,
-    last: int,
-) -> int | None:
-    start = float(unit_by_index[beat_unit]["start"])
-    end = (
-        float(unit_by_index[next_beat_unit]["start"])
-        if next_beat_unit is not None
-        else float(unit_by_index[last]["end"])
-    )
-    if end - start <= 8.0:
-        return None
-    final_candidate = (next_beat_unit - 1) if next_beat_unit is not None else last
-    candidates = [index for index in range(beat_unit + 1, final_candidate + 1)]
-    if not candidates:
-        return None
-    midpoint = start + (end - start) * 0.52
-    later = [index for index in candidates if float(unit_by_index[index]["start"]) >= midpoint]
-    return later[0] if later else candidates[-1]
-
-
 def portrait_id(person: str) -> str:
     return f"portrait-{person}"
 
 
 def build_network(scene: dict[str, Any], person: str | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    labels = (scene["nodes"] or scene["cards"])[:4]
+    labels = scene["nodes"][:4]
     if len(labels) < 2:
-        labels = [scene["headline"].replace("\n", ""), scene["cards"][0]]
+        return [], []
     nodes = []
     for position, label in enumerate(labels, start=1):
         node: dict[str, Any] = {"id": f"n{position}", "label": label}
@@ -341,129 +551,319 @@ def build_network(scene: dict[str, Any], person: str | None) -> tuple[list[dict[
         if position == 1 or position == len(labels):
             node["emphasis"] = True
         nodes.append(node)
-    link_labels = ["影响", "推动", "决定"]
-    links = [
-        {"from": "n1", "to": f"n{position}", "label": link_labels[(position - 2) % len(link_labels)]}
-        for position in range(2, len(nodes) + 1)
-    ]
+    links: list[dict[str, Any]] = []
+    for raw_link in scene.get("links", []):
+        if not isinstance(raw_link, dict):
+            continue
+        link = dict(raw_link)
+        for key in ("from", "to"):
+            value = link.get(key)
+            if isinstance(value, int):
+                link[key] = f"n{value}"
+        links.append(link)
     return nodes, links
 
 
-def build_layers(
+def metric_cue(item: dict[str, Any]) -> str:
+    value = item.get("value", {})
+    return f"{item.get('label', '')}{value.get('from', '')}{value.get('to', '')}{value.get('suffix', '')}"
+
+
+def bar_cue(item: dict[str, Any]) -> str:
+    return f"{item.get('label', '')}{item.get('value', '')}{item.get('suffix', '')}"
+
+
+def _number_label(value: int | float) -> str:
+    number = float(value)
+    return str(int(number)) if number.is_integer() else str(number)
+
+
+def _representation_numbers(value: Any) -> set[str]:
+    """Collect story numbers while ignoring technical scale fields such as bar.max."""
+
+    if isinstance(value, bool) or value is None:
+        return set()
+    if isinstance(value, (int, float)):
+        return {_number_label(value)}
+    if isinstance(value, str):
+        numbers = {
+            token.rstrip("%")
+            for token in re.findall(r"\d+(?:\.\d+)?%?", value.replace(",", ""))
+        }
+        if "零" in value:
+            numbers.add("0")
+        return numbers
+    if isinstance(value, dict):
+        numbers: set[str] = set()
+        for key, item in value.items():
+            if key == "max":
+                continue
+            numbers.update(_representation_numbers(item))
+        return numbers
+    if isinstance(value, (list, tuple)):
+        numbers: set[str] = set()
+        for item in value:
+            numbers.update(_representation_numbers(item))
+        return numbers
+    return set()
+
+
+def _metric_is_covered_by_bars(item: dict[str, Any], bars: list[dict[str, Any]]) -> bool:
+    if not bars:
+        return False
+    metric_numbers = _representation_numbers(item.get("value", {}))
+    bar_numbers = {
+        number
+        for bar_item in bars
+        for number in _representation_numbers(bar_item.get("value"))
+    }
+    if metric_numbers and metric_numbers <= bar_numbers:
+        return True
+    return text_alignment_score((metric_cue(item),), " ".join(bar_cue(bar_item) for bar_item in bars)) >= 0.24
+
+
+def _has_rich_semantic_layer(candidate: BeatCandidate) -> bool:
+    return any(
+        layer.get("kind") in {"bar-compare", "counter", "dialogue", "network"}
+        for layer in candidate.layers
+    )
+
+
+def _prune_redundant_points(
+    candidates: list[BeatCandidate],
+    *,
+    minimum_count: int,
+) -> list[BeatCandidate]:
+    """Let richer evidence replace duplicate text cards without creating pacing gaps."""
+
+    minimum_count = max(1, min(minimum_count, len(candidates)))
+    rich_candidates = [candidate for candidate in candidates if _has_rich_semantic_layer(candidate)]
+    if not rich_candidates or len(candidates) <= minimum_count:
+        return candidates
+
+    redundant: list[tuple[float, str]] = []
+    for candidate in candidates:
+        if not candidate.key.startswith("point-"):
+            continue
+        point_text = " ".join(candidate.cue_texts)
+        point_numbers = _representation_numbers(point_text)
+        best_score = 0.0
+        numeric_coverage = False
+        for rich_candidate in rich_candidates:
+            rich_text = " ".join(rich_candidate.cue_texts)
+            best_score = max(best_score, text_alignment_score(candidate.cue_texts, rich_text))
+            rich_numbers = _representation_numbers(rich_text)
+            numeric_coverage = numeric_coverage or bool(
+                point_numbers and point_numbers <= rich_numbers
+            )
+        zero_equivalence = "零" in point_text and "0" in {
+            number
+            for rich_candidate in rich_candidates
+            for number in _representation_numbers(" ".join(rich_candidate.cue_texts))
+        }
+        if numeric_coverage or best_score >= 0.22 or (zero_equivalence and best_score >= 0.08):
+            redundant.append((best_score + (1.0 if numeric_coverage else 0.0), candidate.key))
+
+    remove_budget = max(0, len(candidates) - minimum_count)
+    remove_keys = {
+        key
+        for _, key in sorted(redundant, reverse=True)[:remove_budget]
+    }
+    return [candidate for candidate in candidates if candidate.key not in remove_keys]
+
+
+def build_beat_candidates(
     scene: dict[str, Any],
-    beat_position: int,
-    mode: str,
-    at_unit: int,
-    internal_unit: int | None,
-) -> tuple[str, list[dict[str, Any]]]:
+    *,
+    is_first: bool,
+    is_last: bool,
+    minimum_count: int = 1,
+) -> list[BeatCandidate]:
+    headline = scene["headline"].replace("\n", "")
+    cards = tuple(scene["cards"])
+    candidates: list[BeatCandidate] = [
+        BeatCandidate(
+            key="claim",
+            intent="context" if is_first else ("reflection" if is_last else "claim"),
+            cue_texts=(headline,),
+            layers=(
+                {
+                    "kind": "text",
+                    "slot": "top-left",
+                    "variant": "headline",
+                    "label": scene["kicker"],
+                    "text": scene["headline"],
+                },
+            ),
+            priority=76,
+            preferred_fraction=0.0,
+            anchor_policy="start",
+        )
+    ]
+
+    card_fractions = (0.28, 0.55, 0.82)
+    for card_position, card in enumerate(cards[:3]):
+        if is_last:
+            card_intent = "reflection" if card_position == len(cards[:3]) - 1 else "consequence"
+        elif scene["role"] in {"map", "metaphor"}:
+            card_intent = "mechanism"
+        elif scene["role"] == "evidence":
+            card_intent = "evidence"
+        elif scene["treatment"] == "crisis" and card_position == len(cards[:3]) - 1:
+            card_intent = "decision"
+        else:
+            card_intent = "claim"
+        candidates.append(
+            BeatCandidate(
+                key=f"point-{card_position + 1}",
+                intent=card_intent,
+                cue_texts=(card,),
+                layers=(
+                    {
+                        "kind": "text",
+                        "slot": "center",
+                        "variant": "headline",
+                        "label": scene["kicker"],
+                        "text": card,
+                    },
+                ),
+                priority=74,
+                preferred_fraction=card_fractions[card_position],
+                composition="full-bleed" if card_intent in {"claim", "reflection"} else "split",
+            )
+        )
+
     person = scene["person"]
-    card = scene["cards"][beat_position % len(scene["cards"])]
-    phase = PHASES[beat_position % len(PHASES)]
-    focus_text = f"{phase}\n{card}"
-    layers: list[dict[str, Any]] = []
-    composition = "full-bleed"
-
-    if mode == "dialogue" and person and scene["quote"]:
-        composition = "portrait-left"
-        layers.extend(
-            [
-                {"kind": "asset", "slot": "left", "asset": portrait_id(person)},
-                {
-                    "kind": "dialogue",
-                    "slot": "right",
-                    "speaker": scene["speaker"] or "人物",
-                    "text": scene["quote"],
-                    "tail": "left",
-                },
-            ]
+    if person and scene["quote"]:
+        intent = "reflection" if is_last else ("decision" if scene["treatment"] == "crisis" else "protagonist")
+        candidates.append(
+            BeatCandidate(
+                key="dialogue",
+                intent=intent,
+                cue_texts=(scene["quote"],),
+                layers=(
+                    {"kind": "asset", "slot": "left", "asset": portrait_id(person)},
+                    {
+                        "kind": "dialogue",
+                        "slot": "right",
+                        "speaker": scene["speaker"] or "人物",
+                        "text": scene["quote"],
+                        "tail": "left",
+                    },
+                ),
+                priority=94,
+                preferred_fraction=0.18 if not is_last else 0.88,
+                composition="portrait-left",
+            )
         )
-    elif mode == "portrait" and person:
-        portrait_slot = "left" if beat_position % 2 == 0 else "right"
-        text_slot = "right" if portrait_slot == "left" else "left"
-        composition = "portrait-left" if portrait_slot == "left" else "portrait-right"
-        layers.extend(
-            [
-                {"kind": "asset", "slot": portrait_slot, "asset": portrait_id(person)},
-                {"kind": "text", "slot": text_slot, "variant": "headline", "label": phase, "text": card},
-            ]
-        )
-    elif mode == "counter" and scene["metrics"]:
-        composition = "split"
-        item = scene["metrics"][beat_position % len(scene["metrics"])]
-        layers.extend(
-            [
-                {"kind": "text", "slot": "top-left", "variant": "caption", "text": focus_text},
-                {
-                    "kind": "counter",
-                    "slot": "right",
-                    "label": item["label"],
-                    "value": item["value"],
-                    "deltaTone": item["tone"],
-                },
-            ]
-        )
-    elif mode == "bars" and scene["bars"]:
-        composition = "evidence-collage"
-        layers.extend(
-            [
-                {"kind": "text", "slot": "top-left", "variant": "caption", "text": focus_text},
-                {"kind": "bar-compare", "slot": "right", "label": "关键对比", "bars": scene["bars"][:4]},
-            ]
-        )
-    elif mode == "network":
-        composition = "document-focus"
-        nodes, links = build_network(scene, person)
-        layers.extend(
-            [
-                {"kind": "text", "slot": "top-left", "variant": "caption", "text": focus_text},
-                {"kind": "network", "slot": "center", "label": "关系链", "nodes": nodes, "links": links},
-            ]
-        )
-    else:
-        composition = "full-bleed"
-        region_variants = [
-            {"x": 0.08, "y": 0.20, "w": 0.34, "h": 0.22},
-            {"x": 0.58, "y": 0.18, "w": 0.30, "h": 0.24},
-            {"x": 0.34, "y": 0.42, "w": 0.30, "h": 0.18},
-        ]
-        layers.extend(
-            [
-                {"kind": "text", "slot": "top-left", "variant": "headline", "label": phase, "text": card},
-                {
-                    "kind": "annotate",
-                    "slot": "canvas",
-                    "shape": ["box", "arrow", "underline"][beat_position % 3],
-                    "region": region_variants[beat_position % len(region_variants)],
-                },
-            ]
+    elif person:
+        candidates.append(
+            BeatCandidate(
+                key="protagonist",
+                intent="protagonist",
+                cue_texts=(scene["speaker"] or "", headline),
+                layers=(
+                    {"kind": "asset", "slot": "left", "asset": portrait_id(person)},
+                    {"kind": "text", "slot": "right", "variant": "headline", "text": scene["headline"]},
+                ),
+                priority=84,
+                preferred_fraction=0.18,
+                composition="portrait-left",
+            )
         )
 
-    if internal_unit is not None:
-        layers.append(
-            {
-                "kind": "annotate",
-                "slot": "canvas",
-                "shape": "underline" if beat_position % 2 == 0 else "arrow",
-                "region": {"x": 0.14 + 0.08 * (beat_position % 3), "y": 0.62, "w": 0.28, "h": 0.12},
-                "revealAtUnit": internal_unit,
-            }
-        )
-    return composition, layers
-
-
-def build_modes(scene: dict[str, Any]) -> list[str]:
-    modes: list[str] = []
-    if scene["person"] and scene["quote"]:
-        modes.append("dialogue")
-    if scene["metrics"]:
-        modes.append("counter")
     if scene["bars"]:
-        modes.append("bars")
-    modes.append("network")
-    if scene["person"]:
-        modes.append("portrait")
-    modes.append("annotate")
-    return modes
+        candidates.append(
+            BeatCandidate(
+                key="comparison",
+                intent="consequence" if is_last else "evidence",
+                cue_texts=tuple(bar_cue(item) for item in scene["bars"]),
+                layers=(
+                    {
+                        "kind": "text",
+                        "slot": "top-left",
+                        "variant": "caption",
+                        "text": scene["headline"],
+                    },
+                    {
+                        "kind": "bar-compare",
+                        "slot": "right",
+                        "label": scene["kicker"],
+                        "bars": scene["bars"][:4],
+                    },
+                ),
+                priority=98,
+                preferred_fraction=0.48,
+                composition="evidence-collage",
+            )
+        )
+
+    unique_metrics = [
+        item
+        for item in scene["metrics"]
+        if not _metric_is_covered_by_bars(item, scene["bars"])
+    ][:2]
+    metric_fractions = (0.40, 0.66)
+    for metric_position, item in enumerate(unique_metrics):
+        candidates.append(
+            BeatCandidate(
+                key=f"metric-{metric_position + 1}",
+                intent="consequence" if is_last else "evidence",
+                cue_texts=(metric_cue(item), item["label"]),
+                layers=(
+                    {
+                        "kind": "text",
+                        "slot": "top-left",
+                        "variant": "caption",
+                        "text": scene["headline"],
+                    },
+                    {
+                        "kind": "counter",
+                        "slot": "right" if metric_position % 2 == 0 else "left",
+                        "label": item["label"],
+                        "value": item["value"],
+                        "deltaTone": item["tone"],
+                    },
+                ),
+                priority=92,
+                preferred_fraction=metric_fractions[metric_position],
+                composition="split",
+            )
+        )
+
+    nodes, links = build_network(scene, person)
+    if nodes and links:
+        relationship_intent = "mechanism" if scene["role"] in {"metaphor", "map"} else "relationship"
+        candidates.append(
+            BeatCandidate(
+                key="relationship",
+                intent=relationship_intent,
+                cue_texts=(
+                    *(node["label"] for node in nodes),
+                    *(str(link.get("label", "")) for link in links if link.get("label")),
+                ),
+                layers=(
+                    {
+                        "kind": "text",
+                        "slot": "top-left",
+                        "variant": "caption",
+                        "text": scene["headline"],
+                    },
+                    {
+                        "kind": "network",
+                        "slot": "center",
+                        "label": "机制关系",
+                        "nodes": nodes,
+                        "links": links,
+                        "networkLayout": scene.get("networkLayout") or "auto",
+                    },
+                ),
+                priority=90,
+                preferred_fraction=0.62,
+                composition="document-focus",
+            )
+        )
+    return _prune_redundant_points(candidates, minimum_count=minimum_count)
 
 
 def build_visual_beats(
@@ -472,28 +872,39 @@ def build_visual_beats(
     first: int,
     last: int,
     unit_by_index: dict[int, dict[str, Any]],
+    *,
+    scene_count: int,
+    default_asset: str,
+    candidate_asset_map: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
-    beat_units = choose_beat_units(unit_by_index, first, last)
-    modes = build_modes(scene)
-    beats = []
-    for position, at_unit in enumerate(beat_units):
-        next_unit = beat_units[position + 1] if position + 1 < len(beat_units) else None
-        internal = internal_reveal_unit(unit_by_index, at_unit, next_unit, last)
-        mode = modes[position % len(modes)]
-        composition, layers = build_layers(scene, position, mode, at_unit, internal)
-        beats.append(
-            {
-                "id": f"s{scene_position:02d}-b{position + 1:02d}",
-                "atUnit": at_unit,
-                "purpose": PURPOSES[(scene_position + position - 1) % len(PURPOSES)],
-                "composition": composition,
-                "baseAsset": f"bg-s{scene_position:02d}",
-                "transition": "dissolve" if position == 0 else ("push" if position % 3 == 0 else "cut"),
-                "camera": CAMERAS[(scene_position + position) % len(CAMERAS)],
-                "treatment": scene["treatment"],
-                "layers": layers,
-            }
-        )
+    start_value = unit_by_index[first].get("start")
+    end_value = unit_by_index[last].get("end")
+    if isinstance(start_value, (int, float)) and isinstance(end_value, (int, float)):
+        duration = max(0.0, float(end_value) - float(start_value))
+    else:
+        duration = float(last - first + 1) * 4.0
+    # Use a little headroom below the 12s hard limit because narration units
+    # are discrete and cannot always land on an exact temporal quantile.
+    minimum_count = max(1, math.ceil(duration / 11.25))
+    candidates = build_beat_candidates(
+        scene,
+        is_first=scene_position == 1,
+        is_last=scene_position == scene_count,
+        minimum_count=minimum_count,
+    )
+    beats = schedule_visual_beats(
+        candidates,
+        scene_id=f"s{scene_position:02d}",
+        first=first,
+        last=last,
+        unit_by_index=unit_by_index,
+        base_asset=default_asset,
+        treatment=scene["treatment"],
+    )
+    for beat in beats:
+        candidate_key = beat.get("candidateKey")
+        if candidate_asset_map and isinstance(candidate_key, str):
+            beat["baseAsset"] = candidate_asset_map.get(candidate_key, default_asset)
     return beats
 
 
@@ -532,30 +943,70 @@ def build_project(slug: str, config: dict[str, Any]) -> None:
     scenes: list[dict[str, Any]] = []
 
     for position, source in enumerate(config["scenes"], start=1):
+        is_first = position == 1
+        is_last = position == len(config["scenes"])
         first, last = scene_bounds(bounds, source["paragraphs"])
-        image_file = f"images/generated/s{position:02d}.png"
+        visual_variants = source.get("visualVariants", [])
+        has_variants = bool(visual_variants)
+        image_file = (
+            f"images/generated/s{position:02d}_context.png"
+            if has_variants
+            else f"images/generated/s{position:02d}.png"
+        )
+        default_asset = (
+            f"bg-s{position:02d}-context" if has_variants else f"bg-s{position:02d}"
+        )
         prompt = source["prompt"]
         full_prompt = f"{config['style']} Scene: {prompt}"
         background_prompts.append({"file": image_file, "prompt": prompt})
         image_prompts.append({"file": image_file, "fullPrompt": full_prompt})
         visual_assets.append(
             {
-                "id": f"bg-s{position:02d}",
+                "id": default_asset,
                 "type": "image",
                 "src": image_file,
                 "role": source["role"],
                 "origin": "generated",
             }
         )
+        candidate_asset_map: dict[str, str] = {}
+        for variant in visual_variants:
+            variant_name = str(variant["name"])
+            variant_file = f"images/generated/s{position:02d}_{variant_name.replace('-', '_')}.png"
+            variant_asset = f"bg-s{position:02d}-{variant_name}"
+            variant_prompt = str(variant["prompt"])
+            background_prompts.append({"file": variant_file, "prompt": variant_prompt})
+            image_prompts.append(
+                {"file": variant_file, "fullPrompt": f"{config['style']} Scene: {variant_prompt}"}
+            )
+            visual_assets.append(
+                {
+                    "id": variant_asset,
+                    "type": "image",
+                    "src": variant_file,
+                    "role": source["role"],
+                    "origin": "generated",
+                }
+            )
+            for candidate_key in variant["candidateKeys"]:
+                if candidate_key in candidate_asset_map:
+                    raise ValueError(
+                        f"{slug} scene {position} maps candidate {candidate_key!r} more than once"
+                    )
+                candidate_asset_map[candidate_key] = variant_asset
         scenes.append(
             {
                 "id": f"s{position:02d}",
                 "chapter": f"{position:02d}",
                 "kicker": source["kicker"],
-                "layout": LAYOUTS[(position - 1) % len(LAYOUTS)],
+                "layout": select_scene_layout(
+                    source,
+                    is_first=is_first,
+                    is_last=is_last,
+                ),
                 "background": image_file,
-                "transition": TRANSITIONS[(position - 1) % len(TRANSITIONS)],
-                "motion": MOTIONS[(position - 1) % len(MOTIONS)],
+                "transition": select_scene_transition(source),
+                "motion": select_scene_motion(source, is_last=is_last),
                 "tone": "dark",
                 "headline": source["headline"],
                 "accent": source["cards"][:2],
@@ -565,7 +1016,16 @@ def build_project(slug: str, config: dict[str, Any]) -> None:
                 ],
                 "props": {},
                 "visualMode": "editorial",
-                "visualBeats": build_visual_beats(source, position, first, last, unit_by_index),
+                "visualBeats": build_visual_beats(
+                    source,
+                    position,
+                    first,
+                    last,
+                    unit_by_index,
+                    scene_count=len(config["scenes"]),
+                    default_asset=default_asset,
+                    candidate_asset_map=candidate_asset_map,
+                ),
                 "paragraphs": source["paragraphs"],
             }
         )

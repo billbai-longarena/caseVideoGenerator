@@ -8,6 +8,7 @@ import concurrent.futures
 from datetime import timezone
 import email.utils
 import http.client
+from io import BytesIO
 import json
 import os
 import threading
@@ -17,6 +18,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from PIL import Image, UnidentifiedImageError
+
 
 ENGINE_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ENGINE_ROOT.parent
@@ -24,6 +27,21 @@ DEPLOYMENT = "gpt-image-2"
 API_VERSION = "2025-04-01-preview"
 DEFAULT_REQUESTS_PER_MINUTE = 12
 REQUEST_WINDOW_SECONDS = 60.0
+IMAGE_OUTPUT_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+FORBIDDEN_GENERATED_IMAGE_DIR_PARTS = {
+    "qa",
+    "video",
+    "contact-sheet",
+    "contact-sheets",
+    "contact_sheet",
+    "contact_sheets",
+}
+FORBIDDEN_GENERATED_IMAGE_NAME_MARKERS = (
+    "contact-sheet",
+    "contact_sheet",
+    "overview",
+    "thumbnail",
+)
 
 STYLE_PREFIX = (
     "Bright editorial watercolor and gouache illustration, cinematic 16:9 composition, "
@@ -209,7 +227,12 @@ def generate_image(
                 f"delay={delay:.1f}s reason=HTTP {exc.code}",
                 flush=True,
             )
-        except (urllib.error.URLError, TimeoutError, http.client.RemoteDisconnected) as exc:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            http.client.RemoteDisconnected,
+            http.client.IncompleteRead,
+        ) as exc:
             if attempt == attempts:
                 raise RuntimeError(f"Azure image request failed after {attempts} attempts: {exc}") from exc
             delay = retry_delay_seconds(attempt=attempt, error=exc, rate_limiter=rate_limiter)
@@ -246,11 +269,110 @@ def legacy_prompt_items(project_root: Path) -> tuple[Path, list[dict[str, str]]]
     output_dir = project_root / "images" / "watercolor_bright"
     items = []
     for index, (name, scene_prompt) in enumerate(DEFAULT_PROMPTS, start=1):
-        items.append({
-            "file": str(output_dir / f"{index:02d}_{name}.png"),
-            "prompt": f"{STYLE_PREFIX} Scene: {scene_prompt}",
-        })
+        output_path = output_dir / f"{index:02d}_{name}.png"
+        validate_generated_image_target(project_root, output_path, f"legacy prompt {index}")
+        items.append(
+            {
+                "file": str(output_path),
+                "prompt": f"{STYLE_PREFIX} Scene: {scene_prompt}",
+            }
+        )
     return output_dir, items
+
+
+def resolve_project_path(project_root: Path, value: str, label: str) -> tuple[Path, str]:
+    if not isinstance(value, str) or not value.strip():
+        raise SystemExit(f"{label} path must be a non-empty string")
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = project_root / path
+    path = path.resolve()
+    try:
+        relative = path.relative_to(project_root)
+    except ValueError as exc:
+        raise SystemExit(f"{label} must stay inside project root: {value}") from exc
+    return path, relative.as_posix()
+
+
+def validate_generated_output_dir(project_root: Path, output_dir: Path, label: str) -> None:
+    try:
+        relative = output_dir.resolve().relative_to(project_root)
+    except ValueError as exc:
+        raise SystemExit(f"{label} must stay inside project root: {output_dir}") from exc
+    parts = {part.lower() for part in relative.parts}
+    forbidden = next(
+        (part for part in parts if part in FORBIDDEN_GENERATED_IMAGE_DIR_PARTS),
+        None,
+    )
+    if forbidden:
+        raise SystemExit(
+            f"{label} uses forbidden generated image directory {output_dir!s} "
+            f"matching {forbidden!r}"
+        )
+
+
+def validate_generated_image_target(project_root: Path, output_path: Path, label: str) -> None:
+    try:
+        relative = output_path.resolve().relative_to(project_root)
+    except ValueError as exc:
+        raise SystemExit(f"{label} image target must stay inside project root: {output_path}") from exc
+    if output_path.suffix.lower() not in IMAGE_OUTPUT_SUFFIXES:
+        raise SystemExit(
+            f"{label} image target must use one of {sorted(IMAGE_OUTPUT_SUFFIXES)}: "
+            f"{relative.as_posix()}"
+        )
+    lower_name = output_path.name.lower()
+    forbidden_name = next(
+        (marker for marker in FORBIDDEN_GENERATED_IMAGE_NAME_MARKERS if marker in lower_name),
+        None,
+    )
+    if forbidden_name:
+        raise SystemExit(
+            f"{label} uses forbidden generated image path {relative.as_posix()!r} "
+            f"matching {forbidden_name!r}"
+        )
+    parts = {part.lower() for part in relative.parts}
+    forbidden_part = next(
+        (part for part in parts if part in FORBIDDEN_GENERATED_IMAGE_DIR_PARTS),
+        None,
+    )
+    if forbidden_part:
+        raise SystemExit(
+            f"{label} uses forbidden generated image path {relative.as_posix()!r} "
+            f"matching {forbidden_part!r}"
+        )
+
+
+def parse_image_size(size: str) -> tuple[int, int]:
+    try:
+        width_text, height_text = size.lower().split("x", 1)
+        width = int(width_text)
+        height = int(height_text)
+    except (AttributeError, ValueError) as exc:
+        raise SystemExit(f"invalid image size {size!r}; expected WIDTHxHEIGHT") from exc
+    if width <= 0 or height <= 0:
+        raise SystemExit(f"invalid image size {size!r}; dimensions must be positive")
+    return width, height
+
+
+def validate_generated_image_bytes(
+    image_bytes: bytes,
+    *,
+    expected_size: tuple[int, int],
+    label: str,
+) -> None:
+    try:
+        with Image.open(BytesIO(image_bytes)) as image:
+            actual_size = image.size
+            image.verify()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise RuntimeError(f"generated image is not a readable image: {label}") from exc
+    if actual_size != expected_size:
+        raise RuntimeError(
+            f"generated image has unexpected size for {label}: "
+            f"expected {expected_size[0]}x{expected_size[1]}, "
+            f"got {actual_size[0]}x{actual_size[1]}"
+        )
 
 
 def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, list[dict[str, str]]]:
@@ -262,14 +384,18 @@ def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, l
     else:
         style_prefix = data.get("stylePrefix", STYLE_PREFIX)
         prompt_specs = data["prompts"]
-        output_dir = project_root / data.get("outputDir", "images/watercolor_bright")
+        output_dir, _ = resolve_project_path(
+            project_root,
+            data.get("outputDir", "images/watercolor_bright"),
+            "image outputDir",
+        )
+    validate_generated_output_dir(project_root, output_dir, "image outputDir")
 
     items = []
-    for spec in prompt_specs:
+    for position, spec in enumerate(prompt_specs, start=1):
         file_name = spec["file"]
-        output_path = Path(file_name)
-        if not output_path.is_absolute():
-            output_path = project_root / output_path
+        output_path, _ = resolve_project_path(project_root, file_name, f"image prompt {position}")
+        validate_generated_image_target(project_root, output_path, f"image prompt {position}")
         prompt = spec.get("fullPrompt") or f"{style_prefix} Scene: {spec['prompt']}"
         items.append({"file": str(output_path), "prompt": prompt})
     return output_dir, items
@@ -288,6 +414,7 @@ def write_prompt_image(
     quality: str,
 ) -> dict[str, str]:
     output_path = Path(item["file"])
+    validate_generated_image_target(project_root, output_path, f"image prompt {index}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prompt = item["prompt"]
     metadata = {"file": str(output_path.relative_to(project_root)), "prompt": prompt}
@@ -296,15 +423,27 @@ def write_prompt_image(
         return metadata
     print(f"generate {index:02d}/{total} {output_path.name}", flush=True)
     started = time.time()
-    output_path.write_bytes(
-        generate_image(
-            prompt,
-            rate_limiter=rate_limiter,
-            attempts=attempts,
-            size=size,
-            quality=quality,
-        )
+    image_bytes = generate_image(
+        prompt,
+        rate_limiter=rate_limiter,
+        attempts=attempts,
+        size=size,
+        quality=quality,
     )
+    validate_generated_image_bytes(
+        image_bytes,
+        expected_size=parse_image_size(size),
+        label=str(output_path.relative_to(project_root)),
+    )
+    temp_path = output_path.with_name(
+        f".{output_path.name}.{os.getpid()}.{threading.get_ident()}.tmp"
+    )
+    try:
+        temp_path.write_bytes(image_bytes)
+        temp_path.replace(output_path)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
     print(f"saved {index:02d}/{total} {output_path.name} elapsed={time.time() - started:.1f}s", flush=True)
     return metadata
 

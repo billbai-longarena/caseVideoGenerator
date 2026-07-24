@@ -5,10 +5,26 @@ import argparse
 from copy import deepcopy
 import json
 from pathlib import Path
+import sys
 
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_authored_title(project: Path) -> str | None:
+    path = project / "title.txt"
+    if not path.is_file():
+        print(
+            "warning: title.txt is missing; using the legacy title embedded in storyboard_plan.json",
+            file=sys.stderr,
+        )
+        return None
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if len(lines) != 1 or not lines[0].strip():
+        raise SystemExit("title.txt must contain exactly one non-empty logical line")
+    return lines[0].strip()
 
 
 def display_text(text: str, replacements: dict[str, str]) -> str:
@@ -152,6 +168,65 @@ def build_visual_beats(
     return beats
 
 
+def build_cover(
+    project_meta: dict,
+    *,
+    first: int,
+    last: int,
+    authored_title: str | None = None,
+) -> dict:
+    raw_cover = project_meta.get("cover", {})
+    if raw_cover is None:
+        raw_cover = {}
+    if not isinstance(raw_cover, dict):
+        raise SystemExit("project.cover must be an object")
+
+    title = authored_title or raw_cover.get("title", project_meta.get("title"))
+    if not isinstance(title, str) or not title.strip():
+        raise SystemExit("project.cover.title must be a non-empty string")
+
+    through_unit = raw_cover.get("throughUnit", first)
+    if isinstance(through_unit, bool) or not isinstance(through_unit, int):
+        raise SystemExit("project.cover.throughUnit must be an integer")
+    if through_unit < first or through_unit > last:
+        raise SystemExit(
+            f"project.cover.throughUnit={through_unit} is outside first scene units "
+            f"[{first}, {last}]"
+        )
+
+    cover = {"title": title.strip(), "throughUnit": through_unit}
+    for key, fallback in (
+        ("subtitle", project_meta.get("subtitle")),
+        ("kicker", project_meta.get("brand")),
+    ):
+        value = raw_cover[key] if key in raw_cover else fallback
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            raise SystemExit(f"project.cover.{key} must be a string")
+        cover[key] = value.strip()
+    return cover
+
+
+def scene_paragraphs(spec: dict, position: int) -> list[int]:
+    if "paragraph" in spec and "paragraphs" in spec:
+        raise SystemExit("scene cannot define both paragraph and paragraphs")
+    if "paragraphs" not in spec:
+        return [int(spec.get("paragraph", position))]
+
+    raw = spec["paragraphs"]
+    if not isinstance(raw, list) or not raw:
+        raise SystemExit("scene paragraphs must be a non-empty list")
+    if len(raw) == 2 and all(isinstance(item, int) for item in raw) and raw[0] <= raw[1]:
+        return list(range(raw[0], raw[1] + 1))
+    paragraphs: list[int] = []
+    for item in raw:
+        if isinstance(item, bool) or not isinstance(item, int):
+            raise SystemExit(f"scene paragraphs entries must be integers: {item!r}")
+        paragraphs.append(item)
+    return paragraphs
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build rich_storyboard.json from a paragraph-based plan.")
     parser.add_argument("project", help="Case-video project directory")
@@ -160,6 +235,7 @@ def main() -> None:
     project = Path(args.project).expanduser().resolve()
     timeline = load_json(project / "narration.timeline.json")
     plan = load_json(project / "storyboard_plan.json")
+    authored_title = load_authored_title(project)
     units = timeline["units"]
     by_paragraph: dict[int, list[dict]] = {}
     for unit in units:
@@ -168,10 +244,13 @@ def main() -> None:
     replacements = plan.get("displayReplacements", {})
     scenes = []
     for position, spec in enumerate(plan["scenes"], start=1):
-        paragraph = int(spec.get("paragraph", position))
-        paragraph_units = by_paragraph.get(paragraph)
-        if not paragraph_units:
-            raise SystemExit(f"no timeline units for paragraph {paragraph}")
+        paragraph_indexes = scene_paragraphs(spec, position)
+        paragraph_units = []
+        for paragraph in paragraph_indexes:
+            current = by_paragraph.get(paragraph)
+            if not current:
+                raise SystemExit(f"no timeline units for paragraph {paragraph}")
+            paragraph_units.extend(current)
         first = int(paragraph_units[0]["index"])
         last = int(paragraph_units[-1]["index"])
 
@@ -231,8 +310,20 @@ def main() -> None:
             scene["visualMode"] = spec["visualMode"]
         scenes.append(scene)
 
+    project_meta = deepcopy(plan["project"])
+    if authored_title is not None:
+        project_meta["title"] = authored_title
+
+    first_scene_first, first_scene_last = scenes[0]["units"]
+    cover = build_cover(
+        project_meta,
+        first=first_scene_first,
+        last=first_scene_last,
+        authored_title=authored_title,
+    )
     storyboard = {
-        **plan["project"],
+        **project_meta,
+        "cover": cover,
         "fps": 30,
         "width": 1920,
         "height": 1080,

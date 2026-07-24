@@ -31,6 +31,7 @@ engine/remotion/node_modules/
 engine/remotion/public/
 engine/remotion/src/generated/
 engine/remotion/src/data/generated/
+engine/remotion/.case-video.lock/
 
 # Generated media and QA outputs are local artifacts.
 output/**/video/
@@ -44,6 +45,7 @@ output/**/audio_ab_paragraph/
 output/**/voice_energy_test/
 output/**/sample_analysis/
 output/tmp_azure_tts_smoke/
+output/remotion_visual_lab/
 
 # Shared visual pool binaries and browse views are reproducible local artifacts.
 assets/visual-pool/files/

@@ -2,7 +2,7 @@ import React from "react";
 import {interpolate} from "remotion";
 import type {VisualLayer} from "../../../data/types";
 import {EASE_OUT} from "../../../anim/springs";
-import {fontStack, palette} from "../../../theme";
+import {clamp, fontStack, palette} from "../../../theme";
 
 const toneColor = (tone?: "good" | "bad" | "neutral") => {
   if (tone === "good") return "#4cd48a";
@@ -35,6 +35,8 @@ export const CounterLayer: React.FC<{
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const finalValueText = `${value.prefix ?? ""}${value.to.toFixed(decimals)}${value.suffix ?? ""}`;
+  const numberSize = clamp(128 - Math.max(0, Array.from(finalValueText).length - 4) * 13, 72, 128);
 
   return (
     <div
@@ -42,7 +44,10 @@ export const CounterLayer: React.FC<{
         display: "inline-flex",
         flexDirection: "column",
         alignItems: "flex-start",
+        width: "fit-content",
+        maxWidth: "100%",
         padding: "30px 44px",
+        boxSizing: "border-box",
         background: "rgba(5,17,31,0.82)",
         border: `5px solid ${palette.yellow}`,
         boxShadow: "12px 12px 0 rgba(5,17,31,0.7)",
@@ -66,15 +71,16 @@ export const CounterLayer: React.FC<{
           {layer.label}
         </div>
       ) : null}
-      <div style={{display: "flex", alignItems: "baseline", gap: 22}}>
+      <div style={{display: "flex", alignItems: "baseline", gap: 18, maxWidth: "100%"}}>
         <div
           style={{
-            fontSize: 128,
+            fontSize: numberSize,
             lineHeight: 1,
             fontWeight: 950,
             color: palette.yellow,
             fontVariantNumeric: "tabular-nums",
             textShadow: "0 5px 0 rgba(0,0,0,0.55)",
+            whiteSpace: "nowrap",
           }}
         >
           {value.prefix ?? ""}
@@ -87,7 +93,7 @@ export const CounterLayer: React.FC<{
               display: "flex",
               alignItems: "center",
               gap: 8,
-              fontSize: 44,
+              fontSize: Math.min(44, numberSize * 0.38),
               fontWeight: 900,
               color: deltaColor,
             }}
@@ -106,6 +112,7 @@ export const CounterLayer: React.FC<{
             fontWeight: 700,
             color: "rgba(255,255,255,0.86)",
             whiteSpace: "pre-line",
+            overflowWrap: "anywhere",
           }}
         >
           {layer.text}

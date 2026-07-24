@@ -6,6 +6,7 @@ import {HeadlineReveal} from "../components/HeadlineReveal";
 import {PaperLabel} from "../components/PaperLabel";
 import {unitStartFrame} from "../timing/timeline";
 import {propNumber, propString, type LayoutProps} from "./shared";
+import {fitTextBlockFontSize} from "../textFit";
 
 // City-hop roadshow timeline; the 叫停 stamp lands when the narration says it.
 export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
@@ -18,8 +19,8 @@ export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}
     sceneStartFrame;
 
   // City nodes pop staggered across units 26-27 (~5.6s of narration).
-  const railLeft = 150;
-  const railWidth = 1500;
+  const railLeft = 300;
+  const railWidth = 1320;
   const nodeGap = cities.length > 1 ? railWidth / (cities.length - 1) : 0;
   const cityWindowEnd = Math.max(stampAt - 8, 30);
   const cityStagger = cities.length > 1 ? cityWindowEnd / cities.length : 0;
@@ -31,15 +32,23 @@ export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}
   });
   const stampS = spring({frame: frame - stampAt, fps, config: SPRING_POP, durationInFrames: 40});
   const quoteIn = spring({frame: frame - quoteAt, fps, config: SPRING_SETTLE, durationInFrames: 40});
+  const quote = propString(scene, "quote", "真正的考题才刚刚开始");
+  const quoteSize = fitTextBlockFontSize({
+    text: quote,
+    maxWidth: 770,
+    maxLines: 2,
+    preferred: 48,
+    min: 36,
+  });
 
   return (
     <>
-      <HeadlineReveal headline={scene.headline} x={92} y={168} size={92} />
+      <HeadlineReveal headline={scene.headline} x={92} y={168} size={78} width={800} />
       <div
         style={{
           position: "absolute",
           left: railLeft,
-          top: 560,
+          top: 620,
           width: railWidth,
           height: 12,
           background: "rgba(255,255,255,0.34)",
@@ -64,7 +73,7 @@ export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}
             style={{
               position: "absolute",
               left: railLeft + idx * nodeGap - 60,
-              top: idx % 2 === 0 ? 452 : 610,
+              top: idx % 2 === 0 ? 510 : 670,
               width: 120,
               textAlign: "center",
               opacity: s,
@@ -101,8 +110,8 @@ export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}
       <div
         style={{
           position: "absolute",
-          left: 700,
-          top: 300,
+          left: 1080,
+          top: 286,
           opacity: stampS,
           transform: `scale(${0.6 + stampS * 0.4}) rotate(${-8 + stampS * 2}deg)`,
           background: palette.red,
@@ -123,18 +132,19 @@ export const TimelineRoadshow: React.FC<LayoutProps> = ({scene, sceneStartFrame}
         style={{
           position: "absolute",
           left: 92,
-          top: 380,
+          top: 378,
+          width: 770,
           opacity: quoteIn,
           transform: `translateY(${(1 - quoteIn) * 26}px)`,
           fontFamily: fontStack,
-          fontSize: 52,
+          fontSize: quoteSize,
           fontWeight: 950,
           color: palette.yellow,
           WebkitTextStroke: `2px ${palette.ink}`,
           textShadow: `6px 6px 0 rgba(0,0,0,0.5)`,
         }}
       >
-        {propString(scene, "quote", "真正的考题才刚刚开始")}
+        {quote}
       </div>
       <PaperLabel
         text={propString(scene, "railLabel", "MILESTONES")}

@@ -3,6 +3,7 @@ import {interpolate} from "remotion";
 import type {VisualLayer} from "../../../data/types";
 import {EASE_OUT} from "../../../anim/springs";
 import {fontStack, palette} from "../../../theme";
+import {fitTextBlockFontSize} from "../../../textFit";
 
 // Speech bubble bound to a portrait: bubble pops, then the quote types on
 // clause by clause. `tail` points the bubble at the speaker's side.
@@ -26,6 +27,13 @@ export const DialogueLayer: React.FC<{
     }),
   );
   const shown = text.slice(0, charsShown);
+  const textSize = fitTextBlockFontSize({
+    text,
+    maxWidth: 660,
+    maxLines: 4,
+    preferred: 42,
+    min: 30,
+  });
 
   return (
     <div
@@ -33,6 +41,8 @@ export const DialogueLayer: React.FC<{
         position: "relative",
         display: "inline-flex",
         flexDirection: "column",
+        width: "fit-content",
+        boxSizing: "border-box",
         maxWidth: 760,
         opacity: visibility * pop,
         transform: `translateY(${(1 - pop) * 26}px) scale(${0.94 + pop * 0.06})`,
@@ -63,13 +73,16 @@ export const DialogueLayer: React.FC<{
           position: "relative",
           background: "rgba(249,251,255,0.97)",
           color: palette.ink,
-          fontSize: 42,
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          fontSize: textSize,
           fontWeight: 800,
           lineHeight: 1.4,
           padding: "30px 38px",
           border: `4px solid ${palette.ink}`,
           boxShadow: "12px 12px 0 rgba(5,17,31,0.55)",
           whiteSpace: "pre-line",
+          overflowWrap: "anywhere",
           minHeight: 60,
         }}
       >

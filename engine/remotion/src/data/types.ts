@@ -1,7 +1,7 @@
 export type Tone = "dark" | "archive" | "bright";
 
 export type BackgroundTransition = "wash" | "paper" | "ink" | "flash" | "push";
-export type BackgroundMotion = "center" | "left" | "right" | "lift";
+export type BackgroundMotion = "center" | "left" | "right" | "lift" | "drift" | "breathe";
 
 export type VisualAssetType = "image" | "video";
 export type VisualAssetRole =
@@ -26,6 +26,16 @@ export type VisualAsset = {
 };
 
 export type VisualMode = "layout" | "editorial" | "hybrid";
+export type VisualIntent =
+  | "context"
+  | "protagonist"
+  | "claim"
+  | "evidence"
+  | "relationship"
+  | "mechanism"
+  | "decision"
+  | "consequence"
+  | "reflection";
 export type VisualBeatPurpose =
   | "establish"
   | "identify"
@@ -44,7 +54,14 @@ export type VisualBeatComposition =
   | "document-focus"
   | "evidence-collage";
 export type VisualBeatTransition = "cut" | "dissolve" | "push";
-export type VisualBeatCamera = "static" | "push-in" | "pull-out" | "pan-left" | "pan-right";
+export type VisualBeatCamera =
+  | "static"
+  | "push-in"
+  | "pull-out"
+  | "pan-left"
+  | "pan-right"
+  | "drift"
+  | "breathe";
 export type VisualBeatTreatment = "natural" | "desaturated" | "blueprint" | "crisis";
 export type VisualLayerKind =
   | "asset"
@@ -99,7 +116,15 @@ export type NetworkLink = {
   revealAtUnit?: number;
 };
 
-export type AnnotateShape = "ring" | "arrow" | "underline" | "box";
+export type NetworkLayoutMode =
+  | "auto"
+  | "row"
+  | "column"
+  | "triangle"
+  | "hub"
+  | "grid";
+
+export type AnnotateShape = "arrow" | "underline";
 
 export type AnnotateRegion = {
   x: number;
@@ -128,6 +153,7 @@ export type VisualLayer = {
   // network
   nodes?: NetworkNode[];
   links?: NetworkLink[];
+  networkLayout?: NetworkLayoutMode;
   // dialogue
   speaker?: string;
   tail?: "left" | "right";
@@ -139,6 +165,7 @@ export type VisualLayer = {
 export type VisualBeat = {
   id: string;
   atUnit: number;
+  visualIntent?: VisualIntent;
   purpose: VisualBeatPurpose;
   composition: VisualBeatComposition;
   baseAsset?: string;
@@ -239,6 +266,13 @@ export type BgmSpec = {
   duckBoostDb: number;
 };
 
+export type CoverSpec = {
+  title: string;
+  subtitle?: string;
+  kicker?: string;
+  throughUnit: number;
+};
+
 export type Storyboard = {
   slug?: string;
   title: string;
@@ -253,6 +287,7 @@ export type Storyboard = {
   audio: string;
   timeline: string;
   bgm?: BgmSpec;
+  cover?: CoverSpec;
   visualAssets?: VisualAsset[];
   scenes: Scene[];
 };

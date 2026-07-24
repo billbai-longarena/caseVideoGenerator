@@ -1,8 +1,8 @@
-# 共享视觉素材复用工作流
+# 共享视觉素材归档与可选复用工作流
 
-适用于新视频选图、旧视频换图以及素材池补库。分类原理和场景词表见 `../docs/knowledge-base/visual-asset-pool.md`。
+适用于新生成素材通过 QA 后入池归档、用户明确要求复用、修订需要视觉连续性，或分镜有意 callback、对照、证据放大的场景。新视频默认先生成新素材，不以共享池检索作为起点。分类原理和场景词表见 `../docs/knowledge-base/visual-asset-pool.md`。
 
-## 1. 刷新素材池
+## 1. 刷新素材池（归档或明确复用前）
 
 输入：现有 `output/<project>/` 案例文本、分镜、提示词和 `images/`。
 
@@ -13,7 +13,7 @@ scripts/visual-assets audit
 
 质量门：audit 通过；`catalog.json` 中没有丢失二进制、哈希错误或无主分类资产。
 
-## 2. 建立分镜检索简报
+## 2. 建立归档或复用简报
 
 对每个待选 Visual Beat 至少记录：
 
@@ -27,7 +27,9 @@ scripts/visual-assets audit
 
 质量门：每个需求都能用两个以上标签描述，且没有把“会议”“公司”等宽泛词当成完整画面。
 
-## 3. 检索候选
+## 3. 可选检索候选
+
+默认新案例和新背景资产跳过本步骤，直接进入第 6 步生成新素材。只有明确复用、修订连续性或有意 callback、对照、证据放大时，才检索候选：
 
 ```bash
 scripts/visual-assets search 工厂 产线 --setting 产线 --activity 生产 --limit 8
@@ -57,7 +59,7 @@ scripts/visual-assets search 门店 货架 --setting 门店 --activity 渠道走
 
 质量门：选中素材无需靠字幕纠正其核心语义。
 
-## 5. Checkout 到项目
+## 5. Checkout 到项目（仅限刻意复用）
 
 ```bash
 scripts/visual-assets checkout <asset-id> output/<project>
@@ -69,11 +71,11 @@ scripts/visual-assets checkout <asset-id> output/<project>
 
 质量门：本地图片存在，`asset_pool_usage.json` 的 SHA-256 与文件一致，`scripts/case-video check output/<project>` 通过。
 
-## 6. 处理素材缺口
+## 6. 生成新素材
 
-没有候选，或候选在语义、画风、人物身份与关系、构图、留白上不合格时：
+新视频默认走本步骤：按 Visual Beat 直接生成新图。明确复用任务中，没有候选，或候选在语义、画风、人物身份与关系、构图、留白上不合格时，也走本步骤：
 
-1. 只为缺口编写可复现提示词，不重生已经合格的素材。
+1. 为当前视觉需求编写可复现提示词；修订时不重生已经明确合格且需要保留的素材。
 2. 背景图写入项目 `image_prompts.json`；缺少合适 NPC 时扩展人物池规格，并限定需要补充的画风和人物属性。
 3. 按项目视觉家族生成新图。
 4. 完成文字、logo、构图、人物和叙事语义 QA。
@@ -85,7 +87,7 @@ scripts/visual-assets checkout <asset-id> output/<project>
 
 ## 7. 检查单条视频内的重复
 
-跨项目复用无需标记 fallback。若同一条视频的多个主场景重复使用同一项目本地图片，必须确认它是 callback、对照、证据放大或明确兜底，并在 scene 或 cue 标记 `reuse` / `allowBackgroundReuse`。
+跨项目复用本身应有明确理由并保留 provenance。若同一条视频的多个主场景重复使用同一项目本地图片，必须确认它是 callback、对照、证据放大或明确兜底，并在 scene 或 cue 标记 `reuse` / `allowBackgroundReuse`。
 
 质量门：没有因为素材不足而机械重复最后一张图。
 
@@ -120,7 +122,7 @@ scripts/character-portraits audit
 最终质量门：
 
 - 项目只引用本地素材。
-- 复用素材有可验证来源和哈希。
+- 刻意复用素材有可验证来源和哈希。
 - 新生成素材有可复现提示词。
 - 新生成且可复用的背景或人物已经进入对应素材池，并能被下一项目检索。
 - 同一视频内的重复有明确叙事意图。

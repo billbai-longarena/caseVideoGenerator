@@ -723,8 +723,8 @@ def render_report(catalog: dict, inventory: dict, taxonomy: dict) -> str:
             "- `tag_overrides.json` 保存少量人工复核后的标签增删改，不直接编辑生成的目录。",
             "- `scene_inventory.json` 是所有案例分镜的归类结果，用于分析场景覆盖和未来缺口。",
             "- `files/` 保存去重后的本地二进制素材；`views/` 提供按空间、行为和画风浏览的符号链接视图。",
-            "- 新项目先检索并 checkout 到项目自己的 `images/pool/`，Remotion 仍只读取项目本地文件。",
-            "- 找不到语义、画风、构图和留白都合适的素材时再生成；通过 QA 后重新 build 入池。",
+            "- 新项目先生成项目本地新图，Remotion 仍只读取项目本地文件。",
+            "- 只有明确复用、修订连续性或有意 callback/对照/证据放大时才检索并 checkout；新图通过 QA 后重新 build 入池。",
             "",
         ]
     )

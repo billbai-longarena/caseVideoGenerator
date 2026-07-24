@@ -53,15 +53,28 @@ const PURPOSE_PRESETS: Record<VisualBeatPurpose, PurposePreset> = {
 
 const presetFor = (beat: VisualBeat): PurposePreset => PURPOSE_PRESETS[beat.purpose];
 
-const slotStyle = (slot: VisualLayerSlot = "canvas"): React.CSSProperties => {
+const isThreeColumnSlot = (slot: VisualLayerSlot = "canvas") =>
+  slot === "left" || slot === "center" || slot === "right";
+
+const slotStyle = (
+  slot: VisualLayerSlot = "canvas",
+  composition?: VisualBeatComposition,
+  reserveBottom = false,
+): React.CSSProperties => {
   const common: React.CSSProperties = {position: "absolute"};
+  if (composition === "triptych" && isThreeColumnSlot(slot)) {
+    const bottom = reserveBottom ? 386 : 244;
+    if (slot === "left") return {...common, left: 80, top: 232, width: 515, bottom};
+    if (slot === "center") return {...common, left: 702, top: 232, width: 515, bottom};
+    return {...common, right: 80, top: 232, width: 515, bottom};
+  }
   switch (slot) {
     case "left":
-      return {...common, left: 78, top: 172, width: 720, bottom: 206};
+      return {...common, left: 78, top: 172, width: 720, bottom: reserveBottom ? 380 : 206};
     case "right":
-      return {...common, right: 78, top: 172, width: 720, bottom: 206};
+      return {...common, right: 78, top: 172, width: 720, bottom: reserveBottom ? 380 : 206};
     case "center":
-      return {...common, left: 430, right: 430, top: 190, bottom: 214};
+      return {...common, left: 430, right: 430, top: 190, bottom: reserveBottom ? 380 : 214};
     case "inset-left":
       return {...common, left: 92, top: 264, width: 520, height: 430};
     case "inset-right":
@@ -78,19 +91,45 @@ const slotStyle = (slot: VisualLayerSlot = "canvas"): React.CSSProperties => {
   }
 };
 
-const treatmentFilter = (treatment: VisualBeatTreatment = "natural") => {
-  if (treatment === "desaturated") return "grayscale(0.7) saturate(0.55) contrast(1.12)";
+const slotDimensions = (
+  slot: VisualLayerSlot = "canvas",
+  composition?: VisualBeatComposition,
+  reserveBottom = false,
+) => {
+  if (composition === "triptych" && isThreeColumnSlot(slot)) {
+    return {width: 515, height: 1080 - 232 - (reserveBottom ? 386 : 244)};
+  }
+  if (slot === "left" || slot === "right") {
+    return {width: 720, height: 1080 - 172 - (reserveBottom ? 380 : 206)};
+  }
+  if (slot === "center") {
+    return {width: 1060, height: 1080 - 190 - (reserveBottom ? 380 : 214)};
+  }
+  if (slot === "inset-left" || slot === "inset-right") return {width: 520, height: 430};
+  if (slot === "top-left" || slot === "top-right") return {width: 690, height: 220};
+  if (slot === "bottom") return {width: 1560, height: 180};
+  return {width: 1920, height: 1080};
+};
+
+const reservesBottomLane = (layers: VisualLayer[]) =>
+  layers.some((layer) => layer.slot === "bottom" && layer.kind !== "tint");
+
+const treatmentTint = (treatment: VisualBeatTreatment = "natural") => {
+  // Full-frame CSS filters are prohibitively expensive in Remotion's
+  // software-rendered Chrome. Lightweight color plates retain the intended
+  // mood while keeping long-form renders practical.
+  if (treatment === "desaturated") return "rgba(8,24,39,0.20)";
   if (treatment === "blueprint") {
     return visualTheme.preserveBlueYellow
-      ? "grayscale(0.22) saturate(1.08) contrast(1.12) brightness(0.98)"
-      : "grayscale(0.28) hue-rotate(165deg) saturate(1.28) contrast(1.12)";
+      ? "rgba(18,80,140,0.12)"
+      : "rgba(12,58,112,0.22)";
   }
   if (treatment === "crisis") {
     return visualTheme.preserveBlueYellow
-      ? "grayscale(0.08) saturate(1.04) contrast(1.14) brightness(0.96)"
-      : "saturate(0.72) contrast(1.18) brightness(0.78)";
+      ? "rgba(78,25,18,0.12)"
+      : "rgba(38,12,10,0.24)";
   }
-  return "saturate(1.08) contrast(1.04)";
+  return "transparent";
 };
 
 const cameraTransform = (
@@ -106,6 +145,18 @@ const cameraTransform = (
   if (camera === "pull-out") return `scale(${1.015 + push - progress * push})`;
   if (camera === "pan-left") return `translateX(${pan / 2 - progress * pan}px) scale(1.08)`;
   if (camera === "pan-right") return `translateX(${-pan / 2 + progress * pan}px) scale(1.08)`;
+  if (camera === "drift") {
+    const driftIntensity = clamp(intensity, 0.7, 1.1);
+    const driftX = Math.sin(progress * Math.PI * 1.12) * 16 * driftIntensity;
+    const driftY = Math.cos(progress * Math.PI * 0.86) * 8 * driftIntensity - 4;
+    const zoom = 1.035 + Math.sin(progress * Math.PI) * 0.018 * driftIntensity;
+    return `translate3d(${driftX}px, ${driftY}px, 0) scale(${zoom})`;
+  }
+  if (camera === "breathe") {
+    const breatheIntensity = clamp(intensity, 0.7, 1.15);
+    const zoom = 1.025 + Math.sin(progress * Math.PI) * 0.024 * breatheIntensity;
+    return `scale(${zoom})`;
+  }
   return "scale(1.025)";
 };
 
@@ -235,12 +286,21 @@ const TextLayer: React.FC<{
   frame: number;
   visibility: number;
   revealFrame: number;
-}> = ({layer, beat, frame, visibility, revealFrame}) => {
+  reserveBottom: boolean;
+}> = ({layer, beat, frame, visibility, revealFrame, reserveBottom}) => {
   const variant = layer.variant ?? "caption";
   const isMetric = variant === "metric";
   const isStamp = variant === "stamp";
   const isHeadline = variant === "headline";
   const fromRight = layer.slot?.includes("right") ?? false;
+  const isTriptychText = beat.composition === "triptych" && isThreeColumnSlot(layer.slot);
+  const text = layer.text ?? "";
+  const textLines = text.split("\n");
+  const longestLine = Math.max(1, ...textLines.map((line) => [...line.trim()].length));
+  const maxTextSize = isMetric ? 94 : isHeadline ? (isTriptychText ? 43 : 58) : isStamp ? 54 : variant === "quote" ? 43 : 36;
+  const textFontSize = isMetric
+    ? maxTextSize
+    : clamp(maxTextSize - Math.max(0, longestLine - 7) * 2.2 - Math.max(0, textLines.length - 2) * 3, 30, maxTextSize);
   const slideX = (1 - visibility) * (fromRight ? 34 : -34);
   const float = idleFloat(frame, revealFrame + 12);
   const emphasis = presetFor(beat).emphasisScale;
@@ -248,7 +308,7 @@ const TextLayer: React.FC<{
   return (
     <div
       style={{
-        ...slotStyle(layer.slot),
+        ...slotStyle(layer.slot, beat.composition, reserveBottom),
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -273,6 +333,7 @@ const TextLayer: React.FC<{
           : `2px solid rgba(255,255,255,0.5)`,
         boxShadow: isStamp ? `10px 10px 0 ${palette.ink}` : "10px 12px 30px rgba(0,0,0,0.34)",
         overflow: "hidden",
+        maxWidth: "100%",
       }}
     >
       {layer.label ? (
@@ -291,11 +352,12 @@ const TextLayer: React.FC<{
       ) : null}
       <div
         style={{
-          fontSize: isMetric ? 94 : isHeadline ? 58 : isStamp ? 54 : variant === "quote" ? 43 : 36,
+          fontSize: textFontSize,
           lineHeight: isMetric ? 0.98 : 1.18,
           fontWeight: isMetric || isHeadline || isStamp ? 950 : 800,
           color: isMetric ? palette.yellow : palette.white,
           whiteSpace: "pre-line",
+          overflowWrap: "anywhere",
           textShadow: "0 4px 0 rgba(0,0,0,0.52)",
         }}
       >
@@ -308,16 +370,20 @@ const TextLayer: React.FC<{
 // Wraps data-driven layers (counter/bar/network/dialogue) in their slot box.
 const SlotWrap: React.FC<{
   layer: VisualLayer;
+  composition: VisualBeatComposition;
+  reserveBottom: boolean;
   children: React.ReactNode;
-}> = ({layer, children}) => (
+}> = ({layer, composition, reserveBottom, children}) => (
   <div
     style={{
-      ...slotStyle(layer.slot),
+      ...slotStyle(layer.slot, composition, reserveBottom),
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: layer.slot === "right" || layer.slot === "top-right" ? "flex-end" : "flex-start",
       boxSizing: "border-box",
+      minWidth: 0,
+      minHeight: 0,
     }}
   >
     {children}
@@ -335,6 +401,7 @@ const VisualLayerView: React.FC<{
   if (visibility <= 0) return null;
   const revealFrame = layerRevealFrame(layer, beat, layerIndex);
   const localFrame = Math.max(0, frame - revealFrame);
+  const reserveBottom = reservesBottomLane(layers);
 
   if (layer.kind === "text") {
     return (
@@ -344,6 +411,7 @@ const VisualLayerView: React.FC<{
         frame={frame}
         visibility={visibility}
         revealFrame={revealFrame}
+        reserveBottom={reserveBottom}
       />
     );
   }
@@ -351,7 +419,7 @@ const VisualLayerView: React.FC<{
     return (
       <div
         style={{
-          ...slotStyle(layer.slot),
+          ...slotStyle(layer.slot, beat.composition, reserveBottom),
           backgroundColor: layer.color,
           opacity: (layer.opacity ?? 0.25) * visibility,
         }}
@@ -360,14 +428,14 @@ const VisualLayerView: React.FC<{
   }
   if (layer.kind === "counter") {
     return (
-      <SlotWrap layer={layer}>
+      <SlotWrap layer={layer} composition={beat.composition} reserveBottom={reserveBottom}>
         <CounterLayer layer={layer} visibility={visibility} localFrame={localFrame} />
       </SlotWrap>
     );
   }
   if (layer.kind === "bar-compare") {
     return (
-      <SlotWrap layer={layer}>
+      <SlotWrap layer={layer} composition={beat.composition} reserveBottom={reserveBottom}>
         <BarCompareLayer
           layer={layer}
           visibility={visibility}
@@ -378,20 +446,24 @@ const VisualLayerView: React.FC<{
     );
   }
   if (layer.kind === "network") {
+    const networkLayer = {...layer, slot: layer.slot ?? "center"} as VisualLayer;
+    const dimensions = slotDimensions(networkLayer.slot, beat.composition, reserveBottom);
     return (
-      <SlotWrap layer={{...layer, slot: layer.slot ?? "center"}}>
+      <SlotWrap layer={networkLayer} composition={beat.composition} reserveBottom={reserveBottom}>
         <NetworkLayer
           layer={layer}
           visibility={visibility}
           frame={frame}
           layerRevealFrame={revealFrame}
+          width={dimensions.width}
+          height={dimensions.height}
         />
       </SlotWrap>
     );
   }
   if (layer.kind === "dialogue") {
     return (
-      <SlotWrap layer={layer}>
+      <SlotWrap layer={layer} composition={beat.composition} reserveBottom={reserveBottom}>
         <DialogueLayer layer={layer} visibility={visibility} localFrame={localFrame} />
       </SlotWrap>
     );
@@ -405,7 +477,7 @@ const VisualLayerView: React.FC<{
   return (
     <div
       style={{
-        ...slotStyle(layer.slot),
+        ...slotStyle(layer.slot, beat.composition, reserveBottom),
         overflow: "hidden",
         opacity: visibility,
         transform: `translateY(${(1 - visibility) * 18 + float}px) scale(${0.96 + visibility * 0.04})`,
@@ -430,7 +502,7 @@ const BeatCanvas: React.FC<{
   const duration = Math.max(1, endFrame - startFrame);
   const preset = presetFor(beat);
   const transform = cameraTransform(beat.camera, localFrame, duration, preset.cameraScale);
-  const filter = treatmentFilter(beat.treatment);
+  const tint = treatmentTint(beat.treatment);
   // escalate beats breathe: a slow tint pulse keeps tension visible.
   const pulse = preset.pulse ? (Math.sin(localFrame / 22) + 1) * 0.045 : 0;
   return (
@@ -439,9 +511,10 @@ const BeatCanvas: React.FC<{
         <AssetMedia
           asset={base}
           style={{
-            transform,
-            filter: `${filter} blur(18px) brightness(0.84)`,
-            opacity: 0.46,
+            // A static ambient plate keeps the canvas filled without forcing
+            // software Chrome to recompute a full-frame animated blur.
+            transform: "scale(1.04)",
+            opacity: 0.34,
           }}
         />
       ) : null}
@@ -450,10 +523,11 @@ const BeatCanvas: React.FC<{
           <AssetMedia
             asset={base}
             fit={composition === "document-focus" ? "contain" : "cover"}
-            style={{transform, filter}}
+            style={{transform}}
           />
         </div>
       ) : null}
+      {tint !== "transparent" ? <AbsoluteFill style={{background: tint}} /> : null}
       <AbsoluteFill
         style={{
           background:
@@ -480,7 +554,7 @@ const BeatCanvas: React.FC<{
           style={{
             border: "14px solid rgba(249,251,255,0.28)",
             boxSizing: "border-box",
-            backdropFilter: "saturate(0.85)",
+            background: "rgba(249,251,255,0.05)",
           }}
         />
       ) : null}

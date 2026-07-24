@@ -120,6 +120,7 @@
 - `case_inputs.json`：来源边界和初始参数。
 - `case_model.json`：客户真相、披露、销售认知、互动、竞争权重、最终决定和揭示计划。
 - `case_story.md`：按揭示顺序编织出的完整案例正文。
-- `narration.txt`：进入视频生产时，再依据 `../docs/knowledge-base/narration.md` 改写为口播。
+- `title.txt`：进入视频生产时，与旁白同期选定的一行最终文章/视频标题。
+- `narration.txt`：进入视频生产时，依据 `../docs/knowledge-base/narration.md` 改写为口播。
 
-质量门：三个工件之间事实一致；旁白只改变揭示顺序和表达密度，不改变案例因果。
+质量门：案例工件之间事实一致；标题承诺由故事与旁白支持，旁白只改变揭示顺序和表达密度，不改变案例因果。

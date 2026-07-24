@@ -74,6 +74,8 @@ def prompt_for(style: dict[str, Any], profile: dict[str, Any]) -> str:
         if is_manager_silhouette
         else f"exactly one distinct {gender_subject(profile['gender'])}"
     )
+    attire_category = profile.get("attireCategory", "formal business attire")
+    attire_constraint = profile.get("attireConstraint", "formal suit or blazer")
     lighting = (
         "Lighting/mood: graphic faceless managerial silhouette, restrained warm rim light, calm authority"
         if is_manager_silhouette
@@ -93,7 +95,7 @@ def prompt_for(style: dict[str, Any], profile: dict[str, Any]) -> str:
             "Asset type: reusable square Remotion character portrait for a Chinese business case video",
             (
                 f"Primary request: {subject_kind}, approximately "
-                f"{profile['age']} years old, in formal business attire"
+                f"{profile['age']} years old, in {attire_category}"
             ),
             (
                 "Scene/backdrop: seamless pure white #FFFFFF background; both top corners and all visible outer "
@@ -113,7 +115,8 @@ def prompt_for(style: dict[str, Any], profile: dict[str, Any]) -> str:
             ),
             lighting,
             (
-                "Constraints: one adult only; recognizably Chinese; age must read plausibly; formal suit or blazer; "
+                "Constraints: one adult only; recognizably Chinese; age must read plausibly; "
+                f"{attire_constraint}; "
                 "an original fictional person who does not resemble a celebrity or public figure; no hands near the face; "
                 "no text, letters, numerals, logos, badges, company marks, watermark or signature"
             ),

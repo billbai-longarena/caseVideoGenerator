@@ -4,16 +4,17 @@ import type {VisualLayer} from "../../../data/types";
 import {EASE_OUT} from "../../../anim/springs";
 import {fontStack, palette} from "../../../theme";
 
-// Evidence annotation drawn over the beat's base image. `region` is relative
-// (0-1) to the full canvas so plans stay resolution-independent.
+// Directional evidence annotation drawn over the beat's base image. `region`
+// is relative (0-1) to the full canvas so plans stay resolution-independent.
 export const AnnotateLayer: React.FC<{
   layer: VisualLayer;
   visibility: number;
   localFrame: number;
 }> = ({layer, visibility, localFrame}) => {
+  const shape = layer.shape as string | undefined;
+  if (shape !== "arrow" && shape !== "underline") return null;
   const region = layer.region;
   if (!region) return null;
-  const shape = layer.shape ?? "ring";
   const draw = interpolate(localFrame, [2, 22], [0, 1], {
     easing: EASE_OUT,
     extrapolateLeft: "clamp",
@@ -30,40 +31,6 @@ export const AnnotateLayer: React.FC<{
   return (
     <div style={{position: "absolute", inset: 0, opacity: visibility, pointerEvents: "none"}}>
       <svg width={W} height={H} style={{position: "absolute", inset: 0}}>
-        {shape === "ring" ? (
-          (() => {
-            const rx = w / 2;
-            const ry = h / 2;
-            const per = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
-            return (
-              <ellipse
-                cx={x + rx}
-                cy={y + ry}
-                rx={rx}
-                ry={ry}
-                fill="none"
-                stroke={color}
-                strokeWidth={8}
-                strokeDasharray={per}
-                strokeDashoffset={per * (1 - draw)}
-                transform={`rotate(-14 ${x + rx} ${y + ry})`}
-              />
-            );
-          })()
-        ) : null}
-        {shape === "box" ? (
-          <rect
-            x={x}
-            y={y}
-            width={w}
-            height={h}
-            fill="none"
-            stroke={color}
-            strokeWidth={7}
-            strokeDasharray={(w + h) * 2}
-            strokeDashoffset={(w + h) * 2 * (1 - draw)}
-          />
-        ) : null}
         {shape === "underline" ? (
           <line
             x1={x}

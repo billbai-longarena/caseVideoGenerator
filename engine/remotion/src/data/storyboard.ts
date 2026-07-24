@@ -28,6 +28,19 @@ const validate = () => {
   if (visualAssetById.size !== (storyboard.visualAssets ?? []).length) {
     throw new Error("visual asset ids must be unique");
   }
+  if (storyboard.cover) {
+    if (!storyboard.cover.title.trim()) {
+      throw new Error("storyboard cover title must be non-empty");
+    }
+    const [first, last] = storyboard.scenes[0]?.units ?? [];
+    if (
+      !Number.isInteger(storyboard.cover.throughUnit) ||
+      storyboard.cover.throughUnit < first ||
+      storyboard.cover.throughUnit > last
+    ) {
+      throw new Error("storyboard cover throughUnit must be inside the first scene");
+    }
+  }
   let expected = 1;
   for (const scene of storyboard.scenes) {
     const [first, last] = scene.units;

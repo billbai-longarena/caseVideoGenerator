@@ -3,6 +3,7 @@ import {spring, useCurrentFrame, useVideoConfig} from "remotion";
 import {fontStack, palette, strokeShadow} from "../theme";
 import {SPRING_SETTLE, SPRING_SMOOTH, idleFloat} from "../anim/springs";
 import type {HeadlineSpec} from "../data/types";
+import {fitSingleLineFontSize} from "../textFit";
 
 const accentRanges = (line: string, accents: string[]) => {
   const flags = new Array<boolean>(line.length).fill(false);
@@ -30,6 +31,12 @@ export const HeadlineReveal: React.FC<{
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const lines = headline.text.split("\n");
+  const fittedSize = fitSingleLineFontSize({
+    text: headline.text,
+    maxWidth: width,
+    preferred: size,
+    min: Math.max(34, size * 0.42),
+  });
   const charStagger = 2;
 
   let charCursor = 0;
@@ -46,7 +53,7 @@ export const HeadlineReveal: React.FC<{
         width,
         transform: `translateY(${float}px)`,
         fontFamily: fontStack,
-        fontSize: size,
+        fontSize: fittedSize,
         lineHeight: 1.02,
         fontWeight: 950,
         color: palette.white,
@@ -74,7 +81,7 @@ export const HeadlineReveal: React.FC<{
                         display: "inline-block",
                         opacity: s,
                         transform: `translateY(${(1 - s) * 44}px)`,
-                        ...strokeShadow(Math.max(2, Math.round(size / 30))),
+                        ...strokeShadow(Math.max(2, Math.round(fittedSize / 30))),
                       }}
                     >
                       {chars.map((ch, i) => (
@@ -114,7 +121,7 @@ export const HeadlineReveal: React.FC<{
                         opacity: s,
                         transform: `translateY(${(1 - s) * 40}px) scale(${(1.15 - 0.15 * s) * pulse})`,
                         color: accent ? palette.yellow : palette.white,
-                        ...strokeShadow(Math.max(2, Math.round(size / 30))),
+                        ...strokeShadow(Math.max(2, Math.round(fittedSize / 30))),
                       }}
                     >
                       {ch === " " ? " " : ch}

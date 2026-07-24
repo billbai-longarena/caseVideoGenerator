@@ -1,5 +1,5 @@
 import {storyboard, timeline, getUnit} from "../data/storyboard";
-import type {Scene, VisualBeat} from "../data/types";
+import type {BackgroundMotion, BackgroundTransition, Scene, VisualBeat} from "../data/types";
 
 export const FPS = storyboard.fps;
 
@@ -30,8 +30,8 @@ export type ResolvedBackgroundCue = {
   image?: string;
   video?: string;
   startFrame: number;
-  transition: "wash" | "paper" | "ink" | "flash" | "push";
-  motion: "center" | "left" | "right" | "lift";
+  transition: BackgroundTransition;
+  motion: BackgroundMotion;
 };
 
 export const resolvedBackgroundCues = (): ResolvedBackgroundCue[] => {

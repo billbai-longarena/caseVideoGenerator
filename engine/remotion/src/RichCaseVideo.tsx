@@ -6,6 +6,7 @@ import {sceneBounds} from "./timing/timeline";
 import {BackgroundTrack} from "./components/background/BackgroundTrack";
 import {VisualBeatTrack} from "./components/visual/VisualBeatTrack";
 import {ProgressRail} from "./components/ProgressRail";
+import {CoverLayer} from "./components/CoverLayer";
 import {AudioTrack} from "./audio/AudioTrack";
 import {SceneLayer} from "./SceneLayer";
 import assets from "./data/generated/assets.json";
@@ -37,8 +38,15 @@ export const RichCaseVideo: React.FC<RichCaseVideoProps> = ({withAudio = true}) 
         </Sequence>
       ))}
       <ProgressRail />
+      <CoverLayer />
     </AbsoluteFill>
   );
 };
 
 export const RichCaseVideoNoAudio: React.FC = () => <RichCaseVideo withAudio={false} />;
+
+export const CoverProofOverlay: React.FC = () => (
+  <AbsoluteFill style={{backgroundColor: "transparent"}}>
+    <CoverLayer />
+  </AbsoluteFill>
+);

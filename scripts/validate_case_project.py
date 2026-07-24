@@ -8,16 +8,45 @@ from pathlib import Path
 import re
 from typing import Any
 
+from PIL import Image, UnidentifiedImageError
+
 FORBIDDEN_BACKGROUND_MARKERS = (
     "images/management_cutout/",
     "programmatic",
     "placeholder",
 )
+FORBIDDEN_FINAL_IMAGE_DIR_PARTS = {
+    "qa",
+    "contact-sheet",
+    "contact-sheets",
+    "contact_sheet",
+    "contact_sheets",
+}
+FORBIDDEN_FINAL_IMAGE_NAME_MARKERS = (
+    "contact-sheet",
+    "contact_sheet",
+    "overview",
+    "thumbnail",
+)
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
 ASSET_TYPES = {"image", "video"}
 ASSET_ROLES = {"context", "person", "evidence", "document", "map", "metaphor", "texture"}
 ASSET_ORIGINS = {"generated", "curated"}
+BACKGROUND_TRANSITIONS = {"wash", "paper", "ink", "flash", "push"}
+BACKGROUND_MOTIONS = {"center", "left", "right", "lift", "drift", "breathe"}
 VISUAL_MODES = {"layout", "editorial", "hybrid"}
+VISUAL_INTENTS = {
+    "context",
+    "protagonist",
+    "claim",
+    "evidence",
+    "relationship",
+    "mechanism",
+    "decision",
+    "consequence",
+    "reflection",
+}
 BEAT_PURPOSES = {
     "establish",
     "identify",
@@ -38,7 +67,7 @@ BEAT_COMPOSITIONS = {
     "evidence-collage",
 }
 BEAT_TRANSITIONS = {"cut", "dissolve", "push"}
-BEAT_CAMERAS = {"static", "push-in", "pull-out", "pan-left", "pan-right"}
+BEAT_CAMERAS = {"static", "push-in", "pull-out", "pan-left", "pan-right", "drift", "breathe"}
 BEAT_TREATMENTS = {"natural", "desaturated", "blueprint", "crisis"}
 LAYER_KINDS = {
     "asset",
@@ -50,10 +79,16 @@ LAYER_KINDS = {
     "dialogue",
     "annotate",
 }
-ANNOTATE_SHAPES = {"ring", "arrow", "underline", "box"}
+ANNOTATE_SHAPES = {"arrow", "underline"}
+DISABLED_ANNOTATE_SHAPES = {"box", "ring"}
 BAR_TONES = {"good", "bad", "neutral"}
 # Layer kinds that carry story information beyond a static caption.
 EXPRESSIVE_LAYER_KINDS = {"asset", "counter", "bar-compare", "network", "dialogue", "annotate"}
+PANEL_LAYER_KINDS = {"text", "counter", "bar-compare", "network", "dialogue"}
+HYBRID_ALLOWED_LAYER_KINDS = {"tint"}
+MAX_BAR_ITEMS = 4
+MAX_NETWORK_NODES = 4
+NETWORK_LAYOUTS = {"auto", "row", "column", "triangle", "hub", "grid"}
 LAYER_SLOTS = {
     "canvas",
     "left",
@@ -88,6 +123,16 @@ def load_json(path: Path) -> dict:
         raise SystemExit(f"invalid JSON: {path}: {exc}") from exc
 
 
+def load_authored_title(project: Path) -> str | None:
+    path = project / "title.txt"
+    if not path.is_file():
+        return None
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if len(lines) != 1 or not lines[0].strip():
+        raise SystemExit("title.txt must contain exactly one non-empty logical line")
+    return lines[0].strip()
+
+
 def prompt_files(project: Path) -> set[str] | None:
     prompt_path = project / "image_prompts.json"
     if not prompt_path.is_file():
@@ -103,6 +148,7 @@ def prompt_files(project: Path) -> set[str] | None:
         image = spec["file"].replace("\\", "/")
         if image.startswith("/") or ".." in Path(image).parts:
             raise SystemExit(f"image prompt {position} has unsafe file path: {spec['file']}")
+        validate_final_image_path(image, f"image prompt {position}")
         files.add(image)
     return files
 
@@ -174,6 +220,118 @@ def normalized_local_asset(project: Path, asset: object, label: str) -> tuple[st
     return normalized, path
 
 
+def count_true_runs(values: list[bool], *, min_length: int) -> int:
+    runs = 0
+    current = 0
+    for value in values:
+        if value:
+            current += 1
+            continue
+        if current >= min_length:
+            runs += 1
+        current = 0
+    if current >= min_length:
+        runs += 1
+    return runs
+
+
+def looks_like_contact_sheet_or_overview(image: Image.Image) -> bool:
+    width, height = image.size
+    if width < 900 or height < 700:
+        return False
+    ratio = width / height
+    if ratio < 0.75 or ratio > 1.35:
+        return False
+
+    sample_width = 320
+    sample_height = max(1, round(height * sample_width / width))
+    sample = image.convert("RGB").resize((sample_width, sample_height))
+    light_pixels: list[bool] = []
+    for red, green, blue in sample.getdata():
+        light_pixels.append(red >= 238 and green >= 238 and blue >= 238)
+
+    light_fraction = sum(light_pixels) / len(light_pixels)
+    if light_fraction < 0.25:
+        return False
+
+    rows: list[bool] = []
+    for y in range(sample_height):
+        offset = y * sample_width
+        row_light = sum(light_pixels[offset:offset + sample_width]) / sample_width
+        rows.append(row_light >= 0.80)
+
+    columns: list[bool] = []
+    for x in range(sample_width):
+        column_light = sum(light_pixels[y * sample_width + x] for y in range(sample_height))
+        columns.append(column_light / sample_height >= 0.80)
+
+    min_row_run = max(2, round(sample_height * 0.006))
+    min_column_run = max(2, round(sample_width * 0.006))
+    row_runs = count_true_runs(rows, min_length=min_row_run)
+    column_runs = count_true_runs(columns, min_length=min_column_run)
+    return row_runs >= 3 and column_runs >= 2
+
+
+def validate_final_image_path(normalized: str, label: str) -> None:
+    lower_image = normalized.lower()
+    forbidden = next(
+        (marker for marker in FORBIDDEN_BACKGROUND_MARKERS if marker in lower_image),
+        None,
+    )
+    if forbidden:
+        raise SystemExit(
+            f"{label} uses forbidden final image path {normalized!r} matching {forbidden!r}"
+        )
+    path = Path(lower_image)
+    forbidden_part = next(
+        (part for part in path.parts if part in FORBIDDEN_FINAL_IMAGE_DIR_PARTS),
+        None,
+    )
+    if forbidden_part:
+        raise SystemExit(
+            f"{label} uses forbidden final image path {normalized!r} matching {forbidden_part!r}"
+        )
+    forbidden_name = next(
+        (marker for marker in FORBIDDEN_FINAL_IMAGE_NAME_MARKERS if marker in path.name),
+        None,
+    )
+    if forbidden_name:
+        raise SystemExit(
+            f"{label} uses forbidden final image path {normalized!r} matching {forbidden_name!r}"
+        )
+
+
+def validate_final_image_asset(
+    normalized: str,
+    path: Path,
+    label: str,
+    checked_images: set[str],
+) -> None:
+    validate_final_image_path(normalized, label)
+    if normalized in checked_images:
+        return
+    if path.suffix.lower() not in IMAGE_SUFFIXES:
+        raise SystemExit(f"{label} image has unsupported file extension: {normalized}")
+    try:
+        with Image.open(path) as image:
+            image.load()
+            path_parts = Path(normalized).parts
+            is_character_portrait = len(path_parts) >= 2 and path_parts[:2] == (
+                "images",
+                "characters",
+            )
+            if not is_character_portrait and looks_like_contact_sheet_or_overview(image):
+                raise SystemExit(
+                    f"{label} image appears to be a contact sheet/overview QA image, "
+                    f"not a final video asset: {normalized}"
+                )
+    except SystemExit:
+        raise
+    except (UnidentifiedImageError, OSError) as exc:
+        raise SystemExit(f"{label} image is not readable: {normalized}") from exc
+    checked_images.add(normalized)
+
+
 def reject_second_timing(value: Any, label: str) -> None:
     if isinstance(value, dict):
         for key, child in value.items():
@@ -191,6 +349,7 @@ def validate_visual_assets(
     storyboard: dict,
     prompt_file_set: set[str] | None,
     pool_assets: dict[str, dict],
+    checked_images: set[str],
 ) -> dict[str, dict]:
     raw_assets = storyboard.get("visualAssets")
     if raw_assets is None:
@@ -217,7 +376,7 @@ def validate_visual_assets(
         origin = asset.get("origin")
         if origin not in ASSET_ORIGINS:
             raise SystemExit(f"{label} has invalid origin: {origin!r}")
-        normalized, _ = normalized_local_asset(project, asset.get("src"), label)
+        normalized, asset_path = normalized_local_asset(project, asset.get("src"), label)
         pool_asset_id = asset.get("poolAssetId")
         if pool_asset_id is not None:
             if not isinstance(pool_asset_id, str) or not pool_asset_id.strip():
@@ -235,15 +394,7 @@ def validate_visual_assets(
                     f"{pool_record.get('assetId')!r}"
                 )
         if asset_type == "image":
-            lower_image = normalized.lower()
-            forbidden = next(
-                (marker for marker in FORBIDDEN_BACKGROUND_MARKERS if marker in lower_image),
-                None,
-            )
-            if forbidden:
-                raise SystemExit(
-                    f"{label} uses forbidden final image path {normalized!r} matching {forbidden!r}"
-                )
+            validate_final_image_asset(normalized, asset_path, label, checked_images)
             if origin == "generated" and (
                 prompt_file_set is None or normalized not in prompt_file_set
             ):
@@ -262,22 +413,101 @@ def scene_end_seconds(unit_by_index: dict[int, dict], last: int) -> float:
     return float(unit_by_index[last]["end"])
 
 
+def semantic_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: semantic_value(child)
+            for key, child in sorted(value.items())
+            if key not in {"id", "slot", "revealAtUnit", "exitAtUnit"}
+        }
+    if isinstance(value, list):
+        return [semantic_value(item) for item in value]
+    return value
+
+
+def is_rendered_visual_layer(layer: dict[str, Any]) -> bool:
+    return (
+        layer.get("kind") != "annotate"
+        or layer.get("shape") in ANNOTATE_SHAPES
+    )
+
+
+def beat_semantic_signature(beat: dict) -> str:
+    payload = {
+        "baseAsset": beat.get("baseAsset"),
+        "layers": [
+            semantic_value(layer)
+            for layer in beat.get("layers", [])
+            if isinstance(layer, dict) and is_rendered_visual_layer(layer)
+        ],
+    }
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def semantic_event_units(raw_beats: list[dict], first: int) -> set[int]:
+    events = {first}
+    previous_signature: str | None = None
+    for beat in raw_beats:
+        at_unit = beat["atUnit"]
+        signature = beat_semantic_signature(beat)
+        if signature != previous_signature:
+            events.add(at_unit)
+        previous_signature = signature
+        for layer in beat.get("layers", []):
+            if not isinstance(layer, dict):
+                continue
+            if not is_rendered_visual_layer(layer):
+                continue
+            events.add(layer.get("revealAtUnit", at_unit))
+            if isinstance(layer.get("exitAtUnit"), int):
+                events.add(layer["exitAtUnit"])
+            for nested_key in ("bars", "nodes", "links"):
+                nested_items = layer.get(nested_key)
+                if not isinstance(nested_items, list):
+                    continue
+                for nested in nested_items:
+                    if isinstance(nested, dict):
+                        events.add(
+                            nested.get(
+                                "revealAtUnit",
+                                layer.get("revealAtUnit", at_unit),
+                            )
+                        )
+    return events
+
+
+def visual_quality_issue(
+    message: str,
+    *,
+    strict: bool,
+    warnings: list[str],
+    errors: list[str],
+) -> None:
+    (errors if strict else warnings).append(message)
+
+
 def validate_visual_beats(
     scenes: list[dict],
     assets: dict[str, dict],
     unit_by_index: dict[int, dict],
     warning_seconds: float,
-) -> tuple[int, list[str]]:
+    max_visual_gap_seconds: float,
+    strict_visuals: bool,
+) -> tuple[int, list[str], list[str]]:
     beat_ids: set[str] = set()
     beat_count = 0
     warnings: list[str] = []
+    errors: list[str] = []
 
     for scene_position, scene in enumerate(scenes, start=1):
         first, last = scene["units"]
-        mode = scene.get("visualMode", "layout")
+        raw_beats = scene.get("visualBeats")
+        mode = scene.get(
+            "visualMode",
+            "editorial" if isinstance(raw_beats, list) and raw_beats else "layout",
+        )
         if mode not in VISUAL_MODES:
             raise SystemExit(f"scene {scene_position} has invalid visualMode: {mode!r}")
-        raw_beats = scene.get("visualBeats")
         if raw_beats is None:
             continue
         if not isinstance(raw_beats, list) or not raw_beats:
@@ -286,8 +516,11 @@ def validate_visual_beats(
 
         previous_unit: int | None = None
         previous_asset: str | None = None
+        previous_signature: str | None = None
         purposes: set[str] = set()
         compositions: set[str] = set()
+        callback_count = 0
+        hybrid_semantic_kinds: set[str] = set()
         for beat_position, beat in enumerate(raw_beats, start=1):
             label = f"scene {scene_position} visual beat {beat_position}"
             if not isinstance(beat, dict):
@@ -311,8 +544,13 @@ def validate_visual_beats(
                 )
             purpose = beat.get("purpose")
             composition = beat.get("composition")
+            visual_intent = beat.get("visualIntent")
+            if visual_intent is not None and visual_intent not in VISUAL_INTENTS:
+                raise SystemExit(f"{label} has invalid visualIntent: {visual_intent!r}")
             if purpose not in BEAT_PURPOSES:
                 raise SystemExit(f"{label} has invalid purpose: {purpose!r}")
+            if purpose == "callback":
+                callback_count += 1
             if composition not in BEAT_COMPOSITIONS:
                 raise SystemExit(f"{label} has invalid composition: {composition!r}")
             if beat.get("transition", "cut") not in BEAT_TRANSITIONS:
@@ -330,6 +568,7 @@ def validate_visual_beats(
                 raise SystemExit(f"{label} layers must be a list")
             layer_ids: set[str] = set()
             has_asset_layer = False
+            panel_layers: list[tuple[str, str, int, int, str]] = []
             for layer_position, layer in enumerate(raw_layers, start=1):
                 layer_label = f"{label} layer {layer_position}"
                 if not isinstance(layer, dict):
@@ -347,6 +586,12 @@ def validate_visual_beats(
                     raise SystemExit(f"{layer_label} has invalid kind: {kind!r}")
                 if slot not in LAYER_SLOTS:
                     raise SystemExit(f"{layer_label} has invalid slot: {slot!r}")
+                if (
+                    mode == "hybrid"
+                    and kind not in HYBRID_ALLOWED_LAYER_KINDS
+                    and is_rendered_visual_layer(layer)
+                ):
+                    hybrid_semantic_kinds.add(kind)
                 if kind == "asset":
                     layer_asset = layer.get("asset")
                     if layer_asset not in assets:
@@ -375,6 +620,14 @@ def validate_visual_beats(
                     bars = layer.get("bars")
                     if not isinstance(bars, list) or not bars:
                         raise SystemExit(f"{layer_label} bar-compare layer must define non-empty bars")
+                    if len(bars) > MAX_BAR_ITEMS:
+                        visual_quality_issue(
+                            f"{layer_label} defines {len(bars)} bars; use at most {MAX_BAR_ITEMS} "
+                            "or split the comparison across beats",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
                     for bar_position, bar in enumerate(bars, start=1):
                         bar_label = f"{layer_label} bar {bar_position}"
                         if not isinstance(bar, dict):
@@ -389,6 +642,27 @@ def validate_visual_beats(
                     nodes = layer.get("nodes")
                     if not isinstance(nodes, list) or len(nodes) < 2:
                         raise SystemExit(f"{layer_label} network layer must define at least 2 nodes")
+                    network_layout = layer.get("networkLayout", "auto")
+                    if network_layout not in NETWORK_LAYOUTS:
+                        raise SystemExit(
+                            f"{layer_label} has invalid networkLayout: {network_layout!r}"
+                        )
+                    if network_layout == "triangle" and len(nodes) != 3:
+                        raise SystemExit(
+                            f"{layer_label} triangle networkLayout requires exactly 3 nodes"
+                        )
+                    if network_layout == "hub" and len(nodes) < 3:
+                        raise SystemExit(
+                            f"{layer_label} hub networkLayout requires at least 3 nodes"
+                        )
+                    if len(nodes) > MAX_NETWORK_NODES:
+                        visual_quality_issue(
+                            f"{layer_label} defines {len(nodes)} nodes; use at most "
+                            f"{MAX_NETWORK_NODES} or split the network across beats",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
                     node_ids: set[str] = set()
                     for node_position, node in enumerate(nodes, start=1):
                         node_label = f"{layer_label} node {node_position}"
@@ -421,17 +695,34 @@ def validate_visual_beats(
                     if layer.get("tail") is not None and layer["tail"] not in {"left", "right"}:
                         raise SystemExit(f"{layer_label} has invalid tail: {layer['tail']!r}")
                 elif kind == "annotate":
-                    region = layer.get("region")
-                    if not isinstance(region, dict):
-                        raise SystemExit(f"{layer_label} annotate layer must define region")
-                    for axis in ("x", "y", "w", "h"):
-                        coord = region.get(axis)
-                        if not isinstance(coord, (int, float)) or coord < 0 or coord > 1:
-                            raise SystemExit(
-                                f"{layer_label} region.{axis} must be a number between 0 and 1"
-                            )
-                    if layer.get("shape") is not None and layer["shape"] not in ANNOTATE_SHAPES:
-                        raise SystemExit(f"{layer_label} has invalid shape: {layer['shape']!r}")
+                    shape = layer.get("shape")
+                    if shape is None:
+                        warnings.append(
+                            f"{layer_label} omits annotate shape; the old implicit 'box' "
+                            "default is disabled and Remotion skips it. Use arrow, underline, "
+                            "or a focused crop."
+                        )
+                    elif shape in DISABLED_ANNOTATE_SHAPES:
+                        warnings.append(
+                            f"{layer_label} uses disabled annotate shape {shape!r}; "
+                            "Remotion skips it. Replace it with arrow, underline, or a focused crop."
+                        )
+                    elif shape not in ANNOTATE_SHAPES:
+                        raise SystemExit(f"{layer_label} has invalid shape: {shape!r}")
+                    else:
+                        region = layer.get("region")
+                        if not isinstance(region, dict):
+                            raise SystemExit(f"{layer_label} annotate layer must define region")
+                        for axis in ("x", "y", "w", "h"):
+                            coord = region.get(axis)
+                            if not isinstance(coord, (int, float)) or coord < 0 or coord > 1:
+                                raise SystemExit(
+                                    f"{layer_label} region.{axis} must be a number between 0 and 1"
+                                )
+                        if region["x"] + region["w"] > 1:
+                            raise SystemExit(f"{layer_label} region exceeds the right canvas edge")
+                        if region["y"] + region["h"] > 1:
+                            raise SystemExit(f"{layer_label} region exceeds the bottom canvas edge")
 
                 reveal = layer.get("revealAtUnit", at_unit)
                 exit_unit = layer.get("exitAtUnit")
@@ -445,6 +736,26 @@ def validate_visual_beats(
                     raise SystemExit(
                         f"{layer_label} exitAtUnit must be after revealAtUnit and inside the scene"
                     )
+                if kind in PANEL_LAYER_KINDS:
+                    panel_layers.append(
+                        (slot, kind, reveal, exit_unit if exit_unit is not None else last + 1, layer_label)
+                    )
+
+            for panel_position, panel in enumerate(panel_layers):
+                slot, kind, reveal, exit_unit, panel_label = panel
+                for other in panel_layers[panel_position + 1 :]:
+                    other_slot, other_kind, other_reveal, other_exit, other_label = other
+                    if slot != other_slot:
+                        continue
+                    if max(reveal, other_reveal) >= min(exit_unit, other_exit):
+                        continue
+                    visual_quality_issue(
+                        f"{panel_label} ({kind}) overlaps {other_label} ({other_kind}) in slot "
+                        f"{slot!r}; assign different slots or non-overlapping reveal/exit units",
+                        strict=strict_visuals,
+                        warnings=warnings,
+                        errors=errors,
+                    )
 
             if base_asset is None and not has_asset_layer:
                 raise SystemExit(f"{label} must define baseAsset or at least one asset layer")
@@ -454,11 +765,56 @@ def validate_visual_beats(
                     f"scene {scene_position} beats {beat_position - 1}-{beat_position} repeat "
                     f"baseAsset {base_asset!r} without callback purpose"
                 )
+            signature = beat_semantic_signature(beat)
+            if previous_signature == signature:
+                visual_quality_issue(
+                    f"scene {scene_position} visual beat {beat_position} introduces no semantic "
+                    "change; camera or composition changes alone do not justify another beat",
+                    strict=strict_visuals,
+                    warnings=warnings,
+                    errors=errors,
+                )
             previous_unit = at_unit
             previous_asset = base_asset
+            previous_signature = signature
             purposes.add(purpose)
             compositions.add(composition)
             beat_count += 1
+
+        if len(raw_beats) >= 3 and callback_count / len(raw_beats) > 0.35:
+            visual_quality_issue(
+                f"scene {scene_position} uses callback purpose on {callback_count}/"
+                f"{len(raw_beats)} beats; callbacks must be occasional, content-motivated returns",
+                strict=strict_visuals,
+                warnings=warnings,
+                errors=errors,
+            )
+        if hybrid_semantic_kinds:
+            visual_quality_issue(
+                f"scene {scene_position} hybrid mode contains semantic Visual Beat layers "
+                f"{sorted(hybrid_semantic_kinds)}; keep hybrid beats image/tint-only and put "
+                "semantic panels in layout props, or use editorial mode",
+                strict=strict_visuals,
+                warnings=warnings,
+                errors=errors,
+            )
+
+        event_units = semantic_event_units(raw_beats, first)
+        event_times = [unit_start_seconds(unit_by_index, unit) for unit in sorted(event_units)]
+        event_times.append(scene_end_seconds(unit_by_index, last))
+        max_gap = max(
+            (end - start for start, end in zip(event_times, event_times[1:])),
+            default=0.0,
+        )
+        if max_gap > max_visual_gap_seconds:
+            visual_quality_issue(
+                f"scene {scene_position} has a {max_gap:.1f}s gap without a semantic visual "
+                f"change; keep gaps within {max_visual_gap_seconds:.1f}s by adding content-bearing "
+                "assets, evidence, or staged semantic reveals",
+                strict=strict_visuals,
+                warnings=warnings,
+                errors=errors,
+            )
 
         for beat_position, beat in enumerate(raw_beats, start=1):
             start = unit_start_seconds(unit_by_index, beat["atUnit"])
@@ -475,10 +831,27 @@ def validate_visual_beats(
             # frozen slide regardless of how good the base image is.
             if end - start > 8.0:
                 beat_unit = beat["atUnit"]
-                has_internal_reveal = any(
-                    isinstance(layer, dict) and layer.get("revealAtUnit", beat_unit) > beat_unit
-                    for layer in beat.get("layers", [])
-                )
+                has_internal_reveal = False
+                for layer in beat.get("layers", []):
+                    if not isinstance(layer, dict) or not is_rendered_visual_layer(layer):
+                        continue
+                    layer_reveal = layer.get("revealAtUnit", beat_unit)
+                    if layer_reveal > beat_unit:
+                        has_internal_reveal = True
+                        break
+                    for nested_key in ("bars", "nodes", "links"):
+                        nested_items = layer.get(nested_key)
+                        if not isinstance(nested_items, list):
+                            continue
+                        if any(
+                            isinstance(item, dict)
+                            and item.get("revealAtUnit", layer_reveal) > beat_unit
+                            for item in nested_items
+                        ):
+                            has_internal_reveal = True
+                            break
+                    if has_internal_reveal:
+                        break
                 if not has_internal_reveal:
                     warnings.append(
                         f"scene {scene_position} visual beat {beat_position} lasts {end - start:.1f}s "
@@ -497,19 +870,20 @@ def validate_visual_beats(
             kinds = {
                 layer.get("kind")
                 for layer in beat.get("layers", [])
-                if isinstance(layer, dict)
+                if isinstance(layer, dict) and is_rendered_visual_layer(layer)
             }
             if kinds and not (kinds & EXPRESSIVE_LAYER_KINDS):
                 text_only_run += 1
                 if text_only_run == 3:
                     warnings.append(
                         f"scene {scene_position} has 3+ consecutive beats with text/tint layers only; "
-                        "use counter, bar-compare, network, dialogue, annotate, or asset layers"
+                        "use counter, bar-compare, network, dialogue, arrow/underline annotate, "
+                        "or asset layers"
                     )
             else:
                 text_only_run = 0
 
-    return beat_count, warnings
+    return beat_count, warnings, errors
 
 
 def main() -> None:
@@ -521,6 +895,17 @@ def main() -> None:
         default=12.0,
         help="Warn when one Visual Beat exceeds this duration; does not fail validation.",
     )
+    parser.add_argument(
+        "--max-visual-gap-seconds",
+        type=float,
+        default=12.0,
+        help="Maximum gap between semantic visual changes in strict visual mode.",
+    )
+    parser.add_argument(
+        "--strict-visuals",
+        action="store_true",
+        help="Fail on visual-density, repeated-beat, hybrid-layer, and panel-overlap issues.",
+    )
     args = parser.parse_args()
 
     project = args.project.expanduser().resolve()
@@ -530,6 +915,7 @@ def main() -> None:
     narration = project / "narration.txt"
     if not narration.is_file() or not narration.read_text(encoding="utf-8").strip():
         raise SystemExit(f"missing or empty narration: {narration}")
+    authored_title = load_authored_title(project)
 
     timeline = load_json(project / "narration.timeline.json")
     storyboard = load_json(project / "rich_storyboard.json")
@@ -564,9 +950,53 @@ def main() -> None:
             f"1..{len(units)}"
         )
 
+    contract_warnings: list[str] = []
+    if authored_title is None:
+        contract_warnings.append(
+            "title.txt is missing; legacy project remains readable, but add it before the next production render"
+        )
+    cover = storyboard.get("cover")
+    if cover is None:
+        contract_warnings.append(
+            "storyboard has no cover; legacy project will render without a frame-0 title cover"
+        )
+    else:
+        if not isinstance(cover, dict):
+            raise SystemExit("storyboard.cover must be an object")
+        title = cover.get("title")
+        if not isinstance(title, str) or not title.strip():
+            raise SystemExit("storyboard.cover.title must be a non-empty string")
+        if authored_title is not None and title.strip() != authored_title:
+            raise SystemExit(
+                "storyboard.cover.title must exactly match the canonical title in title.txt"
+            )
+        through_unit = cover.get("throughUnit")
+        first_scene_first, first_scene_last = scenes[0]["units"]
+        if isinstance(through_unit, bool) or not isinstance(through_unit, int):
+            raise SystemExit("storyboard.cover.throughUnit must be an integer")
+        if through_unit < first_scene_first or through_unit > first_scene_last:
+            raise SystemExit(
+                "storyboard.cover.throughUnit must be inside the first scene units "
+                f"[{first_scene_first}, {first_scene_last}]"
+            )
+        for key in ("subtitle", "kicker"):
+            if key in cover and not isinstance(cover[key], str):
+                raise SystemExit(f"storyboard.cover.{key} must be a string")
+        if len(title.replace("\n", "")) > 30:
+            contract_warnings.append(
+                "storyboard.cover.title is longer than 30 characters; inspect frame 0 for fit"
+            )
+
     prompt_file_set = prompt_files(project)
     pool_assets = pool_asset_records(project)
-    visual_assets = validate_visual_assets(project, storyboard, prompt_file_set, pool_assets)
+    checked_images: set[str] = set()
+    visual_assets = validate_visual_assets(
+        project,
+        storyboard,
+        prompt_file_set,
+        pool_assets,
+        checked_images,
+    )
     background_count = 0
     scene_primary_backgrounds: list[tuple[int, str, bool]] = []
     for position, scene in enumerate(scenes, start=1):
@@ -584,21 +1014,28 @@ def main() -> None:
                 raise SystemExit(
                     f"scene {position} background {cue_position} must define exactly one of image or video"
                 )
+            if cue.get("transition") not in BACKGROUND_TRANSITIONS:
+                raise SystemExit(
+                    f"scene {position} background {cue_position} has invalid transition: "
+                    f"{cue.get('transition')!r}"
+                )
+            if cue.get("motion") not in BACKGROUND_MOTIONS:
+                raise SystemExit(
+                    f"scene {position} background {cue_position} has invalid motion: "
+                    f"{cue.get('motion')!r}"
+                )
             asset = image if image else video
             normalized_asset, asset_path = normalized_local_asset(
                 project,
                 asset,
                 f"scene {position} background {cue_position}",
             )
-            lower_image = normalized_asset.lower()
-            forbidden = next(
-                (marker for marker in FORBIDDEN_BACKGROUND_MARKERS if marker in lower_image),
-                None,
-            )
-            if forbidden:
-                raise SystemExit(
-                    f"scene {position} background {cue_position} uses forbidden final image path "
-                    f"{asset!r} matching {forbidden!r}"
+            if image:
+                validate_final_image_asset(
+                    normalized_asset,
+                    asset_path,
+                    f"scene {position} background {cue_position}",
+                    checked_images,
                 )
             if (
                 image
@@ -635,11 +1072,13 @@ def main() -> None:
                 )
             seen.setdefault(image, position)
 
-    visual_beat_count, visual_warnings = validate_visual_beats(
+    visual_beat_count, visual_warnings, visual_errors = validate_visual_beats(
         scenes,
         visual_assets,
         unit_by_index,
         args.visual_warning_seconds,
+        args.max_visual_gap_seconds,
+        args.strict_visuals,
     )
 
     audio = storyboard.get("audio", "audio/narration_azure.wav")
@@ -647,14 +1086,19 @@ def main() -> None:
     if not audio_path.is_file():
         raise SystemExit(f"storyboard audio not found: {audio_path}")
 
-    for warning in visual_warnings:
+    warnings = contract_warnings + visual_warnings
+    for warning in warnings:
         print(f"warning: {warning}")
+    if visual_errors:
+        raise SystemExit(
+            "strict visual validation failed:\n- " + "\n- ".join(visual_errors)
+        )
 
     print(
         f"valid project={project} units={len(units)} scenes={len(scenes)} "
         f"backgrounds={background_count} visualAssets={len(visual_assets)} "
         f"poolAssets={len(pool_assets)} visualBeats={visual_beat_count} "
-        f"warnings={len(visual_warnings)} audio={audio}"
+        f"warnings={len(warnings)} audio={audio}"
     )
 
 

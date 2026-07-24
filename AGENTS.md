@@ -20,20 +20,22 @@ The replicated pipeline is:
 
 ```text
 case source/materials
--> rewritten narration
+-> title.txt + rewritten narration
 -> numeric-normalized TTS script
 -> Azure Speech TTS narration wav + narration.timeline.json
 -> unit-anchored rich_storyboard.json
--> shared-pool checkout plus generated visual gaps
+-> fresh project visual generation plus post-QA visual-pool archive
 -> Remotion motion-graphics render
 -> ffprobe/ffmpeg visual QA
 ```
 
 ## Source Of Truth
 
+- Keep the final human-authored article/video title in `title.txt`; create and review it together with `narration.txt`.
 - Keep `rich_storyboard.json` or the equivalent storyboard JSON as the source of truth for scenes, layouts, subtitles, keyword timing, and background cues.
+- Keep `storyboard.cover.title` as the rendered copy of `title.txt`, not a separately authored later title.
 - Keep `narration.timeline.json` as the only timing baseline.
-- Keep `assets/visual-pool/taxonomy.json` as the shared visual-label source and `asset_pool_usage.json` as project-local checkout provenance.
+- Keep `assets/visual-pool/taxonomy.json` as the shared visual-label source and `asset_pool_usage.json` as project-local provenance for deliberate checkout.
 - Do not hard-code scene timing or scene data into Remotion components when JSON-driven data exists.
 - Use narration unit numbers (`atUnit`, `units`) instead of handwritten seconds.
 
@@ -58,12 +60,12 @@ case source/materials
 - For Chinese case-video narration and subtitles, do not use the rhetorical contrast pattern `不是……而是……` or close variants such as `不是...而是...`.
 - Rewrite those contrasts as direct assertions, causal statements, or two short sentences. Example: `软件上线改变了责任边界。`
 - In human-readable `narration.txt`, screen subtitles, and normalizer-generated TTS text, keep business acronyms unspaced, such as `CEO`, `CIO`, and `CRM`; do not add spaces between acronym letters or between the acronym and adjacent Chinese text.
-- Before finalizing narration, run an explicit large-model review for natural spoken Chinese, prohibited contrast patterns, acronym spacing, and numeric readout risks.
+- Before finalizing `title.txt` and narration, run an explicit large-model review for title appeal and factual support, hook/title consistency, natural spoken Chinese, prohibited contrast patterns, acronym spacing, and numeric readout risks.
 - When a case shares a category with a prior video, vary the narrative lens. Avoid repeating the same "sales discovers hidden need, upgrades the solution, wins a larger deal" arc if the source material supports a customer-transformation, internal-resistance, or organization-politics angle.
 
 ## TTS Rules
 
-- Human-readable narration goes in `narration.txt`.
+- The one-line final title goes in `title.txt`; human-readable narration goes in `narration.txt`.
 - Spoken text must go through `tts_text_normalizer.py` before Azure Speech TTS.
 - Screen subtitles may keep Arabic numerals for readability; TTS text should use normalized Chinese readings.
 - Azure Speech TTS is the default engine for all future videos. CosyVoice is only a historical fallback unless the user explicitly asks for it.
@@ -96,9 +98,10 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 - Keep generated background prompts free of logos, readable text, numerals, letters, watermarks, UI screenshots, and source-document screenshots. Numbers, percentages, money, and acronyms belong in Remotion text layers, not in generated background art.
 - Final backgrounds must be AI-generated or curated narrative illustrations. Do not use PIL/Canvas/SVG/programmatic diagrams, icon sets, flowcharts, dashboards, or placeholders as final video backgrounds.
 - If image generation fails, fix the Azure image deployment/configuration or stop for review; do not fall back to programmatic images.
-- Search and visually review the shared pool before generating new backgrounds. Checkout selected assets into `output/<project>/images/pool/`; never reference the shared canonical path directly from a storyboard.
-- Main flow must align storyboard refs with project-local files. Generated images are declared by `image_prompts.json`; pool images are declared by `asset_pool_usage.json`.
-- Cross-project pool reuse is normal. Repeating the same image within one video requires an intentional callback, comparison, evidence reveal, or explicit fallback marked with `reuse`/`allowBackgroundReuse`; it must not hide a visual gap.
+- For new video/background work, generate fresh project-local backgrounds first. Do not search or checkout the shared pool as the first step; use pool assets only when the user explicitly requests reuse, a revision needs visual continuity, or a scene intentionally calls back to a prior asset.
+- When pool assets are deliberately reused, checkout selected assets into `output/<project>/images/pool/`; never reference the shared canonical path directly from a storyboard.
+- Main flow must align storyboard refs with project-local files. Generated images are declared by `image_prompts.json`; deliberately checked-out pool images are declared by `asset_pool_usage.json`.
+- Cross-project pool reuse is allowed when deliberate, but it is not the default way to fill new scenes. Repeating the same image within one video requires an intentional callback, comparison, evidence reveal, or explicit fallback marked with `reuse`/`allowBackgroundReuse`; it must not hide a visual gap.
 - After newly generated images pass QA, rebuild and audit the pool so they become reusable.
 
 ## Remotion

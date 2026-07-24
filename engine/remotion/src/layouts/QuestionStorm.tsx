@@ -5,6 +5,7 @@ import {SPRING_SETTLE, idleFloat} from "../anim/springs";
 import {HeadlineReveal} from "../components/HeadlineReveal";
 import {unitStartFrame} from "../timing/timeline";
 import type {LayoutProps} from "./shared";
+import {fitTextBlockFontSize} from "../textFit";
 
 type QuestionProp = {text: string; atUnit: number; offset?: number};
 
@@ -22,7 +23,7 @@ export const QuestionStorm: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
 
   return (
     <>
-      <HeadlineReveal headline={scene.headline} x={1150} y={190} size={86} />
+      <HeadlineReveal headline={scene.headline} x={1120} y={190} size={82} width={700} />
       {questions.map((question, idx) => {
         const startFrame = unitStartFrame(question.atUnit, question.offset ?? 0) - sceneStartFrame;
         const s = spring({
@@ -34,6 +35,13 @@ export const QuestionStorm: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
         const spot = spots[idx % spots.length];
         const color = chipColors[idx % chipColors.length];
         const float = idleFloat(frame, startFrame + 24, 3);
+        const questionSize = fitTextBlockFontSize({
+          text: question.text,
+          maxWidth: spot.width - 60,
+          maxLines: 2,
+          preferred: 48,
+          min: 34,
+        });
         return (
           <div
             key={question.text}
@@ -49,10 +57,12 @@ export const QuestionStorm: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
               border: `6px solid ${palette.white}`,
               boxShadow: `12px 12px 0 ${palette.ink}`,
               padding: "24px 30px",
+              boxSizing: "border-box",
               fontFamily: fontStack,
-              fontSize: 48,
+              fontSize: questionSize,
               fontWeight: 950,
               lineHeight: 1.1,
+              overflowWrap: "anywhere",
             }}
           >
             {question.text}

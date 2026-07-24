@@ -7,7 +7,7 @@ This pool contains reusable square portraits for character introductions, dialog
 - `sales-watercolor-blue-yellow`: 10 Chinese men and 10 Chinese women in the sales-case blue/yellow watercolor family.
 - `manager-silhouette-warm`: 10 Chinese men and 10 Chinese women in the sales-management warm silhouette family.
 
-Every portrait is a 1024×1024 PNG with a white background, formal business attire, a stable asset ID, an approximate age, an age band, a face direction, and a recommended Remotion placement.
+Every portrait is a 1024×1024 PNG with a white background, a stable asset ID, an approximate age, an age band, a face direction, and a recommended Remotion placement. The default profile family uses formal business attire, but individual profiles may define role-appropriate industry attire when a case needs non-office characters.
 
 ## Commands
 

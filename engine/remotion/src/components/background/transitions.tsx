@@ -15,6 +15,17 @@ export const backgroundTransform = (
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  if (motion === "drift") {
+    const driftX = Math.sin(progress * Math.PI * 1.18) * 12;
+    const driftY = Math.cos(progress * Math.PI * 0.9) * 6 - 3;
+    const zoom = 1.04 + Math.sin(progress * Math.PI) * 0.018;
+    return `translate3d(${driftX + extraX}px, ${driftY + extraY}px, 0) scale(${zoom})`;
+  }
+  if (motion === "breathe") {
+    const zoom = 1.035 + Math.sin(progress * Math.PI) * 0.026;
+    return `translate3d(${extraX}px, ${extraY}px, 0) scale(${zoom})`;
+  }
+
   const zoom = interpolate(progress, [0, 1], [1.025, 1.075]);
   const pan =
     motion === "left"

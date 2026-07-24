@@ -23,14 +23,21 @@ export const BarCompareLayer: React.FC<{
   const bars = layer.bars ?? [];
   if (bars.length === 0) return null;
   const maxValue = Math.max(...bars.map((bar) => bar.max ?? bar.value), 1);
+  const compact = bars.length >= 4;
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 26,
-        padding: "32px 40px",
+        gap: compact ? 15 : 22,
+        width: "100%",
+        maxWidth: "100%",
+        maxHeight: "100%",
+        minWidth: 0,
+        padding: compact ? "22px 28px" : "28px 34px",
+        boxSizing: "border-box",
+        overflow: "hidden",
         background: "rgba(5,17,31,0.82)",
         border: "2px solid rgba(255,255,255,0.5)",
         boxShadow: "12px 12px 0 rgba(5,17,31,0.66)",
@@ -38,11 +45,10 @@ export const BarCompareLayer: React.FC<{
         fontFamily: fontStack,
         opacity: visibility,
         transform: `translateY(${(1 - visibility) * 22}px)`,
-        minWidth: 560,
       }}
     >
       {layer.label ? (
-        <div style={{fontSize: 30, fontWeight: 800, letterSpacing: 3, color: "rgba(255,255,255,0.78)"}}>
+        <div style={{fontSize: compact ? 25 : 30, fontWeight: 800, letterSpacing: 2, color: "rgba(255,255,255,0.78)"}}>
           {layer.label}
         </div>
       ) : null}
@@ -64,16 +70,18 @@ export const BarCompareLayer: React.FC<{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "baseline",
-                marginBottom: 8,
+                marginBottom: compact ? 5 : 8,
+                gap: 16,
               }}
             >
-              <span style={{fontSize: 32, fontWeight: 800}}>{bar.label}</span>
+              <span style={{fontSize: compact ? 27 : 32, fontWeight: 800, minWidth: 0, overflowWrap: "anywhere"}}>{bar.label}</span>
               <span
                 style={{
-                  fontSize: 46,
+                  fontSize: compact ? 38 : 46,
                   fontWeight: 950,
                   color: barColor(bar.tone),
                   fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {Math.round(shown)}
@@ -82,7 +90,7 @@ export const BarCompareLayer: React.FC<{
             </div>
             <div
               style={{
-                height: 26,
+                height: compact ? 20 : 26,
                 background: "rgba(255,255,255,0.14)",
                 overflow: "hidden",
               }}
@@ -100,7 +108,7 @@ export const BarCompareLayer: React.FC<{
         );
       })}
       {layer.text ? (
-        <div style={{fontSize: 28, fontWeight: 700, color: "rgba(255,255,255,0.8)", whiteSpace: "pre-line"}}>
+        <div style={{fontSize: compact ? 23 : 28, fontWeight: 700, color: "rgba(255,255,255,0.8)", whiteSpace: "pre-line", overflowWrap: "anywhere"}}>
           {layer.text}
         </div>
       ) : null}

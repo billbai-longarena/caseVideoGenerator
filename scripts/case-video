@@ -6,13 +6,173 @@ ENGINE_ROOT="${CASE_VIDEO_ENGINE_ROOT:-$REPO_ROOT/engine}"
 REMOTION_ROOT="$ENGINE_ROOT/remotion"
 PYTHON_BIN="$REPO_ROOT/.venv/bin/python"
 
+prefer_native_apple_node() {
+  if [[ "$(uname -s)" != "Darwin" || "$(uname -m)" != "arm64" ]]; then
+    return
+  fi
+
+  local current_arch=""
+  if command -v node >/dev/null 2>&1; then
+    current_arch="$(node -p 'process.arch' 2>/dev/null || true)"
+  fi
+  if [[ "$current_arch" == "arm64" ]]; then
+    return
+  fi
+
+  local candidate candidate_arch
+  local -a candidates=()
+  candidates+=("/opt/homebrew/bin/node")
+  candidates+=("$HOME/.volta/bin/node")
+  candidates+=("$HOME/.fnm/current/bin/node")
+
+  if [[ -d "$HOME/.nvm/versions/node" ]]; then
+    while IFS= read -r candidate; do
+      candidates+=("$candidate")
+    done < <(find "$HOME/.nvm/versions/node" -mindepth 3 -maxdepth 3 \
+      -path '*/bin/node' -type f 2>/dev/null)
+  fi
+
+  for candidate in "${candidates[@]}"; do
+    [[ -x "$candidate" ]] || continue
+    candidate_arch="$("$candidate" -p 'process.arch' 2>/dev/null || true)"
+    if [[ "$candidate_arch" == "arm64" ]]; then
+      export PATH="$(dirname "$candidate"):$PATH"
+      hash -r
+      echo "using native Apple Silicon Node: $(node -v) ($(node -p 'process.arch'))"
+      return
+    fi
+  done
+
+  echo "warning: no native arm64 Node found; Remotion will use ${current_arch:-unknown} Node" >&2
+}
+
+detect_local_parallelism() {
+  local cpu_count mem_bytes
+  cpu_count="$(sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 6)"
+  mem_bytes="$(sysctl -n hw.memsize 2>/dev/null || echo 0)"
+
+  DEFAULT_REMOTION_CONCURRENCY=6
+  DEFAULT_IMAGE_CONCURRENCY=2
+
+  # A 10-core Apple Silicon machine with 32GB RAM can keep all eight
+  # performance cores busy while leaving the efficiency cores and memory
+  # headroom for macOS, Chromium orchestration and ffmpeg.
+  if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]] && \
+    (( cpu_count >= 10 && mem_bytes >= 34359738368 )); then
+    DEFAULT_REMOTION_CONCURRENCY=8
+    DEFAULT_IMAGE_CONCURRENCY=3
+  elif (( cpu_count < 8 || (mem_bytes > 0 && mem_bytes < 17179869184) )); then
+    DEFAULT_REMOTION_CONCURRENCY=4
+    DEFAULT_IMAGE_CONCURRENCY=2
+  fi
+}
+
+has_cli_option() {
+  local expected="$1"
+  shift
+  local argument
+  for argument in "$@"; do
+    if [[ "$argument" == "$expected" || "$argument" == "$expected="* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+sync_storyboard_if_needed() {
+  if [[ -f "$PROJECT_ROOT/storyboard_plan.json" ]] && \
+    { [[ ! -f "$PROJECT_ROOT/rich_storyboard.json" ]] || \
+      [[ "$PROJECT_ROOT/storyboard_plan.json" -nt "$PROJECT_ROOT/rich_storyboard.json" ]] || \
+      [[ -f "$PROJECT_ROOT/title.txt" && "$PROJECT_ROOT/title.txt" -nt "$PROJECT_ROOT/rich_storyboard.json" ]] || \
+      [[ "$PROJECT_ROOT/narration.timeline.json" -nt "$PROJECT_ROOT/rich_storyboard.json" ]]; }; then
+    echo "syncing rich_storyboard.json from newer title/plan/timeline"
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/build_storyboard_from_plan.py" "$PROJECT_ROOT"
+  fi
+}
+
+readiness_stage_from_args() {
+  local stage="render"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --stage=*)
+        stage="${1#--stage=}"
+        ;;
+      --stage)
+        if [[ $# -gt 1 ]]; then
+          stage="$2"
+          shift
+        fi
+        ;;
+    esac
+    shift
+  done
+  printf '%s\n' "$stage"
+}
+
+readiness_min_score() {
+  case "$1" in
+    plan) printf '%s\n' "${CASE_VIDEO_PLAN_MIN_SCORE:-80}" ;;
+    render) printf '%s\n' "${CASE_VIDEO_RENDER_MIN_SCORE:-85}" ;;
+    *) printf '%s\n' "85" ;;
+  esac
+}
+
+run_readiness() {
+  local stage="$1"
+  if [[ "${CASE_VIDEO_SKIP_READINESS:-0}" == "1" ]]; then
+    echo "warning: CASE_VIDEO_SKIP_READINESS=1 bypasses the $stage readiness gate (debug only)" >&2
+    return
+  fi
+  sync_storyboard_if_needed
+  "$PYTHON_BIN" "$REPO_ROOT/scripts/case_video_readiness.py" \
+    "$PROJECT_ROOT" --stage "$stage" --min-score "$(readiness_min_score "$stage")"
+}
+
+REMOTION_LOCK_DIR="$REMOTION_ROOT/.case-video.lock"
+REMOTION_LOCK_HELD=0
+
+release_remotion_lock() {
+  if [[ "$REMOTION_LOCK_HELD" == "1" && -d "$REMOTION_LOCK_DIR" ]]; then
+    local owner=""
+    owner="$(readlink "$REMOTION_LOCK_DIR/pid" 2>/dev/null || true)"
+    if [[ "$owner" == "$$" ]]; then
+      rm -rf "$REMOTION_LOCK_DIR"
+    fi
+  fi
+  REMOTION_LOCK_HELD=0
+}
+
+acquire_remotion_lock() {
+  local owner="" active_project=""
+  if ! mkdir "$REMOTION_LOCK_DIR" 2>/dev/null; then
+    owner="$(readlink "$REMOTION_LOCK_DIR/pid" 2>/dev/null || true)"
+    active_project="$(readlink "$REMOTION_LOCK_DIR/project" 2>/dev/null || true)"
+    if [[ "$owner" =~ ^[0-9]+$ ]] && kill -0 "$owner" 2>/dev/null; then
+      echo "Remotion workspace is busy (pid=$owner project=${active_project:-unknown})." >&2
+      echo "Wait for that preview/render to finish before syncing another project." >&2
+      exit 1
+    fi
+    echo "removing stale Remotion workspace lock (pid=${owner:-unknown})" >&2
+    rm -rf "$REMOTION_LOCK_DIR"
+    mkdir "$REMOTION_LOCK_DIR"
+  fi
+  ln -s "$$" "$REMOTION_LOCK_DIR/pid"
+  ln -s "$PROJECT_ROOT" "$REMOTION_LOCK_DIR/project"
+  REMOTION_LOCK_HELD=1
+  trap release_remotion_lock EXIT
+}
+
 usage() {
   cat <<'EOF'
 Usage: scripts/case-video <command> <project> [options]
 
 Commands:
+  build         Build rich_storyboard.json from storyboard_plan.json
   check         Validate project files and unit coverage
+  evaluate      Score Visual Beat pacing, semantics, diversity, and asset use
+  ready         Run staged one-pass readiness checks (default: render)
   tts           Generate Azure narration and timeline
+  images        Generate project images with adaptive safe concurrency
   typecheck     Run Remotion TypeScript checks
   preview       Open Remotion preview for the project
   render        Render complete video to project/video/case_video.mp4
@@ -47,30 +207,85 @@ fi
 
 export VIDEO_PROJECT_DIR="$PROJECT_ROOT"
 mkdir -p "$PROJECT_ROOT/video"
+detect_local_parallelism
 
 case "$COMMAND" in
+  build)
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/build_storyboard_from_plan.py" \
+      "$PROJECT_ROOT" "$@"
+    ;;
   check)
-    "$PYTHON_BIN" "$REPO_ROOT/scripts/validate_case_project.py" "$PROJECT_ROOT"
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/validate_case_project.py" \
+      --strict-visuals "$PROJECT_ROOT" "$@"
+    ;;
+  evaluate)
+    sync_storyboard_if_needed
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/evaluate_visual_storyboard.py" \
+      "$PROJECT_ROOT" "$@"
+    ;;
+  ready)
+    sync_storyboard_if_needed
+    readiness_stage="$(readiness_stage_from_args "$@")"
+    readiness_args=("$@")
+    if ! has_cli_option "--min-score" "$@"; then
+      readiness_args+=(--min-score "$(readiness_min_score "$readiness_stage")")
+    fi
+    if [[ "$readiness_stage" == "render" ]]; then
+      prefer_native_apple_node
+      acquire_remotion_lock
+    fi
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/case_video_readiness.py" \
+      "$PROJECT_ROOT" "${readiness_args[@]}"
     ;;
   tts)
     "$PYTHON_BIN" "$ENGINE_ROOT/tts_compare/generate_tts.py" \
       --engine azure --project "$PROJECT_ROOT" "$@"
     ;;
+  images)
+    run_readiness plan
+    image_concurrency="${IMAGE_GENERATION_CONCURRENCY:-$DEFAULT_IMAGE_CONCURRENCY}"
+    if has_cli_option "--concurrency" "$@"; then
+      "$PYTHON_BIN" "$ENGINE_ROOT/scripts/generate_images.py" \
+        --project "$PROJECT_ROOT" "$@"
+    else
+      echo "image generation concurrency=$image_concurrency (override with --concurrency or IMAGE_GENERATION_CONCURRENCY)"
+      "$PYTHON_BIN" "$ENGINE_ROOT/scripts/generate_images.py" \
+        --project "$PROJECT_ROOT" --concurrency "$image_concurrency" "$@"
+    fi
+    ;;
   typecheck)
+    prefer_native_apple_node
     npm --prefix "$REMOTION_ROOT" run typecheck -- "$@"
     ;;
   preview)
+    prefer_native_apple_node
+    acquire_remotion_lock
     npm --prefix "$REMOTION_ROOT" run preview -- "$@"
     ;;
   render)
+    prefer_native_apple_node
+    acquire_remotion_lock
+    run_readiness render
+    export REMOTION_CONCURRENCY="${REMOTION_CONCURRENCY:-$DEFAULT_REMOTION_CONCURRENCY}"
+    echo "Remotion concurrency=$REMOTION_CONCURRENCY (override with REMOTION_CONCURRENCY)"
+    export REMOTION_HARDWARE_ACCELERATION="${REMOTION_HARDWARE_ACCELERATION:-if-possible}"
+    echo "H.264 hardware acceleration=$REMOTION_HARDWARE_ACCELERATION (override with REMOTION_HARDWARE_ACCELERATION)"
     export VIDEO_OUTPUT="${VIDEO_OUTPUT:-$PROJECT_ROOT/video/case_video.mp4}"
     npm --prefix "$REMOTION_ROOT" run render -- "$@"
     ;;
   render-video)
+    prefer_native_apple_node
+    acquire_remotion_lock
+    run_readiness render
+    export REMOTION_CONCURRENCY="${REMOTION_CONCURRENCY:-$DEFAULT_REMOTION_CONCURRENCY}"
+    echo "Remotion concurrency=$REMOTION_CONCURRENCY (override with REMOTION_CONCURRENCY)"
+    export REMOTION_HARDWARE_ACCELERATION="${REMOTION_HARDWARE_ACCELERATION:-if-possible}"
+    echo "H.264 hardware acceleration=$REMOTION_HARDWARE_ACCELERATION (override with REMOTION_HARDWARE_ACCELERATION)"
     export VIDEO_LAYER_OUTPUT="${VIDEO_LAYER_OUTPUT:-$PROJECT_ROOT/video/case_video_video_only.mp4}"
     npm --prefix "$REMOTION_ROOT" run render:video -- "$@"
     ;;
   mux)
+    prefer_native_apple_node
     export VIDEO_LAYER="${VIDEO_LAYER:-${VIDEO_LAYER_OUTPUT:-$PROJECT_ROOT/video/case_video_video_only.mp4}}"
     export VIDEO_OUTPUT="${VIDEO_OUTPUT:-$PROJECT_ROOT/video/case_video_with_latest_audio.mp4}"
     npm --prefix "$REMOTION_ROOT" run mux:audio -- "$@"

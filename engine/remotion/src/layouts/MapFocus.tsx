@@ -6,6 +6,7 @@ import {HeadlineReveal} from "../components/HeadlineReveal";
 import {KeywordPop} from "../components/KeywordPop";
 import {unitStartFrame} from "../timing/timeline";
 import {propNumber, propString, type LayoutProps} from "./shared";
+import {fitTextBlockFontSize} from "../textFit";
 
 // Headline top-center, focus ring left, chips scattered around the ring.
 export const MapFocus: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
@@ -13,6 +14,14 @@ export const MapFocus: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
   const {fps} = useVideoConfig();
   const ring = spring({frame: frame - 14, fps, config: SPRING_SETTLE, durationInFrames: 44});
   const float = idleFloat(frame, 40, 4);
+  const centerLabel = propString(scene, "centerLabel", "FOCUS");
+  const centerSize = fitTextBlockFontSize({
+    text: centerLabel,
+    maxWidth: 220,
+    maxLines: 2,
+    preferred: 72,
+    min: 38,
+  });
 
   return (
     <>
@@ -41,13 +50,19 @@ export const MapFocus: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: 18,
+            boxSizing: "border-box",
+            textAlign: "center",
             fontFamily: fontStack,
-            fontSize: 72,
+            fontSize: centerSize,
             fontWeight: 950,
+            lineHeight: 1.04,
+            wordBreak: "break-all",
+            overflow: "hidden",
             border: `6px solid ${palette.ink}`,
           }}
         >
-          {propString(scene, "centerLabel", "FOCUS")}
+          {centerLabel}
         </div>
       </div>
       {scene.keywords.map((keyword, idx) => (

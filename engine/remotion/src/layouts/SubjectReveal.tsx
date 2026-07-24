@@ -6,6 +6,7 @@ import {HeadlineReveal} from "../components/HeadlineReveal";
 import {InfoCard} from "../components/InfoCard";
 import {unitStartFrame} from "../timing/timeline";
 import {propNumber, propString, sceneUnitFrame, type LayoutProps} from "./shared";
+import {fitSingleLineFontSize} from "../textFit";
 
 // No keyword chip row, no standard card position: the big yellow slab is the scene.
 export const SubjectReveal: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
@@ -17,15 +18,25 @@ export const SubjectReveal: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
   const s = spring({frame: frame - revealDelay, fps, config: SPRING_POP, durationInFrames: 44});
   const float = idleFloat(frame, revealDelay + 24, 3);
   const noteAt = sceneUnitFrame(scene, sceneStartFrame, "noteAtUnit", revealAtUnit);
+  const reveal = propString(scene, "reveal", "关键主角");
+  const revealWidth = 1240;
+  const revealSize = fitSingleLineFontSize({
+    text: reveal,
+    maxWidth: revealWidth - 108,
+    preferred: propNumber(scene, "revealSize", 140),
+    min: 64,
+  });
 
   return (
     <>
-      <HeadlineReveal headline={scene.headline} x={90} y={190} size={72} />
+      <HeadlineReveal headline={scene.headline} x={90} y={190} size={72} width={960} />
       <div
         style={{
           position: "absolute",
           left: 92,
-          top: 390,
+          top: 430,
+          width: revealWidth,
+          boxSizing: "border-box",
           opacity: Math.min(1, s * 1.3),
           transform: `translateY(${float}px) scale(${s}) rotate(${-4 - (1 - s) * 6}deg)`,
           transformOrigin: "left center",
@@ -35,13 +46,13 @@ export const SubjectReveal: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
           boxShadow: `16px 16px 0 ${palette.blue}`,
           padding: "26px 54px 30px",
           fontFamily: fontStack,
-          fontSize: propNumber(scene, "revealSize", 140),
+          fontSize: revealSize,
           fontWeight: 950,
           lineHeight: 1,
           WebkitTextStroke: `2px ${palette.ink}`,
         }}
       >
-        {propString(scene, "reveal", "关键主角")}
+        {reveal}
       </div>
       <InfoCard
         label={propString(scene, "noteLabel", "CASE NOTE")}

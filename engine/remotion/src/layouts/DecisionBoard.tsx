@@ -5,6 +5,7 @@ import {SPRING_SETTLE, idleFloat} from "../anim/springs";
 import {HeadlineReveal} from "../components/HeadlineReveal";
 import {unitStartFrame} from "../timing/timeline";
 import type {LayoutProps} from "./shared";
+import {fitTextBlockFontSize} from "../textFit";
 
 export const DecisionBoard: React.FC<LayoutProps> = ({scene, sceneStartFrame, duration}) => {
   const frame = useCurrentFrame();
@@ -13,17 +14,25 @@ export const DecisionBoard: React.FC<LayoutProps> = ({scene, sceneStartFrame, du
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const cardGap = 24;
+  const boardWidth = 1240;
+  const cardWidth = Math.min(
+    310,
+    (boardWidth - cardGap * Math.max(0, scene.keywords.length - 1)) /
+      Math.max(1, scene.keywords.length),
+  );
 
   return (
     <>
-      <HeadlineReveal headline={scene.headline} x={94} y={154} size={82} />
+      <HeadlineReveal headline={scene.headline} x={94} y={154} size={72} width={470} />
       <div
         style={{
           position: "absolute",
           left: 620,
           top: 170,
           display: "flex",
-          gap: 28,
+          gap: cardGap,
+          width: boardWidth,
           fontFamily: fontStack,
         }}
       >
@@ -38,11 +47,18 @@ export const DecisionBoard: React.FC<LayoutProps> = ({scene, sceneStartFrame, du
           });
           const background = chipColors[idx % chipColors.length];
           const float = idleFloat(frame, startFrame + 26, 3);
+          const keywordSize = fitTextBlockFontSize({
+            text: keyword.text,
+            maxWidth: cardWidth - 48,
+            maxLines: 3,
+            preferred: 48,
+            min: 32,
+          });
           return (
             <div
               key={keyword.text}
               style={{
-                width: 310,
+                width: cardWidth,
                 height: 390,
                 opacity: s,
                 transform: `translateY(${(1 - s) * 44 + float}px) rotate(${[-3, 1, 3][idx % 3]}deg) scale(${0.94 + s * 0.06})`,
@@ -51,12 +67,15 @@ export const DecisionBoard: React.FC<LayoutProps> = ({scene, sceneStartFrame, du
                 border: `7px solid ${palette.white}`,
                 boxShadow: `13px 13px 0 ${palette.ink}`,
                 padding: 24,
+                boxSizing: "border-box",
+                overflow: "hidden",
+                flexShrink: 0,
               }}
             >
               <div style={{fontSize: 72, fontWeight: 950, lineHeight: 1}}>
                 {String.fromCharCode(65 + idx)}
               </div>
-              <div style={{fontSize: 48, fontWeight: 950, lineHeight: 1.08, marginTop: 34}}>
+              <div style={{fontSize: keywordSize, fontWeight: 950, lineHeight: 1.08, marginTop: 34, overflowWrap: "anywhere"}}>
                 {keyword.text}
               </div>
               <div
