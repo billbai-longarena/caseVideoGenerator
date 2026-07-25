@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:delivery-summary:v1",
+  "title": "Delivery summary",
+  "type": "object",
+  "required": ["version", "status", "summary", "qa_highlights"],
+  "properties": {
+    "version": {"const": "1"},
+    "status": {"enum": ["ready", "blocked"]},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "qa_highlights": {"type": "array", "items": {"type": "string"}},
+    "remaining_risks": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

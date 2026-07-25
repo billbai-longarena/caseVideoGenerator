@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:image-prompts:v2",
+  "title": "Asset-addressed abstract image prompts",
+  "type": "object",
+  "required": ["version", "prompts"],
+  "properties": {
+    "version": {"const": "2"},
+    "prompts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_id", "prompt", "negative_prompt", "style_family"],
+        "properties": {
+          "asset_id": {"type": "string", "minLength": 1, "maxLength": 120},
+          "prompt": {"type": "string", "minLength": 1, "maxLength": 4000},
+          "negative_prompt": {"type": "string", "maxLength": 2000},
+          "style_family": {"enum": ["sales-watercolor", "sales-management-silhouette"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

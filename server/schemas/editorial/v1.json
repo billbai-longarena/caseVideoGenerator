@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:editorial:v1",
+  "title": "Title and narration editorial revision",
+  "type": "object",
+  "required": ["version", "title", "narration", "change_summary"],
+  "properties": {
+    "version": {"const": "1"},
+    "title": {"type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[^\\r\\n]+$"},
+    "narration": {"type": "string", "minLength": 1},
+    "change_summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "addressed_issue_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,163 @@
+groups:
+  - name: case-video-control-plane
+    interval: 30s
+    rules:
+      - alert: CaseVideoMetricsCollectionFailed
+        expr: max(casevideo_metrics_collection_success) < 1
+        for: 2m
+        labels:
+          severity: critical
+          owner: platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 控制面指标采集失败
+          description: 数据库、对象存储或聚合查询不可读，运维页和告警可能同时失真。
+          runbook_url: /runbooks/operations#metrics-collection
+
+      - alert: CaseVideoMetricsStale
+        expr: time() - max(casevideo_metrics_collection_timestamp_seconds) > 300
+        for: 2m
+        labels:
+          severity: critical
+          owner: platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 指标超过五分钟未刷新
+          description: Prometheus 抓取、API 实例或指标采集线程可能不可用。
+          runbook_url: /runbooks/operations#metrics-collection
+
+      - alert: CaseVideoApiHigh5xxRate
+        expr: |
+          sum(rate(casevideo_http_requests_total{status_class="5xx"}[5m]))
+          /
+          clamp_min(sum(rate(casevideo_http_requests_total[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          owner: application-oncall
+          service: case-video
+        annotations:
+          summary: Case Video API 五分钟 5xx 比例超过 5%
+          description: 先冻结高成本新任务，再按 request/trace ID 定位失败依赖和版本。
+          runbook_url: /runbooks/operations#api-errors
+
+      - alert: CaseVideoAuthenticationFailuresBurst
+        expr: sum(rate(casevideo_authentication_failures_total[10m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+          owner: security-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 认证失败异常上升
+          description: 检查 OIDC、过期令牌、暴力尝试和入口代理时钟偏差。
+          runbook_url: /runbooks/security-incident#authentication-anomaly
+
+      - alert: CaseVideoAuthorizationDenialsBurst
+        expr: sum(rate(casevideo_authorization_denials_total[10m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+          owner: security-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 授权拒绝异常上升
+          description: 检查跨租户枚举、角色变更或客户端版本错误，不在指标中暴露租户 ID。
+          runbook_url: /runbooks/security-incident#authorization-anomaly
+
+      - alert: CaseVideoQueueOldestMessageHigh
+        expr: max by (queue) (casevideo_queue_oldest_age_seconds) > 300
+        for: 5m
+        labels:
+          severity: critical
+          owner: worker-oncall
+          service: case-video
+        annotations:
+          summary: Case Video {{ $labels.queue }} 队列最老任务超过五分钟
+          description: 调度延迟已明显超出 30 秒目标，需要检查容量、租约和 provider readiness。
+          runbook_url: /runbooks/operations#queue-stalled
+
+      - alert: CaseVideoQueuedWithoutActiveLease
+        expr: sum(casevideo_queue_depth) > 0 and sum(casevideo_worker_leases{state="active"}) == 0
+        for: 5m
+        labels:
+          severity: critical
+          owner: worker-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 有排队任务但没有活动租约
+          description: worker 可能全部离线、无法领取任务，或消息/outbox 未正常投递。
+          runbook_url: /runbooks/operations#queue-stalled
+
+      - alert: CaseVideoDeadLetterPresent
+        expr: max by (queue) (casevideo_dead_letters) > 0
+        for: 1m
+        labels:
+          severity: critical
+          owner: worker-oncall
+          service: case-video
+        annotations:
+          summary: Case Video {{ $labels.queue }} 队列存在 dead letter
+          description: 超过最大 attempt 的 stage 已停止自动重试，必须先判断费用与输入版本再恢复。
+          runbook_url: /runbooks/operations#dead-letter
+
+      - alert: CaseVideoExpiredWorkerLease
+        expr: casevideo_worker_leases{state="expired"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          owner: worker-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 存在过期 worker 租约
+          description: 运行中的 stage 可能因 worker 崩溃中断，需执行 reaper 并核对幂等恢复。
+          runbook_url: /runbooks/operations#expired-lease
+
+      - alert: CaseVideoOutboxDeliveryFailed
+        expr: casevideo_outbox_events{state="failed"} > 0
+        for: 2m
+        labels:
+          severity: critical
+          owner: platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video outbox 投递失败
+          description: PostgreSQL 中已有事实但 Redis 事件可能缺失，先保护数据库再重建投递。
+          runbook_url: /runbooks/operations#outbox
+
+      - alert: CaseVideoOutboxBacklog
+        expr: casevideo_outbox_events{state="pending"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          owner: platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video outbox 积压超过 100 条
+          description: 检查 Redis、dispatcher 和数据库连接，不要直接删除未投递事件。
+          runbook_url: /runbooks/operations#outbox
+
+      - alert: CaseVideoRequiredModelRouteUnavailable
+        expr: casevideo_model_route_ready == 0
+        for: 2m
+        labels:
+          severity: critical
+          owner: model-platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 必需模型路由 {{ $labels.route }} 不可用
+          description: provider={{ $labels.provider }}；禁止跨模型 fallback。标题、旁白与 Remotion 必须走 Azure Anthropic Claude，其他任务必须走 gpt-5.5。
+          runbook_url: /runbooks/operations#model-route
+
+      - alert: CaseVideoDependencyUnavailable
+        expr: casevideo_dependency_ready == 0
+        for: 2m
+        labels:
+          severity: critical
+          owner: platform-oncall
+          service: case-video
+        annotations:
+          summary: Case Video 依赖 {{ $labels.dependency }} 不可用
+          description: 停止写入和付费阶段，确认权威数据库与对象存储的一致性后再恢复。
+          runbook_url: /runbooks/operations#dependency-outage

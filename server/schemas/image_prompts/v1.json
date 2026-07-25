@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:image-prompts:v1",
+  "title": "Abstract image prompts",
+  "type": "object",
+  "required": ["version", "prompts"],
+  "properties": {
+    "version": {"const": "1"},
+    "prompts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scene_id", "prompt", "negative_prompt", "style_family"],
+        "properties": {
+          "scene_id": {"type": "string", "minLength": 1},
+          "prompt": {"type": "string", "minLength": 1, "maxLength": 4000},
+          "negative_prompt": {"type": "string", "maxLength": 2000},
+          "style_family": {"enum": ["sales-watercolor", "sales-management-silhouette"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

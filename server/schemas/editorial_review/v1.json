@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:editorial-review:v1",
+  "title": "Editorial review",
+  "type": "object",
+  "required": ["version", "verdict", "issues"],
+  "properties": {
+    "version": {"const": "1"},
+    "verdict": {"enum": ["pass", "revise", "blocked"]},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue_id", "severity", "category", "message", "auto_fixable"],
+        "properties": {
+          "issue_id": {"type": "string", "minLength": 1},
+          "severity": {"enum": ["blocker", "warning", "info"]},
+          "category": {"enum": ["factual_support", "title_hook", "spoken_chinese", "prohibited_pattern", "acronym_spacing", "numeric_readout", "duration", "other"]},
+          "message": {"type": "string", "minLength": 1},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}},
+          "suggestion": {"type": "string"},
+          "auto_fixable": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {"type": "string", "maxLength": 2000}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,537 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:visual-plan:v2",
+  "title": "Director-authored Remotion plan",
+  "type": "object",
+  "required": [
+    "version",
+    "projectType",
+    "visualStyle",
+    "cover",
+    "brand",
+    "subtitleLabel",
+    "direction",
+    "chrome",
+    "assets",
+    "scenes"
+  ],
+  "properties": {
+    "version": {"const": "2"},
+    "projectType": {"enum": ["sales", "sales-management"]},
+    "visualStyle": {"type": "string", "minLength": 1, "maxLength": 500},
+    "cover": {
+      "type": "object",
+      "required": ["title", "throughUnit"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "subtitle": {"type": "string"},
+        "kicker": {"type": "string"},
+        "throughUnit": {"type": "integer", "minimum": 1},
+        "proof": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "brand": {"type": "string", "minLength": 1},
+    "subtitleLabel": {"type": "string", "minLength": 1},
+    "direction": {
+      "type": "object",
+      "required": ["visualThesis", "pacingArc", "densityStrategy", "continuityRules"],
+      "properties": {
+        "visualThesis": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "pacingArc": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "densityStrategy": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "continuityRules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 500}
+        },
+        "avoid": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 500}
+        }
+      },
+      "additionalProperties": false
+    },
+    "chrome": {"$ref": "#/$defs/chrome"},
+    "assets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/asset"}
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/scene"}
+    }
+  },
+  "$defs": {
+    "chrome": {
+      "type": "object",
+      "required": ["brandBug", "chapterBadge", "subtitleBar", "progressRail", "cover"],
+      "properties": {
+        "brandBug": {"type": "boolean"},
+        "chapterBadge": {"type": "boolean"},
+        "subtitleBar": {"type": "boolean"},
+        "progressRail": {"type": "boolean"},
+        "cover": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "chromeOverride": {
+      "type": "object",
+      "properties": {
+        "brandBug": {"type": "boolean"},
+        "chapterBadge": {"type": "boolean"},
+        "subtitleBar": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "required": ["id", "sceneId", "role", "promptIntent"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "sceneId": {"type": "string", "minLength": 1, "maxLength": 120},
+        "role": {
+          "enum": ["context", "person", "evidence", "document", "map", "metaphor", "texture"]
+        },
+        "promptIntent": {"type": "string", "minLength": 1, "maxLength": 1600},
+        "continuity": {"type": "string", "maxLength": 800}
+      },
+      "additionalProperties": false
+    },
+    "unitRange": {
+      "type": "array",
+      "prefixItems": [
+        {"type": "integer", "minimum": 1},
+        {"type": "integer", "minimum": 1}
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "sceneMotion": {
+      "type": "object",
+      "required": ["enter", "exit", "enterFrames", "exitFrames"],
+      "properties": {
+        "enter": {"enum": ["cut", "fade", "rise"]},
+        "exit": {"enum": ["cut", "fade", "lift"]},
+        "enterFrames": {"type": "integer", "minimum": 1, "maximum": 60},
+        "exitFrames": {"type": "integer", "minimum": 1, "maximum": 60}
+      },
+      "additionalProperties": false
+    },
+    "headline": {
+      "type": "object",
+      "required": ["text", "reveal", "accent"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "reveal": {"enum": ["perChar", "perClause"]},
+        "accent": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "keyword": {
+      "type": "object",
+      "required": ["text", "atUnit", "display"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1},
+        "atUnit": {"type": "integer", "minimum": 1},
+        "display": {"type": "boolean"},
+        "sfx": {"enum": ["pop", "whoosh", "stamp", "flash"]},
+        "enter": {"enum": ["cut", "fade", "rise", "slide-left", "slide-right", "scale"]},
+        "enterFrames": {"type": "integer", "minimum": 1, "maximum": 60},
+        "surface": {"enum": ["none", "chip"]},
+        "background": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"},
+        "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"},
+        "rotation": {"type": "number", "minimum": -12, "maximum": 12},
+        "fontSize": {"type": "number", "minimum": 20, "maximum": 72},
+        "float": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"display": {"const": true}},
+            "required": ["display"]
+          },
+          "then": {
+            "required": [
+              "enter",
+              "enterFrames",
+              "surface",
+              "background",
+              "color",
+              "rotation",
+              "fontSize",
+              "float"
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "background": {
+      "type": "object",
+      "required": ["asset", "atUnit", "transition", "motion"],
+      "properties": {
+        "asset": {"type": "string", "minLength": 1},
+        "atUnit": {"type": "integer", "minimum": 1},
+        "transition": {"enum": ["wash", "paper", "ink", "flash", "push"]},
+        "motion": {"enum": ["center", "left", "right", "lift", "drift", "breathe"]},
+        "sfx": {"enum": ["pop", "whoosh", "stamp", "flash"]}
+      },
+      "additionalProperties": false
+    },
+    "box": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "counterValue": {
+      "type": "object",
+      "required": ["to"],
+      "properties": {
+        "from": {"type": "number"},
+        "to": {"type": "number"},
+        "suffix": {"type": "string"},
+        "prefix": {"type": "string"},
+        "decimals": {"type": "integer", "minimum": 0, "maximum": 4}
+      },
+      "additionalProperties": false
+    },
+    "bar": {
+      "type": "object",
+      "required": ["label", "value"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "value": {"type": "number"},
+        "max": {"type": "number"},
+        "suffix": {"type": "string"},
+        "tone": {"enum": ["good", "bad", "neutral"]},
+        "revealAtUnit": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "sub": {"type": "string"},
+        "asset": {"type": "string", "minLength": 1},
+        "emphasis": {"type": "boolean"},
+        "revealAtUnit": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "link": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 1},
+        "label": {"type": "string"},
+        "revealAtUnit": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "region": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "w": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "h": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "layer": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {
+          "enum": ["asset", "text", "tint", "counter", "bar-compare", "network", "dialogue", "annotate"]
+        },
+        "slot": {
+          "enum": ["canvas", "left", "right", "center", "inset-left", "inset-right", "top-left", "top-right", "bottom"]
+        },
+        "box": {"$ref": "#/$defs/box"},
+        "asset": {"type": "string", "minLength": 1},
+        "label": {"type": "string"},
+        "text": {"type": "string"},
+        "variant": {"enum": ["metric", "caption", "quote", "stamp", "headline"]},
+        "surface": {
+          "enum": ["none", "glass", "solid", "paper", "accent"],
+          "description": "Use none/glass for compact text over a visible background. Opaque paper/solid/accent surfaces must be bound to an explicit box."
+        },
+        "align": {"enum": ["left", "center", "right"]},
+        "enter": {"enum": ["cut", "fade", "slide-left", "slide-right", "scale"]},
+        "fontSize": {"type": "number", "minimum": 20, "maximum": 140},
+        "fontWeight": {"type": "integer", "minimum": 400, "maximum": 950},
+        "lineHeight": {"type": "number", "minimum": 0.8, "maximum": 1.8},
+        "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"},
+        "opacity": {"type": "number", "minimum": 0, "maximum": 1},
+        "frame": {"enum": ["none", "white", "paper", "dark"]},
+        "fit": {"enum": ["cover", "contain"]},
+        "revealAtUnit": {"type": "integer", "minimum": 1},
+        "exitAtUnit": {"type": "integer", "minimum": 1},
+        "value": {"$ref": "#/$defs/counterValue"},
+        "deltaTone": {"enum": ["good", "bad", "neutral"]},
+        "bars": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/bar"}},
+        "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
+        "links": {"type": "array", "items": {"$ref": "#/$defs/link"}},
+        "networkLayout": {"enum": ["auto", "row", "column", "triangle", "hub", "grid"]},
+        "speaker": {"type": "string"},
+        "tail": {"enum": ["left", "right"]},
+        "shape": {"enum": ["arrow", "underline"]},
+        "region": {"$ref": "#/$defs/region"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"kind": {"not": {"const": "annotate"}}},
+            "required": ["kind"]
+          },
+          "then": {
+            "oneOf": [
+              {"required": ["slot"], "not": {"required": ["box"]}},
+              {"required": ["box"], "not": {"required": ["slot"]}}
+            ]
+          }
+        },
+        {
+          "if": {"properties": {"kind": {"const": "text"}}, "required": ["kind"]},
+          "then": {
+            "required": [
+              "text",
+              "variant",
+              "surface",
+              "align",
+              "enter",
+              "fontSize",
+              "fontWeight",
+              "lineHeight",
+              "color"
+            ]
+          }
+        },
+        {
+          "if": {"properties": {"kind": {"const": "asset"}}, "required": ["kind"]},
+          "then": {"required": ["asset", "frame", "fit", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "tint"}}, "required": ["kind"]},
+          "then": {"required": ["color", "opacity", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "counter"}}, "required": ["kind"]},
+          "then": {"required": ["value", "align", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "bar-compare"}}, "required": ["kind"]},
+          "then": {"required": ["bars", "align", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "network"}}, "required": ["kind"]},
+          "then": {"required": ["nodes", "links", "networkLayout", "align", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "dialogue"}}, "required": ["kind"]},
+          "then": {"required": ["text", "tail", "align", "enter"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "annotate"}}, "required": ["kind"]},
+          "then": {"required": ["shape", "region", "color"]}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "beatRender": {
+      "type": "object",
+      "required": [
+        "cameraPath",
+        "treatmentColor",
+        "ambientOpacity",
+        "vignette",
+        "overlay",
+        "transitionFrames",
+        "layerEnterFrames",
+        "layerExitFrames",
+        "layerStaggerFrames",
+        "emphasisScale",
+        "pulse",
+        "flashbackFrame",
+        "canvasTone"
+      ],
+      "properties": {
+        "cameraPath": {"$ref": "#/$defs/cameraPath"},
+        "treatmentColor": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"},
+        "ambientOpacity": {"type": "number", "minimum": 0, "maximum": 1},
+        "vignette": {"type": "number", "minimum": 0, "maximum": 0.6},
+        "overlay": {"enum": ["none", "soft", "read-left", "read-right"]},
+        "transitionFrames": {"type": "integer", "minimum": 1, "maximum": 45},
+        "layerEnterFrames": {"type": "integer", "minimum": 1, "maximum": 30},
+        "layerExitFrames": {"type": "integer", "minimum": 1, "maximum": 30},
+        "layerStaggerFrames": {"type": "integer", "minimum": 0, "maximum": 30},
+        "emphasisScale": {"type": "number", "minimum": 0.9, "maximum": 1.25},
+        "pulse": {"type": "boolean"},
+        "flashbackFrame": {"type": "boolean"},
+        "canvasTone": {
+          "enum": ["transparent", "light", "dark"],
+          "description": "Use transparent when baseAsset is a generated background or context stage; light/dark are only for intentionally blank canvases."
+        }
+      },
+      "additionalProperties": false
+    },
+    "cameraPath": {
+      "type": "object",
+      "required": ["startScale", "endScale", "startX", "endX", "startY", "endY"],
+      "properties": {
+        "startScale": {"type": "number", "minimum": 0.5, "maximum": 2},
+        "endScale": {"type": "number", "minimum": 0.5, "maximum": 2},
+        "startX": {"type": "number", "minimum": -500, "maximum": 500},
+        "endX": {"type": "number", "minimum": -500, "maximum": 500},
+        "startY": {"type": "number", "minimum": -300, "maximum": 300},
+        "endY": {"type": "number", "minimum": -300, "maximum": 300}
+      },
+      "additionalProperties": false
+    },
+    "beat": {
+      "type": "object",
+      "required": [
+        "id",
+        "atUnit",
+        "visualIntent",
+        "purpose",
+        "directorialIntent",
+        "composition",
+        "transition",
+        "render",
+        "layers"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "atUnit": {"type": "integer", "minimum": 1},
+        "visualIntent": {
+          "enum": ["context", "protagonist", "claim", "evidence", "relationship", "mechanism", "decision", "consequence", "reflection"]
+        },
+        "purpose": {"enum": ["establish", "identify", "evidence", "explain", "escalate", "consequence", "callback", "reset"]},
+        "directorialIntent": {"type": "string", "minLength": 1, "maxLength": 800},
+        "composition": {"enum": ["full-bleed", "portrait-left", "portrait-right", "split", "triptych", "document-focus", "evidence-collage", "custom"]},
+        "baseAsset": {"type": "string", "minLength": 1},
+        "baseBox": {"$ref": "#/$defs/box"},
+        "baseFit": {"enum": ["cover", "contain"]},
+        "transition": {"enum": ["cut", "dissolve", "push"]},
+        "camera": {"enum": ["static", "push-in", "pull-out", "pan-left", "pan-right", "drift", "breathe"]},
+        "treatment": {"enum": ["natural", "desaturated", "blueprint", "crisis"]},
+        "render": {"$ref": "#/$defs/beatRender"},
+        "chrome": {"$ref": "#/$defs/chromeOverride"},
+        "layers": {"type": "array", "items": {"$ref": "#/$defs/layer"}}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["baseAsset"]},
+          "then": {"required": ["baseFit"]}
+        },
+        {
+          "if": {
+            "properties": {"composition": {"const": "custom"}},
+            "required": ["composition", "baseAsset"]
+          },
+          "then": {"required": ["baseBox"]}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "id",
+        "units",
+        "chapter",
+        "kicker",
+        "layout",
+        "visualMode",
+        "dramaticFunction",
+        "directorialIntent",
+        "keywords",
+        "backgrounds",
+        "sceneMotion",
+        "transition",
+        "transitionFrames",
+        "visualBeats"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "units": {"$ref": "#/$defs/unitRange"},
+        "chapter": {"type": "string"},
+        "kicker": {"type": "string"},
+        "layout": {
+          "enum": [
+            "director-canvas",
+            "breaking-news",
+            "hook-alert",
+            "subject-reveal",
+            "reveal-card",
+            "split-data",
+            "insight-split",
+            "map-focus",
+            "focus-ring",
+            "local-playbook",
+            "resource-map",
+            "balance-beam",
+            "tension-line",
+            "question-storm",
+            "question-cards",
+            "timeline-roadshow",
+            "milestone-rail",
+            "decision-board",
+            "option-board",
+            "closing-quote",
+            "closing-idea",
+            "performance-ladder",
+            "decision-bottleneck",
+            "authority-matrix"
+          ]
+        },
+        "tone": {"enum": ["dark", "archive", "bright"]},
+        "visualMode": {"enum": ["layout", "editorial", "hybrid"]},
+        "dramaticFunction": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "directorialIntent": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "headline": {"$ref": "#/$defs/headline"},
+        "keywords": {"type": "array", "items": {"$ref": "#/$defs/keyword"}},
+        "backgrounds": {"type": "array", "items": {"$ref": "#/$defs/background"}},
+        "sceneMotion": {"$ref": "#/$defs/sceneMotion"},
+        "transition": {"enum": ["none", "ink-slide", "chapter-circle", "paper-stripes"]},
+        "transitionFrames": {"type": "integer", "minimum": 2, "maximum": 60},
+        "chrome": {"$ref": "#/$defs/chromeOverride"},
+        "layoutProps": {"type": "object", "additionalProperties": true},
+        "visualBeats": {"type": "array", "items": {"$ref": "#/$defs/beat"}}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"visualMode": {"const": "editorial"}},
+            "required": ["visualMode"]
+          },
+          "then": {
+            "properties": {"layout": {"const": "director-canvas"}}
+          },
+          "else": {
+            "required": ["tone", "headline"],
+            "properties": {"layout": {"not": {"const": "director-canvas"}}}
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

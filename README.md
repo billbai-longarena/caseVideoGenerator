@@ -9,6 +9,7 @@
 - 视频修订工作流：`workflows/revise-video.md`
 - Agent Skill：`.agents/skills/produce-case-video/SKILL.md`
 - 目录与职责：`docs/architecture/repository-layout.md`
+- 可部署服务器：`server/README.md`
 
 ## 统一命令
 
@@ -33,6 +34,7 @@ scripts/case-video
 python -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements-server.txt
 
 cd output/budweiser_apac_story_video/remotion
 npm install

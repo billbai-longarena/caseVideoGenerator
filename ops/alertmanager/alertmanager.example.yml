@@ -1,0 +1,25 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: case-video-platform
+  group_by:
+    - alertname
+    - severity
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - owner="security-oncall"
+      receiver: case-video-security
+
+receivers:
+  - name: case-video-platform
+    webhook_configs:
+      - url: https://replace-before-production.invalid/platform-alerts
+        send_resolved: true
+  - name: case-video-security
+    webhook_configs:
+      - url: https://replace-before-production.invalid/security-alerts
+        send_resolved: true

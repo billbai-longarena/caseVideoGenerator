@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:job-manifest:v2",
+  "title": "Phase B job manifest",
+  "type": "object",
+  "required": [
+    "manifest_version", "job_id", "project_name", "input_mode", "status", "stage",
+    "approval_mode", "contract_versions", "current_revisions", "approved_revisions",
+    "model_routes", "task_registry", "prompt_pins", "budget", "stage_runs",
+    "created_at", "updated_at"
+  ],
+  "properties": {
+    "manifest_version": {"const": 2},
+    "job_id": {"type": "string", "pattern": "^job_[A-Za-z0-9_-]+$"},
+    "project_name": {"type": "string", "minLength": 1},
+    "input_mode": {"enum": ["source", "structured", "project"]},
+    "status": {"enum": ["created", "queued", "running", "waiting_approval", "succeeded", "failed", "canceling", "canceled"]},
+    "stage": {"type": "string", "minLength": 1},
+    "approval_mode": {"enum": ["editorial", "auto", "full"]},
+    "contract_versions": {"type": "object", "additionalProperties": {"type": "string"}},
+    "current_revisions": {"type": "object", "additionalProperties": {"type": ["string", "null"]}},
+    "approved_revisions": {"type": "object", "additionalProperties": {"type": ["string", "null"]}},
+    "approval_checkpoints": {
+      "type": "object",
+      "properties": {
+        "visual_contract": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "model_routes": {"type": "object"},
+    "task_registry": {"type": "object", "minProperties": 1},
+    "prompt_pins": {"type": "object", "minProperties": 1},
+    "budget": {
+      "type": "object",
+      "required": ["currency", "limit_micros", "spent_micros"],
+      "properties": {
+        "currency": {"const": "USD"},
+        "limit_micros": {"type": ["integer", "null"], "minimum": 0},
+        "spent_micros": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "stage_runs": {"type": "object"},
+    "artifact_index_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

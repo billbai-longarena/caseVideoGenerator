@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-video:source-classification:v1",
+  "title": "Source classification",
+  "type": "object",
+  "required": ["material_types", "usability", "gaps"],
+  "properties": {
+    "material_types": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "usability": {"enum": ["sufficient", "partial", "insufficient"]},
+    "gaps": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "summary": {"type": "string", "maxLength": 2000}
+  },
+  "additionalProperties": false
+}
