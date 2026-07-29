@@ -15,9 +15,15 @@ const bounds = sceneBounds();
 
 type RichCaseVideoProps = {
   withAudio?: boolean;
+  withCover?: boolean;
+  withProgressRail?: boolean;
 };
 
-export const RichCaseVideo: React.FC<RichCaseVideoProps> = ({withAudio = true}) => {
+export const RichCaseVideo: React.FC<RichCaseVideoProps> = ({
+  withAudio = true,
+  withCover = true,
+  withProgressRail = true,
+}) => {
   return (
     <AbsoluteFill style={{backgroundColor: palette.ink}}>
       <BackgroundTrack />
@@ -31,19 +37,23 @@ export const RichCaseVideo: React.FC<RichCaseVideoProps> = ({withAudio = true}) 
         >
           <SceneLayer
             scene={scene}
-            index={index}
+            chrome={storyboard.chrome}
             sceneStartFrame={bounds[index].from}
             duration={bounds[index].duration}
           />
         </Sequence>
       ))}
-      <ProgressRail />
-      <CoverLayer />
+      {withProgressRail && (storyboard.chrome?.progressRail ?? true) ? <ProgressRail /> : null}
+      {withCover && (storyboard.chrome?.cover ?? true) ? <CoverLayer /> : null}
     </AbsoluteFill>
   );
 };
 
 export const RichCaseVideoNoAudio: React.FC = () => <RichCaseVideo withAudio={false} />;
+
+export const RichCaseVideoIntentReview: React.FC = () => (
+  <RichCaseVideo withAudio={false} withCover={false} withProgressRail={false} />
+);
 
 export const CoverProofOverlay: React.FC = () => (
   <AbsoluteFill style={{backgroundColor: "transparent"}}>

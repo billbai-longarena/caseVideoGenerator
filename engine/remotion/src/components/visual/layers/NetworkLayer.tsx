@@ -4,7 +4,7 @@ import type {VisualLayer} from "../../../data/types";
 import {getVisualAsset} from "../../../data/storyboard";
 import {unitStartFrame} from "../../../timing/timeline";
 import {EASE_OUT} from "../../../anim/springs";
-import {fontStack, palette} from "../../../theme";
+import {fontStack, palette, visualTheme} from "../../../theme";
 import {fitSingleLineFontSize, fitTextBlockFontSize} from "../../../textFit";
 import {
   resolveNetworkLayout,
@@ -339,7 +339,7 @@ export const NetworkLayer: React.FC<{
               gap: compact ? 10 : 16,
               padding: compact ? "8px 12px" : "14px 20px",
               boxSizing: "border-box",
-              background: node.emphasis ? "rgba(11,98,214,0.92)" : "rgba(5,17,31,0.9)",
+              background: node.emphasis ? visualTheme.networkEmphasis : "rgba(5,17,31,0.9)",
               border: node.emphasis
                 ? `${compact ? 4 : 5}px solid ${palette.yellow}`
                 : `${compact ? 2 : 3}px solid rgba(255,255,255,0.66)`,

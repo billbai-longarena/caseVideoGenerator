@@ -1,6 +1,6 @@
 import React from "react";
 import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
-import {fontStack, palette} from "../theme";
+import {fontStack, palette, visualTheme} from "../theme";
 import {SPRING_SETTLE, EASE_OUT} from "../anim/springs";
 import {getUnit, storyboard} from "../data/storyboard";
 import {secondsToFrame} from "../timing/timeline";
@@ -94,7 +94,7 @@ export const SubtitleBar: React.FC<{
     >
       <div
         style={{
-          background: palette.blue,
+          background: visualTheme.brandSurface,
           color: palette.white,
           fontWeight: 950,
           fontSize: labelFontSize,

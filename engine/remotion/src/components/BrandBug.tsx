@@ -1,6 +1,6 @@
 import React from "react";
 import {spring, useCurrentFrame, useVideoConfig} from "remotion";
-import {fontStack, palette} from "../theme";
+import {fontStack, palette, visualTheme} from "../theme";
 import {SPRING_SETTLE} from "../anim/springs";
 import {storyboard} from "../data/storyboard";
 
@@ -27,7 +27,7 @@ export const BrandBug: React.FC<{kicker: string}> = ({kicker}) => {
     >
       <div
         style={{
-          background: palette.blue,
+          background: visualTheme.brandSurface,
           padding: "12px 18px",
           border: `3px solid ${palette.white}`,
           boxShadow: `8px 8px 0 ${palette.ink}`,
@@ -67,7 +67,7 @@ export const ChapterBadge: React.FC<{chapter: string}> = ({chapter}) => {
         fontSize: 66,
         fontWeight: 950,
         lineHeight: 1,
-        WebkitTextStroke: `3px ${palette.blue}`,
+        WebkitTextStroke: `3px ${visualTheme.brandSurface}`,
         textShadow: `6px 6px 0 ${palette.ink}`,
         opacity: s,
         transform: `scale(${0.7 + s * 0.3})`,

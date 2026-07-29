@@ -1,6 +1,6 @@
 import React from "react";
 import {spring, useCurrentFrame, useVideoConfig} from "remotion";
-import {fontStack, palette} from "../theme";
+import {fontStack, palette, visualTheme} from "../theme";
 import {SPRING_SETTLE, idleFloat} from "../anim/springs";
 
 // Generic framed 花字 card: colored top rule + white body + hard shadow.
@@ -19,7 +19,7 @@ export const InfoCard: React.FC<{
   shadowColor?: string;
 }> = ({
   label,
-  labelColor = palette.blue,
+  labelColor = visualTheme.brandSurface,
   text,
   delay,
   x,
@@ -29,7 +29,7 @@ export const InfoCard: React.FC<{
   width = 460,
   rotate = 0,
   dark = false,
-  shadowColor = palette.blue,
+  shadowColor = visualTheme.brandSurface,
 }) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();

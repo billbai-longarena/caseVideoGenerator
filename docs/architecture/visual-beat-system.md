@@ -7,10 +7,11 @@ Visual Beat 用来把一段旁白拆成若干个有明确叙事职责的视觉�
 系统必须同时满足：
 
 - `narration.timeline.json` 继续是唯一时间基线。
-- `rich_storyboard.json` 继续是画面编排的 source of truth。
+- schema-v2 `storyboard_plan.json` 是当前项目的导演 source of truth；`rich_storyboard.json` 是确定性编译出的 render IR。
 - 旧项目只写 `backgrounds` 时保持原有渲染结果。
-- 新项目可以逐场景采用 Visual Beat，不要求一次性迁移全部场景。
+- 新项目由大模型逐场景显式选择 layout、editorial 或 hybrid，并完整声明 Visual Beat 的画面控制。
 - 视觉方法允许因案例、素材和叙事视角变化，不把样片的固定秒数写成产品规则。
+- adapter 和运行时不按 scene/beat 序号、purpose 或模板数组补创意选择。
 
 ## 自由度分层
 
@@ -20,13 +21,14 @@ Visual Beat 用来把一段旁白拆成若干个有明确叙事职责的视觉�
 | Workflow | 定义先后顺序、阶段输入输出和质量门 | 不承担 JSON 解析和确定性校验 |
 | Knowledge base | 保存可迁移的叙事视觉语法、经验范围和选择方法 | 不把经验范围当成所有案例的硬门槛 |
 | Schema / builder / validator | 定义稳定字段、单位换算、引用完整性和机器可判定的不变量 | 不判断某种美学是否永远正确 |
-| Case project | 决定本案例的节奏、拍点、构图、素材、文字和例外 | 不修改共享引擎来偷渡单案例数据 |
+| LLM director plan | 决定本案例的视觉命题、节奏、拍点、构图、素材 casting、文字、镜头、chrome 和例外 | 不把未声明的创意选择留给 adapter 猜测 |
+| Case project | 保存导演计划、资产和生成 IR | 不修改共享引擎来偷渡单案例数据 |
 
 ## 数据合同
 
 ### 顶层素材清单
 
-`rich_storyboard.json.visualAssets` 是可选的素材清单。存在 Visual Beat 时，拍点通过素材 ID 引用它，避免在多个层里重复路径。
+v2 plan 的 `assets` 是导演阶段的资产 casting 清单，以 `id`、`sceneId`、`role`、`promptIntent` 和可选 continuity 声明“为什么需要这张图”。编译后写入 `rich_storyboard.json.visualAssets`，Visual Beat 通过素材 ID 引用它，避免在多个层里重复路径。
 
 ```json
 {
@@ -56,10 +58,14 @@ Visual Beat 用来把一段旁白拆成若干个有明确叙事职责的视觉�
 每个 scene 可选声明 `visualMode`：
 
 - `layout`：沿用背景加现有 LayoutRouter，由 layout 独占业务语义面板。
-- `editorial`：播放 Visual Beat，保留品牌、章节和字幕层，隐藏静态业务 layout。
+- `editorial`：使用 `director-canvas`，由 Visual Beat 和显式 layer 组织画布，隐藏静态业务 layout。
 - `hybrid`：播放 Visual Beat 主素材和 tint，同时保留现有业务 layout；Visual Beat 不再承载面板型 layer。
 
-没有 `visualBeats` 的场景始终回退到原有 `backgrounds` 和 `layout` 行为。存在 `visualBeats` 但省略 `visualMode` 时，运行时按 `editorial` 处理；新项目应显式声明模式。
+v2 scene 必须显式声明 `visualMode`、`directorialIntent`、scene motion、transition frame count 和 chrome override。没有 `visualBeats` 的历史场景继续回退到原有 `backgrounds` 和 `layout` 行为；省略模式的旧 Visual Beat 数据仍按兼容逻辑读取。
+
+v2 不要求为了填充结构而生成背景图。`assets` 与 `backgrounds` 都可以为空；纯 editorial 场景由从场景首个 unit 开始的 Visual Beat 承担完整画布。旧背景只在明确保留 cue 时继续存在，不能把“每场一张图”当作生产配额。
+
+`director-canvas` 中的可见关键词必须建模为 Visual Beat 的文字 layer，避免关键词组件再次替导演决定位置或样式。`scene.keywords` 只保留两种用途：模型主动选用旧 layout 并委托它安排关键词位置，或用 `display=false` 触发纯音效 cue。v2 中 `display=true` 的关键词必须完整声明入场、表面、颜色、字号、旋转和漂浮；只有 v1 兼容路径保留按序号轮换的旧行为。
 
 ### Visual Beat
 
@@ -70,20 +76,37 @@ Visual Beat 用来把一段旁白拆成若干个有明确叙事职责的视觉�
     {
       "id": "s02-evidence",
       "atUnit": 4,
+      "visualIntent": "evidence",
       "purpose": "evidence",
+      "directorialIntent": "先让仓库占满画面，再让周转数字从左侧压入，形成事实挤压人物判断的感觉。",
       "composition": "split",
       "baseAsset": "warehouse-wide",
       "transition": "cut",
       "camera": "push-in",
       "treatment": "crisis",
+      "render": {
+        "cameraIntensity": 0.7,
+        "ambientOpacity": 0.08,
+        "vignette": 0.22,
+        "overlay": "read-left",
+        "transitionFrames": 6,
+        "layerEnterFrames": 10,
+        "layerExitFrames": 8,
+        "layerStaggerFrames": 3,
+        "emphasisScale": 1.04,
+        "pulse": false,
+        "flashbackFrame": false,
+        "canvasTone": "dark"
+      },
       "layers": [
         {
           "id": "turnover-metric",
-          "kind": "text",
+          "kind": "counter",
           "slot": "left",
           "label": "库存周转",
-          "text": "82天",
-          "variant": "metric",
+          "value": {"to": 82, "suffix": "天"},
+          "align": "left",
+          "enter": "slide-right",
           "revealAtUnit": 4
         }
       ]
@@ -96,15 +119,20 @@ Visual Beat 用来把一段旁白拆成若干个有明确叙事职责的视觉�
 
 - `id`：项目内唯一。
 - `atUnit`：拍点开始的 narration unit。结束点由下一拍或 scene 结束推导。
+- `visualIntent`：内容职责，如 evidence、relationship、mechanism 或 consequence。
 - `purpose`：`establish`、`identify`、`evidence`、`explain`、`escalate`、`consequence`、`callback`、`reset`。
-- `composition`：`full-bleed`、`portrait-left`、`portrait-right`、`split`、`triptych`、`document-focus`、`evidence-collage`。
+- `directorialIntent`：这一拍的层级、焦点、情绪和可见变化目标。
+- `composition`：`full-bleed`、`portrait-left`、`portrait-right`、`split`、`triptych`、`document-focus`、`evidence-collage` 或 `custom`。custom 使用 `baseBox` 与 layer `box` 明确归一化画布区域。
+- `render`：显式控制镜头强度、画布、叠层、进出场帧数和节奏；v2 不从 purpose 推导视觉效果。
+- `layers`：除 annotate 外必须在 `slot` 与 `box` 中二选一。文字、图片和数据原语的可见样式必须写全，运行时只为历史数据保留兼容默认值。
 - `baseAsset`：可选的主素材 ID；没有主素材时，至少一个 asset layer 必须提供画面。
 - `transition`：`cut`、`dissolve`、`push`。
 - `camera`：`static`、`push-in`、`pull-out`、`pan-left`、`pan-right`、`drift`、`breathe`。
 - `treatment`：`natural`、`desaturated`、`blueprint`、`crisis`。
+- `render`：显式声明 camera intensity、overlay、vignette、transition/layer frame counts、stagger、emphasis、pulse、flashback frame 和 canvas tone。运行时不得从 purpose 推导这些值。
 - `layers`：拍点内的素材、文字或色彩层。
 
-Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`network`、`dialogue` 或 `annotate`。所有揭示时间使用 `revealAtUnit`/`exitAtUnit`；位置使用语义 slot，如 `canvas`、`left`、`right`、`center`、`inset-left`、`inset-right`、`top-left`、`top-right`、`bottom`。文字层可声明 `label`、`text` 和 `variant`，素材层引用 `asset`，色彩层使用 `color` 和 `opacity`。
+Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`network`、`dialogue` 或 `annotate`。所有揭示时间使用 `revealAtUnit`/`exitAtUnit`；位置可以使用语义 slot，也可以用 `box` 直接声明归一化坐标。文字/数据层可显式声明 `surface`、`align`、`enter`、字号、字重、行高和颜色；素材层可声明 `frame`、`fit` 和 box；色彩层使用 `color` 和 `opacity`。这些值均由导演计划决定。
 
 ### 语义数据 layer
 
@@ -122,26 +150,30 @@ Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`ne
 
 `network` 默认使用 `networkLayout: "auto"`。运行时同时读取节点、连线拓扑和 slot 画幅：矮宽区域优先横排；唯一高连接度节点优先作为 hub；三个非中心节点使用三角形；四个节点使用网格。只有叙事必须固定阅读方向时才显式指定布局。节点顺序表达内容顺序，不再承担隐含坐标；超过四个节点时拆成多个 beat，并用 `revealAtUnit` 逐步建立关系。
 
-### purpose 驱动的渲染预设
+### 显式导演控制
 
-`purpose` 不再只是策划标注，运行时按 purpose 应用默认渲染：`evidence` 聚焦暗角加快揭示；`escalate` 相机加速加色调脉冲；`consequence` 强调数字层；`callback` 加闪回边框降饱和；`identify` 收窄相机突出人物。显式字段可覆盖预设。同一拍点内多个 layer 自动按 purpose 节奏级联入场（stagger），入场后有轻微悬浮，不再整拍冻结。`drift` 和 `breathe` 用于长停留静态插画的微动，幅度低于 `push-in` 和 `pan-*`，适合保持画面活性而不制造新的叙事转折。
+v2 中 `purpose` 与 `visualIntent` 只保存语义，不触发隐藏的渲染预设。相机强度、暗角、overlay、pulse、flashback frame、transition frame count、layer entrance/stagger 和 emphasis 都由 `render` 明确声明。layer 的 surface、enter、box、typography 和 media fit 同样明确声明。
+
+旧 v1 数据仍可由兼容运行时应用 purpose 预设和默认 stagger，但这些行为不得进入 v2 编译结果。`drift` 和 `breathe` 仍是可选 camera 原语，是否使用以及强度由导演计划决定。
 
 ### Builder 输入
 
-`storyboard_plan.json` 可以用相对 scene 起点的 `offset`、`revealOffset` 和 `exitOffset`。共享 builder 把它们转换成 `atUnit`、`revealAtUnit` 和 `exitAtUnit`；`bar-compare` 的 `bars`、`network` 的 `nodes`/`links` 内的 `revealOffset` 同样被转换。生成后的 `rich_storyboard.json` 不保留手写秒数。
+schema-v2 `storyboard_plan.json` 直接使用 1-based narration unit，包括 `atUnit`、`revealAtUnit` 和 `exitAtUnit`。compiler 校验 unit、引用、路径和排序并生成 `rich_storyboard.json`，不做语义调度或美学补全。
 
-## 语义候选与调度
+scene-relative `offset`、`revealOffset`、`exitOffset` 和自动 purpose 预设只属于 v1 兼容 builder。新项目不得使用它们，也不得把兼容转换误认为导演生成步骤。
 
-自动分镜分成“候选生成”和“时间调度”两层。候选先描述可见内容，再决定落在哪个 narration unit；不得按场景序号、拍点序号或模板数组取模轮换构图。
+## 语义分析辅助
+
+`scripts/visual_beat_planning.py` 可以分析 narration unit、提出语义候选并评估锚点，但它不是 v2 的导演源。最终 scene、beat、composition、asset、camera 和 timing 必须由大模型结合整条叙事显式写入计划；不得让确定性调度器直接产出生产画面。
 
 - 候选携带稳定的 `intent`、文本/数字线索、`anchorPolicy`、表现形式和 layer 数据。`intent` 使用 `context`、`protagonist`、`relationship`、`claim`、`evidence`、`mechanism`、`decision`、`consequence`、`reflection` 等案例职责。
 - 场景主张或 governing thought 固定在场景起点；证据、关系、机制和后果候选按当前场景 narration unit 的文字与数字线索寻找语义锚点。
-- 调度器联合考虑局部语义匹配、全场景契约、案例弧线覆盖、表现形式去重和最长语义空档。12 秒是交付上限，不是固定切镜周期。
+- 分析器可报告局部语义匹配、案例弧线覆盖、表现形式重复和最长语义空档。12 秒是交付上限，不是固定切镜周期，也不是自动插入 beat 的指令。
 - 相同数字、关系或主张只能保留一个主要表现形式。不能把同一事实同时排成文字卡、计数器和对比条来伪造丰富度。
 - `network` 只表达案例中明确写出的关系。不得为了得到 hub、chain 或 grid 外观自动补连线。
 - 内容指纹记录“表达了什么”，调度指纹记录“何时、如何表达”。评估重复度时使用内容指纹，定位锚点漂移时使用调度指纹。
 
-共享实现位于 `scripts/visual_beat_planning.py`。案例生成器可以提供候选和少量明确关系，但不应复制调度算法。
+共享分析实现位于 `scripts/visual_beat_planning.py`。它的输出只能作为导演模型的证据或 QA 提示，不能在模型计划之后二次改写计划。
 
 ## 无渲染快速评估
 
@@ -158,9 +190,9 @@ Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`ne
 1. 旧 `BackgroundTrack`，提供兼容背景和 Visual Beat 空缺时的兜底。
 2. `VisualBeatTrack`，按 unit 播放主素材、构图、镜头运动和拍点内图层。
 3. scene 业务 layout；仅 `layout` 和 `hybrid` 模式显示。
-4. 品牌、章节、关键词、字幕和全局进度层。
+4. 品牌、章节、关键词、字幕和全局进度层；v2 按顶层与 scene chrome 开关显示，其中字幕栏必须保持开启。
 
-拍点切换和 layer 揭示都从 timeline unit 解析为 frame。React 组件不得保存案例专属 unit、路径或秒数。
+拍点切换和 layer 揭示都从 timeline unit 解析为 frame。scene enter/exit、scene transition、beat transition 和 layer entrance 使用 v2 显式 frame counts。React 组件不得保存案例专属 unit、路径或秒数，也不得按 scene/beat index 选择 transition 或 motion。
 
 ## 校验边界
 
@@ -196,19 +228,21 @@ Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`ne
 
 ## 迁移策略
 
-1. 旧项目无需修改；`visualAssets` 和 `visualBeats` 都是可选字段。
-2. 优先迁移信息密度高、人物关系复杂或需要证据揭示的场景。
-3. 同一项目允许 `layout`、`editorial` 和 `hybrid` 并存。
-4. 迁移后仍保留每个 scene 的 legacy background，作为兼容兜底和转场底色。
-5. 确认视觉语法稳定后，再逐步扩展 composition，而不是把单案例 JSX 写入共享引擎。
+1. 旧项目无需立即修改；v1 plan、rich-only storyboard、默认 purpose preset 和 layout fallback 保持可读。
+2. 实质性视觉重做先恢复每个 scene 的导演意图，再写 schema-v2 plan；不要把旧 rich storyboard 原样包一层版本号。
+3. 同一 v2 项目允许 `layout`、`editorial` 和 `hybrid` 并存；editorial 使用 `director-canvas`。
+4. v2 compiler 输出可以保留兼容 background，但不得用它替代导演声明的 asset 与 beat。
+5. 当前共享能力不足时扩展 schema、类型、Remotion 原语和测试，而不是把单案例 JSX 写入共享引擎或让 adapter 映射到旧模板。
 
 ## 验收标准
 
 ### 功能验收
 
-- 共享 builder 能把 plan 中的 Visual Beat offset 转成绝对 unit，并保持旧 plan 输出兼容。
+- v2 compiler 能校验 direct 1-based unit、解析引用并忠实生成 render IR；v1 builder 继续支持旧 offset 转换。
 - validator 能发现无效素材引用、非法 unit、错误顺序和缺失生成提示词。
 - Remotion 能渲染 `layout`、`editorial`、`hybrid` 三种模式。
+- `director-canvas` 不添加业务 layout；v2 的 chrome、camera、transition、timing、surface、box 和 typography 按计划生效。
+- 对同一 v2 plan 重复编译不会因 scene/beat index 产生不同或新增的创意字段。
 - Visual Beat 缺失时，视频继续使用旧 backgrounds 和 layout。
 - 图片、视频、文字和 tint layer 均可按 unit 出现，拍点结束由下一拍或 scene 结束自动确定。
 
@@ -218,6 +252,7 @@ Layer 的 `kind` 为 `asset`、`text`、`tint`、`counter`、`bar-compare`、`ne
 - `scripts/case-video check` 对视觉实验室和代表性长案例通过；旧项目若触发严格视觉错误，应修订后再交付。
 - 共享 Remotion `typecheck` 通过。
 - 示例案例完整渲染成功，ffprobe 确认 1920×1080、30fps、音视频流存在且时长接近 timeline。
+- 代表帧逐 scene 对照 `directorialIntent`，技术通过但层级、焦点、情绪或连续性未实现时不验收。
 
 ### 示例视觉验收
 

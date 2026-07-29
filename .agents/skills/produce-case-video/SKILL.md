@@ -21,6 +21,7 @@ description: Model, produce, revise, render, and quality-check Chinese sales and
 - **Change storyboard or visuals**: Follow the visual path in `../../../workflows/revise-video.md`; preserve narration unit anchors.
 - **Generate, deliberately reuse, or replenish shared visual assets**: Follow `../../../workflows/reuse-visual-assets.md`. New video work generates fresh project-local backgrounds first; search and checkout background or character pools only for explicit reuse, revision continuity, or intentional callbacks. Treat weak semantic, character, style, or composition fit as a real gap, then return accepted new assets to the appropriate pool after QA.
 - **Render or deliver**: Run plan readiness, project validation, typecheck, render readiness, render, ffprobe, and visual QA in that order.
+- **Review or audit narration**: Verify `narration.txt` against every item in the writing checklist at the end of `../../../docs/knowledge-base/narration.md`. Do not treat narration review as a surface-level prohibited-pattern scan; the checklist includes structural, beat-level, and theory/teaching checks.
 - **Improve the Skill, workflow, validator, or shared engine**: Follow `../../../workflows/improve-production-system.md` and classify the learning before editing a reusable layer.
 - **Change reusable pipeline code**: Work in the current engine implementation only after confirming the change benefits multiple case projects.
 
@@ -31,15 +32,31 @@ description: Model, produce, revise, render, and quality-check Chinese sales and
 - Keep human-readable speech in `narration.txt`.
 - Generate spoken text through the shared TTS normalizer.
 - Keep `narration.timeline.json` as the only timing baseline.
-- Keep `rich_storyboard.json` as the source of truth for rendered frame-0 cover placement, scenes, subtitles, layouts, backgrounds, assets, and Visual Beats; its `cover.title` must mirror `title.txt` exactly.
+- For current projects, keep the schema-v2 `storyboard_plan.json` as the authored visual source of truth. It records the LLM's direction, scene intent, asset casting, composition, camera, timing, layers, chrome, and cover decisions.
+- Treat `rich_storyboard.json` as generated render IR when a v2 plan exists. Rebuild it through the deterministic compiler; do not hand-edit it or let the compiler add aesthetic choices. Legacy projects without a v2 plan may continue to use `rich_storyboard.json` until migrated.
 - When deliberately reusing shared assets, checkout them into the case project and preserve `asset_pool_usage.json` provenance; never make a storyboard depend directly on the pool's canonical path.
 - Generate project-local backgrounds first for new work; keep generated-image prompts and any deliberate checkout provenance as separate declarations, then archive accepted new assets to the appropriate pool after QA.
+- Keep generated backgrounds free of clear human faces and story characters: backgrounds carry scene and atmosphere only, and people always appear as separate character-portrait assets, never inside background art.
 - Express authored visual timing with narration units, not handwritten seconds.
 - Give every newly built video a hook-title cover sourced from `title.txt`, fully visible on frame 0, and ending on a narration unit declared by `cover.throughUnit`.
-- Write the visual script before the storyboard data: every Visual Beat answers "what visible change does the viewer see", and key numbers, decision networks, and quoted speech use the semantic layer kinds (`counter`, `bar-compare`, `network`, `dialogue`, `annotate`) instead of static text captions. Evidence annotations use only `arrow` or `underline`; `box` and `ring` are disabled because coordinate boxes are too fragile to target reliably.
+- Write the visual script before executable beat data: every scene states its dramatic function and `directorialIntent`, and every Visual Beat answers "what visible change does the viewer see and why here". Key numbers, decision networks, and quoted speech use the semantic layer kinds (`counter`, `bar-compare`, `network`, `dialogue`, `annotate`) instead of static text captions. Evidence annotations use only `arrow` or `underline`; `box` and `ring` are disabled because coordinate boxes are too fragile to target reliably.
 - Choose `visualMode` by semantic ownership: `layout` for fixed business structures, `editorial` for Visual Beat-led evidence and story layers, and `hybrid` only when the layout remains primary and Visual Beats provide a base image plus optional tint. Do not put panel layers in hybrid scenes or duplicate one fact across the layout and Visual Beats.
 - Keep production semantic visual gaps within 12 seconds. A new asset or a story-bearing layer reveal/exit counts; camera, composition, transition, treatment, slot, or timing changes alone do not. Keep callbacks occasional and content-motivated, one active panel per slot, and at most four bars or network nodes per panel.
 - Keep reusable implementation out of case directories whenever a shared command or engine change is appropriate.
+
+## Run The Director Loop
+
+For a new visual plan or a material revision, use the LLM as the director before invoking the compiler:
+
+1. Read the title, narration, timeline, case facts, audience, and visual family together. Write one visual thesis plus explicit pacing, density, continuity, and chrome decisions.
+2. Give every scene a dramatic function, `directorialIntent`, `visualMode`, and reason for its chosen layout or free-form composition. Do not start from a rotation of available templates.
+3. Cast assets from narrative need. Asset count and reuse follow story function, not one-image-per-scene or one-image-per-beat quotas.
+4. Author every beat's composition, boxes, camera, treatment, transition, frame counts, layer entrances, and local chrome explicitly in schema v2. Use `director-canvas` when the idea is primarily editorial.
+5. Compile the plan deterministically. The compiler may validate, resolve units and paths, and copy declared values; it must not select layouts, cycle styles, add cards, invent beats, or assign motion by index.
+6. After real assets exist, run `scripts/case-video intent-frames output/<project>`. Review the actual pixels against every scene's `directorialIntent`; every scene must be represented and review findings must cite the rendered frame IDs.
+7. If pixels miss the contract, allow at most one composition-only revision and render the representative frames again. It may change composition, crop, boxes, slots, timing, camera, treatment, transitions, and local chrome, but must preserve facts, copy, layout, asset IDs, scene ranges, and directorial intent.
+
+If the current schema or Remotion primitives cannot express an approved directorial idea, extend the reusable contract and engine first. Do not flatten the idea into the nearest template merely to keep the pipeline moving.
 
 ## Apply Production Gates
 
@@ -54,9 +71,10 @@ Run project validation after any storyboard or image-asset change. It is the gua
 ## Preserve Creative Freedom
 
 - Apply current defaults and methods from `../../../docs/knowledge-base/`; do not duplicate their detailed values here.
-- Choose `layout`, `editorial`, or `hybrid` scene by scene according to the communication need.
+- Choose `layout`, `editorial`, or `hybrid` scene by scene according to the communication need. Templates are optional capabilities: use a semantic layout only when its structure is the clearest expression of the scene; use `director-canvas` plus explicit boxes/layers for authored editorial composition.
 - Treat pacing ranges and composition patterns as planning aids unless the contract or validator marks a rule as invariant.
-- Do not encode a fixed shot count, cut interval, narrative twist, case outcome, or single-case style recipe in this Skill.
+- Do not encode a fixed shot count, cut interval, beat count, asset quota, narrative twist, case outcome, template rotation, or single-case style recipe in this Skill.
+- Do not reward visual quantity by itself. Repeated labels, generic cards, camera-only changes, and modulo-selected variants are not evidence of direction or semantic progress.
 
 ## Improve Deliberately
 

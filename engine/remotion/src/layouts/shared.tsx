@@ -1,11 +1,11 @@
 import React from "react";
 import {AbsoluteFill} from "remotion";
-import type {Scene, Tone} from "../data/types";
+import type {LayoutScene, Scene, Tone} from "../data/types";
 import {KeywordPop} from "../components/KeywordPop";
 import {unitStartFrame} from "../timing/timeline";
 
 export type LayoutProps = {
-  scene: Scene;
+  scene: LayoutScene;
   sceneStartFrame: number;
   duration: number;
 };
@@ -32,7 +32,7 @@ export const KeywordCueRow: React.FC<{
       {scene.keywords.map((keyword, idx) => (
         <KeywordPop
           key={keyword.text}
-          text={keyword.text}
+          cue={keyword}
           startFrame={unitStartFrame(keyword.atUnit, keyword.offset ?? 0) - sceneStartFrame}
           index={idx}
           large={large}

@@ -220,7 +220,7 @@ class CaseVideoReadinessTests(unittest.TestCase):
         good_prompts = {
             "images/characters/li.png": {
                 "prompt": (
-                    "Square half-body manager silhouette, cut-paper and screen-print style, "
+                    "Square half-body Chinese manager silhouette, cut-paper and screen-print style, "
                     "pure white background, deep navy and burnt orange palette."
                 )
             }

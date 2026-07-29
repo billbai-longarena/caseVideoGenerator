@@ -114,3 +114,15 @@ Environment overrides:
 
 On an arm64 Mac, `scripts/case-video` also prefers an installed native arm64 Node over an x86_64 Node running through Rosetta.
 - `QA_VIDEO`: Video path checked by the `qa` command.
+
+## Delivery: compressed sharing copy
+
+Every delivered video ships with a ~50 MB compressed copy beside the master as `video/case_video_compressed_50m.mp4`. Scale the two-pass x264 video bitrate to the actual duration (target ≈ 50 MB × 8 ÷ duration, minus ~96 kbps for AAC; about 980 kbps video for a 6-minute video):
+
+```bash
+cd output/<project>/video
+ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 1 -an -f mp4 /dev/null
+ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 2 -c:a aac -b:a 96k -movflags +faststart case_video_compressed_50m.mp4
+```
+
+Verify the copy keeps 1920x1080/30fps, both streams, and the full duration before delivery.

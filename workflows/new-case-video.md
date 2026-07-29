@@ -51,32 +51,35 @@ scripts/case-video tts output/<project> --gender female --single-voice --force
 
 ## 5. 建立分镜
 
-- 以 timeline unit 编号划分连续场景。
-- 在 `rich_storyboard.json` 填写封面排版、字幕、关键词、布局、背景和语义揭示 unit。
-- 将 `title.txt` 逐字复制到 `storyboard.cover.title`，不在本步骤另写标题。标题必须在第 0 帧完整可见；封面结束时间写入首场景范围内的 `cover.throughUnit`，不用秒数。若发现标题需要改写，返回第 3 步同时复核旁白承诺。
-- 判断每个 scene 使用 `layout`、`editorial` 还是 `hybrid`。需要在同一 scene 内轮换环境、人物、证据、机制和后果时，先写 Visual Beat 的 purpose，再选择 composition 和素材。
-- **先写视觉剧本，再填数据**：每个拍点先回答 beat 卡第五项“画面动作”——这一拍观众看见什么变化。只有氛围图加静态文字框的拍点是缺陷，不是完成。
+- 由大模型同时读取 `title.txt`、`narration.txt`、`narration.timeline.json`、案例事实、目标受众和视觉家族，先完成导演判断，再写执行数据。不要从已有 layout 列表或模板轮换开始构思。
+- 在 schema-v2 `storyboard_plan.json` 顶层写明视觉命题、节奏、密度、连续性和全局 chrome。资产数量、scene 数量和 beat 数量由叙事职责决定，不采用“一场一图”“每场三拍”或固定切镜周期。
+- 以 timeline unit 编号划分连续场景。每个 scene 先写 `dramaticFunction` 和 `directorialIntent`，说明这一段要建立的层级、证据、情绪或关系，再决定 `layout`、`editorial` 或 `hybrid`。
+- 模板只是一种能力。固定业务结构确实最清楚时才选择语义 layout；以图片、证据、人物、自由排版和节奏为主时使用 `editorial` + `director-canvas`，由 plan 明确 composition、boxes、camera、treatment、transition、frame counts、layers 和局部 chrome。
+- 将 `title.txt` 逐字复制到 plan 的 `cover.title`，不在本步骤另写标题。标题必须在第 0 帧完整可见；封面结束时间写入首场景范围内的 `cover.throughUnit`，不用秒数。若发现标题需要改写，返回第 3 步同时复核旁白承诺。
+- **先写视觉剧本，再填 beat**：每个拍点回答“观众此刻看见什么变化、为什么必须在这个 unit 发生”。只有氛围图加静态文字框的拍点是缺陷，不是完成。
 - 按信息类型选择 layer kind（合同见 `../docs/architecture/visual-beat-system.md`）：
   - 关键数字和前后对比 → `counter` 或 `bar-compare`，不用纯文字大字报。
   - 决策网络、谁掌握什么 → `network` 节点图。剧本写节点、连线、强调关系和 reveal unit，默认让 `networkLayout: "auto"` 按拓扑与 slot 画幅排布；只有叙事顺序必须固定时才覆盖为 `row`、`column`、`triangle`、`hub` 或 `grid`。
   - 人物原话 → `dialogue` 气泡，绑定人物素材。
   - 图上证据（错配、异常位置）→ `annotate`，只用 `arrow` 或 `underline`。不使用坐标矩形框或圆圈；无法精确定位时改用裁切、`document-focus` 或 `evidence-collage`。
-- 在 `storyboard_plan.json` 中可用 scene-relative offset 编排拍点和 layer；构建后检查 `rich_storyboard.json` 只保留绝对 unit。
-- 运行项目检查：
+- v2 plan 直接使用 1-based narration unit。运行 deterministic compiler，检查它只做 schema 校验、引用解析、路径处理和字段复制；不得按序号选择 layout、composition、camera、transition 或装饰层。
+- 如果已批准的导演意图无法用现有合同表达，先扩展共享 schema 和 Remotion 能力，再回到 plan；不得为了通过构建把想法压成最接近的模板。
+- 构建并运行项目检查：
 
 ```bash
+scripts/case-video build output/<project>
 scripts/case-video check output/<project>
 ```
 
-质量门：`storyboard.cover.title` 与 `title.txt` 完全一致，第 0 帧封面标题完整可读，`cover.throughUnit` 位于首场景；unit 连续覆盖，音频、素材和 layer 引用有效，没有手写秒数替代 unit timing；使用 editorial/hybrid 的场景从 scene 起点就有可见拍点；关键数字、决策网络和关键引语使用了对应的语义 layer；新分镜不含 `box`、隐式方框或 `ring` 标注；validator 的表现力警告（长拍点无内部揭示、连续纯文字拍点）已逐条处理或说明理由。
+质量门：plan 的 `cover.title` 与 `title.txt` 完全一致，第 0 帧封面标题完整可读，`cover.throughUnit` 位于首场景；每个 scene 有可审查的 `directorialIntent`；unit 连续覆盖，音频、素材和 layer 引用有效，没有手写秒数替代 unit timing；使用 editorial/hybrid 的场景从 scene 起点就有可见拍点；关键数字、决策网络和关键引语使用了对应的语义 layer；新分镜不含 `box`、隐式方框或 `ring` 标注；`rich_storyboard.json` 与 v2 plan 的导演选择逐项一致，没有编译器补出的模板、卡片、动效或拍点；validator 的表现力警告已逐条处理或说明理由。
 
 ## 6. 生成与归档视觉资产
 
-- 先确定一个视觉家族。销售案例默认沿用蓝黄水彩：亮钴蓝/天蓝、镉黄高光、高明暗对比、奶油纸面、透明水彩/水粉叠色、干刷边缘、前景清楚、背景半抽象低细节。销售管理案例默认沿用本地暖色经理剪影风格：近黑人物剪影、深海军蓝层次、钴蓝、焦橙、灰桃色、奶油到琥珀背光、剪纸/丝网印刷感、干净留白。
-- 新项目默认先生成项目本地新背景：为每个 Visual Beat 或背景 cue 写入 `image_prompts.json`，只使用抽象重写后的场景描述，不把共享池检索作为起点，也不使用池中资产来免除生图。
+- 先确定一个视觉家族。销售案例默认沿用蓝黄水彩：亮钴蓝/天蓝、镉黄高光、高明暗对比、奶油纸面、透明水彩/水粉叠色、干刷边缘、前景清楚、背景半抽象低细节。FDE（AI 落地）专题默认沿用明亮版蓝黄水彩（`fde-bright-watercolor`）：更高明度的天蓝/浅钴蓝、大面积留白、阳光感暖黄、轻薄叠色、浅色背景。销售管理案例默认沿用本地暖色经理剪影风格：近黑人物剪影、深海军蓝层次、钴蓝、焦橙、灰桃色、奶油到琥珀背光、剪纸/丝网印刷感、干净留白。
+- 新项目默认先生成项目本地新背景：按 v2 plan 的资产 casting，以 asset ID 写入 `image_prompts.json`。是否需要新图由导演意图决定，不机械地为每个 scene 或每个 Visual Beat 生成一张图；只使用抽象重写后的场景描述，不把共享池检索作为起点，也不使用池中资产来免除生图。
 - 只有用户明确要求复用、修订已有项目需要保持连续性，或分镜设计了 callback、对照、证据放大时，才执行 `reuse-visual-assets.md` 的检索、人工复核和 checkout。池中图必须复制到项目 `images/pool/`，不能直接引用共享池路径。
 - 有明确出场人物时，先按角色身份、年龄、朝向、权力关系和画风补充或生成可复用头像规格；已存在头像只在明确复用、修订连续性或有意 callback 时 checkout 到 `images/characters/`。左右对话优先选择相向朝向，人物介绍优先使用正面头像。同一角色在整条案例中保持同一个素材 ID。
-- 人物头像统一为正方形、至少 512px、纯白背景的单人半身像或胸像，并明确继承项目视觉家族：销售用蓝黄水彩/水粉语言，销售管理用暖色经理剪影/剪纸丝网印刷语言。提示词必须同时写明白底、半身构图和风格；不得把有人物的叙事背景图当作头像。
+- 人物头像统一为正方形、至少 512px、纯白背景的单人半身像或胸像，并明确继承项目视觉家族：销售用蓝黄水彩/水粉语言，销售管理用暖色经理剪影/剪纸丝网印刷语言。所有系列（销售、销售管理、FDE）的头像必须是中国人形象，提示词必须显式写出 Chinese/中国人；render readiness 会把缺中国人声明的头像提示词判为 blocker。提示词必须同时写明白底、半身构图和风格；不得把有人物的叙事背景图当作头像。
 - 销售水彩图提示词不要写红色、珊瑚红、铁锈橙、橙红作为风格色；除非案例事实必须出现极小警示色。经理剪影风格允许本地参考里的焦橙和灰桃色背光，但不得生成红色水彩。
 - 确认 `storyboard.visualStyle` 已传入 Remotion 风格路由；检查标签、进度条、图表、转场和 Visual Beat 滤镜不会把合格素材改成另一套色系。
 - 禁止在背景图里生成可读文字、数字、字母、logo、水印、UI 截图或来源文档截图；数字、金额、百分比和英文缩写放到 Remotion 文本层。
@@ -103,13 +106,16 @@ scripts/case-video images output/<project>
 ```bash
 scripts/case-video typecheck output/<project>
 scripts/case-video preview output/<project>
+scripts/case-video intent-frames output/<project>
 scripts/case-video ready output/<project> --stage render
 scripts/case-video render output/<project>
 ```
 
 `render` 会自动再次执行 render readiness。该门禁使用真实素材运行严格 validator，核验头像像素/来源/画风，并渲染精确第 0 帧和透明封面证明层，检查完整文案位于画面几何中心、处在居中 1:1 裁切内，黑色蒙版只覆盖文字且没有吞掉背景。
 
-质量门：预览无布局冲突，typecheck 与 render readiness 通过，完整渲染成功。
+在完整渲染前，用 `qa/intent-frames/manifest.json` 中的实际 frame ID 逐一对照 plan 的 `directorialIntent`。代表帧必须覆盖每个 scene，并额外覆盖关键 Visual Beat。发现信息层级、视觉焦点、情绪、密度、连续性、素材适配或品牌 chrome 与意图不符时，只允许一次 composition-only 修订并重新生成代表帧；可改构图、裁切、box、slot、同场时序、镜头、treatment、转场和局部 chrome，不得改事实、文案、layout、资产 ID、scene 范围或导演意图。不要在生成的 `rich_storyboard.json` 或 JSX 中做单案例补丁。
+
+质量门：代表帧覆盖所有 scene，`qa/intent-frame-review.json` 通过且引用准确 frame ID；typecheck 与 render readiness 通过，完整渲染成功。
 
 ## 8. 质检与交付
 
@@ -118,6 +124,7 @@ scripts/case-video qa output/<project>
 ```
 
 - 抽 contact sheet 和关键帧（至少覆盖精确第 0 帧、每种语义 layer 首次出现、所有坐标标注帧和结尾）。
+- 建立 intent-to-frame 对照：对每个 scene 记录至少一张代表帧，并判断它是否实现 plan 的 `directorialIntent`。技术合格但意图未落地仍视为失败。
 - 完成视觉检查和数字密集段试听。
 - 表现力检查：标题、图章与信息卡无重叠；关键数字场景出现动画计数或对比条而非静态文字；每个拍点在其时间窗内有可见变化。
 - 记录最终文件、时长、规格和已知限制。

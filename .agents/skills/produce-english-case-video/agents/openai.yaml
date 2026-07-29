@@ -1,0 +1,4 @@
+interface:
+  display_name: "English Case Video Production"
+  short_description: "Produce native English case-story videos"
+  default_prompt: "Use $produce-english-case-video to produce a native-English case video from source material."

@@ -19,6 +19,12 @@ except ImportError:  # pragma: no cover - handled by audit/build output
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from server.app.services.visual_adapter import prompt_image_path
+
+
 DEFAULT_POOL = ROOT / "assets" / "visual-pool"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 FORBIDDEN_POOL_SOURCE_MARKERS = (
@@ -327,13 +333,16 @@ def prompt_index(project: Path) -> tuple[dict[str, dict], dict[str, list[dict]],
     by_path: dict[str, dict] = {}
     by_basename: dict[str, list[dict]] = {}
     for item in prompts:
-        if not isinstance(item, dict) or not isinstance(item.get("file"), str):
+        if not isinstance(item, dict):
             continue
-        normalized = normalize_relative(item["file"])
+        target = prompt_image_path(item)
+        if not target:
+            continue
+        normalized = normalize_relative(target)
         record = {
             "file": normalized,
             "prompt": str(item.get("prompt", "")),
-            "stylePrefix": style_prefix,
+            "stylePrefix": style_prefix or str(item.get("style_family", "")),
         }
         by_path[normalized] = record
         by_basename.setdefault(Path(normalized).name, []).append(record)

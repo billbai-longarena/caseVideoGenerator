@@ -52,7 +52,8 @@ export type VisualBeatComposition =
   | "split"
   | "triptych"
   | "document-focus"
-  | "evidence-collage";
+  | "evidence-collage"
+  | "custom";
 export type VisualBeatTransition = "cut" | "dissolve" | "push";
 export type VisualBeatCamera =
   | "static"
@@ -133,16 +134,60 @@ export type AnnotateRegion = {
   h: number;
 };
 
+export type VisualBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type CameraPath = {
+  startScale: number;
+  endScale: number;
+  startX: number;
+  endX: number;
+  startY: number;
+  endY: number;
+};
+
+export type VisualBeatRender = {
+  // cameraIntensity is retained for v1 storyboard compatibility. Director
+  // plans use an exact camera path and treatment color instead.
+  cameraIntensity?: number;
+  cameraPath?: CameraPath;
+  treatmentColor?: string;
+  ambientOpacity: number;
+  vignette: number;
+  overlay: "none" | "soft" | "read-left" | "read-right";
+  transitionFrames: number;
+  layerEnterFrames: number;
+  layerExitFrames: number;
+  layerStaggerFrames: number;
+  emphasisScale: number;
+  pulse: boolean;
+  flashbackFrame: boolean;
+  canvasTone: "transparent" | "light" | "dark";
+};
+
 export type VisualLayer = {
   id?: string;
   kind: VisualLayerKind;
   slot?: VisualLayerSlot;
+  box?: VisualBox;
   asset?: string;
   label?: string;
   text?: string;
   variant?: "metric" | "caption" | "quote" | "stamp" | "headline";
+  surface?: "none" | "glass" | "solid" | "paper" | "accent";
+  align?: "left" | "center" | "right";
+  enter?: "cut" | "fade" | "slide-left" | "slide-right" | "scale";
+  fontSize?: number;
+  fontWeight?: number;
+  lineHeight?: number;
   color?: string;
   opacity?: number;
+  frame?: "none" | "white" | "paper" | "dark";
+  fit?: "cover" | "contain";
   revealAtUnit?: number;
   exitAtUnit?: number;
   // counter
@@ -167,17 +212,23 @@ export type VisualBeat = {
   atUnit: number;
   visualIntent?: VisualIntent;
   purpose: VisualBeatPurpose;
+  directorialIntent?: string;
   composition: VisualBeatComposition;
   baseAsset?: string;
+  baseBox?: VisualBox;
+  baseFit?: "cover" | "contain";
   transition?: VisualBeatTransition;
   camera?: VisualBeatCamera;
   treatment?: VisualBeatTreatment;
+  render?: VisualBeatRender;
+  chrome?: SceneChrome;
   layers?: VisualLayer[];
 };
 
 export type SfxId = "pop" | "whoosh" | "stamp" | "flash";
 
 export type LayoutId =
+  | "director-canvas"
   | "breaking-news"
   | "hook-alert"
   | "subject-reveal"
@@ -226,7 +277,16 @@ export type KeywordCue = {
   text: string;
   atUnit: number;
   offset?: number;
+  display?: boolean;
   sfx?: SfxId;
+  enter?: "cut" | "fade" | "rise" | "slide-left" | "slide-right" | "scale";
+  enterFrames?: number;
+  surface?: "none" | "chip";
+  background?: string;
+  color?: string;
+  rotation?: number;
+  fontSize?: number;
+  float?: boolean;
 };
 
 export type SubtitleCue = {
@@ -244,21 +304,60 @@ export type BackgroundCue = {
   sfx?: SfxId;
 };
 
+export type SceneMotion = {
+  enter: "cut" | "fade" | "rise";
+  exit: "cut" | "fade" | "lift";
+  enterFrames?: number;
+  exitFrames?: number;
+};
+
+export type SceneTransition = "none" | "ink-slide" | "chapter-circle" | "paper-stripes";
+
+export type SceneChrome = {
+  brandBug?: boolean;
+  chapterBadge?: boolean;
+  subtitleBar?: boolean;
+};
+
+export type StoryboardChrome = {
+  brandBug: boolean;
+  chapterBadge: boolean;
+  subtitleBar: boolean;
+  progressRail: boolean;
+  cover: boolean;
+};
+
+export type DirectorDirection = {
+  visualThesis: string;
+  pacingArc: string;
+  densityStrategy: string;
+  continuityRules: string[];
+  avoid?: string[];
+};
+
 export type Scene = {
   id: string;
   chapter: string;
   kicker: string;
   layout: LayoutId;
-  tone: Tone;
+  tone?: Tone;
   units: [number, number];
-  headline: HeadlineSpec;
+  dramaticFunction?: string;
+  directorialIntent?: string;
+  headline?: HeadlineSpec;
   keywords: KeywordCue[];
   subtitles: SubtitleCue[];
   backgrounds: BackgroundCue[];
   visualMode?: VisualMode;
   visualBeats?: VisualBeat[];
+  sceneMotion?: SceneMotion;
+  transition?: SceneTransition;
+  transitionFrames?: number;
+  chrome?: SceneChrome;
   props: Record<string, unknown>;
 };
+
+export type LayoutScene = Scene & {tone: Tone; headline: HeadlineSpec};
 
 export type BgmSpec = {
   src: string;
@@ -281,6 +380,9 @@ export type Storyboard = {
   projectType?: string;
   visualStyle?: string;
   subtitleLabel?: string;
+  directorPlanVersion?: string;
+  direction?: DirectorDirection;
+  chrome?: StoryboardChrome;
   fps: number;
   width: number;
   height: number;

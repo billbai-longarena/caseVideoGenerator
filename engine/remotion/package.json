@@ -8,9 +8,9 @@
     "prepreview": "npm run sync",
     "preview": "remotion preview src/index.ts",
     "prerender": "npm run sync",
-    "render": "remotion render src/index.ts CaseVideo ${VIDEO_OUTPUT:-../video/case_video.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6} --hardware-acceleration=${REMOTION_HARDWARE_ACCELERATION:-if-possible}",
+    "render": "remotion render src/index.ts CaseVideo ${VIDEO_OUTPUT:-../video/case_video.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6} --hardware-acceleration=${REMOTION_HARDWARE_ACCELERATION:-if-possible} ${REMOTION_BROWSER_EXECUTABLE:+--browser-executable=$REMOTION_BROWSER_EXECUTABLE}",
     "prerender:video": "npm run sync",
-    "render:video": "remotion render src/index.ts CaseVideoVideoOnly ${VIDEO_LAYER_OUTPUT:-../video/case_video_video_only.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6} --hardware-acceleration=${REMOTION_HARDWARE_ACCELERATION:-if-possible}",
+    "render:video": "remotion render src/index.ts CaseVideoVideoOnly ${VIDEO_LAYER_OUTPUT:-../video/case_video_video_only.mp4} --codec h264 --overwrite --concurrency=${REMOTION_CONCURRENCY:-6} --hardware-acceleration=${REMOTION_HARDWARE_ACCELERATION:-if-possible} ${REMOTION_BROWSER_EXECUTABLE:+--browser-executable=$REMOTION_BROWSER_EXECUTABLE}",
     "mux:audio": "bash ../scripts/mux_audio.sh",
     "typecheck": "tsc --noEmit"
   },

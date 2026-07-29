@@ -15,7 +15,10 @@ import {PerformanceLadder} from "./PerformanceLadder";
 import {DecisionBottleneck} from "./DecisionBottleneck";
 import {AuthorityMatrix} from "./AuthorityMatrix";
 
+const DirectorCanvas: React.FC<LayoutProps> = () => null;
+
 const LAYOUTS: Record<LayoutId, React.FC<LayoutProps>> = {
+  "director-canvas": DirectorCanvas,
   "breaking-news": BreakingNews,
   "hook-alert": BreakingNews,
   "subject-reveal": SubjectReveal,

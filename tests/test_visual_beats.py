@@ -178,6 +178,30 @@ class VisualBeatProjectTests(unittest.TestCase):
         )
         return project
 
+    def beat_render(self, *, canvas_tone: str = "transparent") -> dict[str, object]:
+        return {
+            "cameraPath": {
+                "startScale": 1,
+                "endScale": 1.02,
+                "startX": 0,
+                "endX": 0,
+                "startY": 0,
+                "endY": 0,
+            },
+            "treatmentColor": "#00000000",
+            "ambientOpacity": 0,
+            "vignette": 0,
+            "overlay": "none",
+            "transitionFrames": 2,
+            "layerEnterFrames": 2,
+            "layerExitFrames": 2,
+            "layerStaggerFrames": 0,
+            "emphasisScale": 1,
+            "pulse": False,
+            "flashbackFrame": False,
+            "canvasTone": canvas_tone,
+        }
+
     def run_builder(self, project: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(BUILDER), str(project)],
@@ -315,6 +339,54 @@ class VisualBeatProjectTests(unittest.TestCase):
             validated = self.run_validator(project)
             self.assertNotEqual(validated.returncode, 0)
             self.assertIn("unknown baseAsset", validated.stderr)
+
+    def test_strict_validator_rejects_opaque_v2_background_canvas(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.assertEqual(self.run_builder(project).returncode, 0)
+            path = project / "rich_storyboard.json"
+            storyboard = json.loads(path.read_text())
+            storyboard["visualAssets"][0]["id"] = "bg-scene"
+            for beat in storyboard["scenes"][0]["visualBeats"]:
+                beat["baseAsset"] = "bg-scene"
+                beat["render"] = self.beat_render(canvas_tone="dark")
+            path.write_text(json.dumps(storyboard), encoding="utf-8")
+
+            validated = self.run_validator(project, strict_visuals=True)
+
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("background-like baseAsset", validated.stderr)
+            self.assertIn("opaque render.canvasTone", validated.stderr)
+
+    def test_strict_validator_rejects_unboxed_opaque_text_surface(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.assertEqual(self.run_builder(project).returncode, 0)
+            path = project / "rich_storyboard.json"
+            storyboard = json.loads(path.read_text())
+            beat = storyboard["scenes"][0]["visualBeats"][0]
+            beat["render"] = self.beat_render(canvas_tone="transparent")
+            beat["layers"] = [
+                {
+                    "kind": "text",
+                    "slot": "center",
+                    "text": "大块纸面",
+                    "variant": "caption",
+                    "surface": "paper",
+                    "align": "center",
+                    "enter": "fade",
+                    "fontSize": 42,
+                    "fontWeight": 800,
+                    "lineHeight": 1.1,
+                    "color": "#111827",
+                }
+            ]
+            path.write_text(json.dumps(storyboard), encoding="utf-8")
+
+            validated = self.run_validator(project, strict_visuals=True)
+
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("surface without an explicit box", validated.stderr)
 
     def test_validator_rejects_contact_sheet_visual_asset(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -694,6 +766,52 @@ class VisualBeatProjectTests(unittest.TestCase):
             validated = self.run_validator(project)
             self.assertNotEqual(validated.returncode, 0)
             self.assertIn("region.w must be a number between 0 and 1", validated.stderr)
+
+    def test_strict_validator_rejects_low_contrast_text_on_dark_surface(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "text",
+                        "slot": "left",
+                        "text": "深色字压深色玻璃卡",
+                        "surface": "glass",
+                        "color": "#12325E",
+                    }
+                ],
+            )
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("contrast", validated.stderr)
+
+    def test_strict_validator_accepts_light_text_on_glass_and_ink_on_paper(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "text",
+                        "slot": "left",
+                        "text": "奶油字压玻璃卡",
+                        "surface": "glass",
+                        "color": "#F7E7C7",
+                        "box": {"x": 0.05, "y": 0.2, "w": 0.3, "h": 0.2},
+                    },
+                    {
+                        "kind": "text",
+                        "slot": "right",
+                        "text": "深墨字压纸面卡",
+                        "surface": "paper",
+                        "color": "#12325E",
+                        "box": {"x": 0.6, "y": 0.2, "w": 0.3, "h": 0.2},
+                    },
+                ],
+            )
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertEqual(validated.returncode, 0, validated.stderr)
 
     def test_validator_rejects_annotate_region_crossing_canvas_edge(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

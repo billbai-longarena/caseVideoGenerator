@@ -8,6 +8,13 @@ from pathlib import Path
 import sys
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from server.app.services.visual_adapter import build_rich_storyboard
+
+
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -236,6 +243,32 @@ def main() -> None:
     timeline = load_json(project / "narration.timeline.json")
     plan = load_json(project / "storyboard_plan.json")
     authored_title = load_authored_title(project)
+    if (
+        plan.get("version") in {"1", "2"}
+        and isinstance(plan.get("scenes"), list)
+        and plan["scenes"]
+        and isinstance(plan["scenes"][0], dict)
+        and ("scene_id" in plan["scenes"][0] or "units" in plan["scenes"][0])
+    ):
+        if authored_title is None:
+            raise SystemExit("title.txt is required for a contracted visual plan")
+        prompt_path = project / "image_prompts.json"
+        image_prompts = load_json(prompt_path) if prompt_path.is_file() else None
+        try:
+            storyboard = build_rich_storyboard(
+                plan,
+                timeline,
+                authored_title=authored_title,
+                project_name=project.name,
+                program=str(plan.get("subtitleLabel") or "销售不复杂"),
+                image_prompts=image_prompts,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise SystemExit(str(exc)) from exc
+        output = project / "rich_storyboard.json"
+        output.write_text(json.dumps(storyboard, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"wrote {output} scenes={len(storyboard['scenes'])} units={len(timeline['units'])}")
+        return
     units = timeline["units"]
     by_paragraph: dict[int, list[dict]] = {}
     for unit in units:

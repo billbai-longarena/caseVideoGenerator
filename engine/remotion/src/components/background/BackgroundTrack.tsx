@@ -49,6 +49,10 @@ export const BackgroundTrack: React.FC = () => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
 
+  if (cues.length === 0) {
+    return <AbsoluteFill style={{backgroundColor: palette.ink}} />;
+  }
+
   let currentIndex = 0;
   for (let index = 0; index < cues.length; index += 1) {
     if (frame >= cues[index].startFrame) {

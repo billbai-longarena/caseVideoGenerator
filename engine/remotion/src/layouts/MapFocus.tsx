@@ -75,7 +75,7 @@ export const MapFocus: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
           }}
         >
           <KeywordPop
-            text={keyword.text}
+            cue={keyword}
             startFrame={unitStartFrame(keyword.atUnit, keyword.offset ?? 0) - sceneStartFrame}
             index={idx}
             large={propNumber(scene, "keywordLarge", 1) > 0}

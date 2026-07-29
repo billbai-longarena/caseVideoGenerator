@@ -1,17 +1,22 @@
 import React from "react";
 import {AbsoluteFill} from "remotion";
-import {fontStack, palette} from "../theme";
+import type {SceneTransition} from "../data/types";
+import {fontStack, palette, visualTheme} from "../theme";
 
-export const TransitionWipe: React.FC<{progress: number; chapter: string; variant: number}> = ({
+export const TransitionWipe: React.FC<{
+  progress: number;
+  chapter: string;
+  variant: SceneTransition;
+}> = ({
   progress,
   chapter,
   variant,
 }) => {
-  if (progress <= 0) {
+  if (progress <= 0 || variant === "none") {
     return null;
   }
 
-  if (variant === 1) {
+  if (variant === "chapter-circle") {
     return (
       <AbsoluteFill
         style={{
@@ -32,7 +37,7 @@ export const TransitionWipe: React.FC<{progress: number; chapter: string; varian
             fontWeight: 950,
             color: palette.white,
             WebkitTextStroke: `4px ${palette.ink}`,
-            textShadow: `10px 10px 0 ${palette.blue}`,
+            textShadow: `10px 10px 0 ${visualTheme.brandSurface}`,
           }}
         >
           {chapter}
@@ -41,7 +46,7 @@ export const TransitionWipe: React.FC<{progress: number; chapter: string; varian
     );
   }
 
-  if (variant === 2) {
+  if (variant === "paper-stripes") {
     return (
       <AbsoluteFill
         style={{
@@ -76,7 +81,7 @@ export const TransitionWipe: React.FC<{progress: number; chapter: string; varian
       style={{
         pointerEvents: "none",
         opacity: progress * 0.72,
-        background: palette.blue,
+        background: visualTheme.brandSurface,
         clipPath: `polygon(0 0, ${24 + progress * 82}% 0, ${8 + progress * 82}% 100%, 0 100%)`,
       }}
     >

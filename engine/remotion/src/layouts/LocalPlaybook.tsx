@@ -42,7 +42,7 @@ export const LocalPlaybook: React.FC<LayoutProps> = ({scene, sceneStartFrame}) =
           style={{position: "absolute", left: 900 + idx * 230, top: 210 + idx * 118}}
         >
           <KeywordPop
-            text={keyword.text}
+            cue={keyword}
             startFrame={unitStartFrame(keyword.atUnit, keyword.offset ?? 0) - sceneStartFrame}
             index={idx}
             large

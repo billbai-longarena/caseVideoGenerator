@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from create_priority_and_management_storyboards import MANAGEMENT_STYLE, S, V, bar, build_project, metric
+from requested_management_case14_19_configs import build_projects as build_case14_19_projects
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -358,6 +359,10 @@ PROJECTS: dict[str, dict[str, Any]] = {
         ],
     ),
 }
+
+PROJECTS.update(
+    build_case14_19_projects(C=C, P=P, S=S, metric=metric, bar=bar)
+)
 
 
 def load_project_title(slug: str) -> str:

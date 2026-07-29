@@ -1,5 +1,7 @@
 # Case Video Production Notes
 
+**第一原则：具体人物 + 具体事件。** 每个案例旁白必须有至少 3 个有名字的人物和具体的场景事件。关键转折必须绑定人物在哪里、做了什么、说了什么话。不能用"团队觉得""大家认为"等抽象集体表述替代具体人物反应。违反即为缺陷。
+
 Follow `docs/README.md`, the matching file under `workflows/`, and `AGENTS.md` for the full workflow. `PLAYBOOK.md` is a compatibility entry. Additional narration constraints:
 
 - For new narration or video generation, do not read or imitate old generated narration, timelines, storyboards, rendered videos, QA frames, or other completed `output/<project>/` artifacts as examples. Many historical outputs are wrong. Use the production Skill and current source materials; only inspect an existing project's artifacts when the user explicitly asks to revise or audit that project.

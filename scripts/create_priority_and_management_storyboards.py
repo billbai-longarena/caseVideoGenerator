@@ -110,6 +110,7 @@ def S(
     role: str = "context",
     treatment: str = "natural",
     visual_variants: list[dict[str, Any]] | None = None,
+    support_beats: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "paragraphs": paragraphs,
@@ -128,6 +129,7 @@ def S(
         "role": role,
         "treatment": treatment,
         "visualVariants": visual_variants or [],
+        "supportBeats": support_beats or [],
     }
 
 
@@ -733,6 +735,44 @@ def build_beat_candidates(
             )
         )
 
+    for support_position, item in enumerate(scene.get("supportBeats", []), start=1):
+        text = str(item["text"])
+        label = str(item.get("label") or scene["kicker"])
+        cue_texts = tuple(str(cue) for cue in item.get("cueTexts", [text]) if str(cue).strip())
+        layers = tuple(
+            item.get(
+                "layers",
+                [
+                    {
+                        "kind": "text",
+                        "slot": item.get("slot", "center"),
+                        "variant": item.get("variant", "headline"),
+                        "label": label,
+                        "text": text,
+                    }
+                ],
+            )
+        )
+        candidates.append(
+            BeatCandidate(
+                key=str(item.get("key") or f"support-{support_position}"),
+                intent=str(item.get("intent", "evidence")),
+                cue_texts=cue_texts,
+                layers=layers,
+                priority=int(item.get("priority", 86)),
+                preferred_fraction=(
+                    float(item["preferredFraction"])
+                    if "preferredFraction" in item and item["preferredFraction"] is not None
+                    else None
+                ),
+                purpose=item.get("purpose"),
+                composition=item.get("composition"),
+                camera=item.get("camera"),
+                transition=item.get("transition"),
+                treatment=item.get("treatment"),
+            )
+        )
+
     person = scene["person"]
     if person and scene["quote"]:
         intent = "reflection" if is_last else ("decision" if scene["treatment"] == "crisis" else "protagonist")
@@ -883,9 +923,9 @@ def build_visual_beats(
         duration = max(0.0, float(end_value) - float(start_value))
     else:
         duration = float(last - first + 1) * 4.0
-    # Use a little headroom below the 12s hard limit because narration units
-    # are discrete and cannot always land on an exact temporal quantile.
-    minimum_count = max(1, math.ceil(duration / 11.25))
+    # Use enough headroom below the 12s hard limit because narration units are
+    # discrete and cannot always land on an exact temporal quantile.
+    minimum_count = max(1, math.ceil(duration / 10.0))
     candidates = build_beat_candidates(
         scene,
         is_first=scene_position == 1,

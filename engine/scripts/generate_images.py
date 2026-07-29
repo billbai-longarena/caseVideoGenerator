@@ -17,12 +17,17 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+import sys
 
 from PIL import Image, UnidentifiedImageError
 
 
 ENGINE_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ENGINE_ROOT.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from server.app.services.visual_adapter import prompt_image_path
 DEPLOYMENT = "gpt-image-2"
 API_VERSION = "2025-04-01-preview"
 DEFAULT_REQUESTS_PER_MINUTE = 12
@@ -55,6 +60,35 @@ STYLE_PREFIX = (
     "not heavy oil painting, not photorealistic, no dense rendering, no logos, no brand marks, "
     "no readable text, no watermark, no detailed faces, no detailed windows, no hard architectural linework in the background."
 )
+
+MANAGEMENT_STYLE_PREFIX = (
+    "Editorial sales-management illustration, cinematic 16:9 composition, near-black manager silhouettes "
+    "in the foreground, deep navy layered shapes, cobalt blue shadows, burnt orange and gray-peach backlight, "
+    "cream-to-amber glow, tactile cut-paper and screen-print texture, clean negative space, strong subject hierarchy, "
+    "semi-abstract low-detail workplace background, no detailed faces, no logos, no brand marks, no readable text, "
+    "no numerals, no letters, no watermark, no UI screenshot, no source-document screenshot."
+)
+
+FDE_BRIGHT_STYLE_PREFIX = (
+    "Extra-bright editorial watercolor and gouache illustration, cinematic 16:9 composition, "
+    "dominant luminous sky blue and light cobalt palette with sunny cadmium yellow highlights, "
+    "high-key lighting, overall light and airy tonality, pale cream paper visible throughout, "
+    "generous white negative space, thin translucent washes, clean flat shapes, light dry-brush edges, "
+    "modern business magazine style, foreground subject relatively clear and readable, "
+    "everything beyond the foreground is impressionist and semi-abstract, "
+    "background rendered as very light loose color fields and soft silhouettes, minimal details, "
+    "optimistic sunlit morning atmosphere, "
+    "no deep navy, no dark backgrounds, no heavy shadows, no large dark areas, "
+    "not heavy oil painting, not photorealistic, no dense rendering, no logos, no brand marks, "
+    "no readable text, no numerals, no letters, no watermark, no detailed faces, "
+    "no UI screenshot, no source-document screenshot."
+)
+
+STYLE_PREFIXES = {
+    "sales-watercolor": STYLE_PREFIX,
+    "sales-management-silhouette": MANAGEMENT_STYLE_PREFIX,
+    "fde-bright-watercolor": FDE_BRIGHT_STYLE_PREFIX,
+}
 
 DEFAULT_PROMPTS = [
     ("bg_01_ipo_pause", "A confident business executive silhouette on a phone call near a Hong Kong financial district skyline, low-angle heroic framing, abstract IPO roadshow tension, blue suit shapes and yellow sunlight washes."),
@@ -375,6 +409,16 @@ def validate_generated_image_bytes(
         )
 
 
+def existing_image_has_size(path: Path, expected_size: tuple[int, int]) -> bool:
+    try:
+        with Image.open(path) as image:
+            actual_size = image.size
+            image.verify()
+    except (UnidentifiedImageError, OSError):
+        return False
+    return actual_size == expected_size
+
+
 def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, list[dict[str, str]]]:
     data = json.loads(prompt_path.read_text(encoding="utf-8"))
     if isinstance(data, list):
@@ -384,19 +428,36 @@ def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, l
     else:
         style_prefix = data.get("stylePrefix", STYLE_PREFIX)
         prompt_specs = data["prompts"]
+        is_asset_contract = bool(
+            data.get("version") in {"1", "2"}
+            and prompt_specs
+            and isinstance(prompt_specs[0], dict)
+            and ("scene_id" in prompt_specs[0] or "asset_id" in prompt_specs[0])
+        )
         output_dir, _ = resolve_project_path(
             project_root,
-            data.get("outputDir", "images/watercolor_bright"),
+            data.get("outputDir", "images/generated" if is_asset_contract else "images/watercolor_bright"),
             "image outputDir",
         )
     validate_generated_output_dir(project_root, output_dir, "image outputDir")
 
     items = []
     for position, spec in enumerate(prompt_specs, start=1):
-        file_name = spec["file"]
+        legacy_file = spec.get("file") or spec.get("src")
+        file_name = (
+            legacy_file.replace("\\", "/").strip()
+            if isinstance(legacy_file, str) and legacy_file.strip()
+            else prompt_image_path(spec)
+        )
+        if not file_name:
+            raise SystemExit(f"image prompt {position} must define a safe file, scene_id, or asset_id")
         output_path, _ = resolve_project_path(project_root, file_name, f"image prompt {position}")
         validate_generated_image_target(project_root, output_path, f"image prompt {position}")
-        prompt = spec.get("fullPrompt") or f"{style_prefix} Scene: {spec['prompt']}"
+        record_style = STYLE_PREFIXES.get(str(spec.get("style_family")), style_prefix)
+        prompt = spec.get("fullPrompt") or f"{record_style} Scene: {spec['prompt']}"
+        negative_prompt = str(spec.get("negative_prompt") or "").strip()
+        if negative_prompt:
+            prompt = f"{prompt} Explicitly avoid: {negative_prompt}"
         items.append({"file": str(output_path), "prompt": prompt})
     return output_dir, items
 
@@ -418,9 +479,16 @@ def write_prompt_image(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prompt = item["prompt"]
     metadata = {"file": str(output_path.relative_to(project_root)), "prompt": prompt}
+    expected_size = parse_image_size(size)
     if output_path.exists() and not force:
-        print(f"skip {index:02d}/{total} {output_path}", flush=True)
-        return metadata
+        if existing_image_has_size(output_path, expected_size):
+            print(f"skip {index:02d}/{total} {output_path}", flush=True)
+            return metadata
+        print(
+            f"regenerate {index:02d}/{total} {output_path.name} "
+            f"because existing dimensions do not match {size}",
+            flush=True,
+        )
     print(f"generate {index:02d}/{total} {output_path.name}", flush=True)
     started = time.time()
     image_bytes = generate_image(
@@ -432,7 +500,7 @@ def write_prompt_image(
     )
     validate_generated_image_bytes(
         image_bytes,
-        expected_size=parse_image_size(size),
+        expected_size=expected_size,
         label=str(output_path.relative_to(project_root)),
     )
     temp_path = output_path.with_name(

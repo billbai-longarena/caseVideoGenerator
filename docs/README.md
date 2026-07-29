@@ -21,7 +21,10 @@
 - `knowledge-base/qa-and-delivery.md`：技术质检、视觉质检和交付门槛。
 - `knowledge-base/tooling-decisions.md`：工具选型及历史决策。
 - `knowledge-base/troubleshooting.md`：常见故障与处理顺序。
+- `architecture/server-deployment-design.md`：异步任务服务器、严格模型路由、Phase A 现状，以及 Phase B/C 的数据、审核、UI、扩容、运维与验收合同。
+- `acceptance/server-b-c-status.md`：Phase B/C 验收 ID 的实时状态、证据和未完成项；`partial` 不视为放行。
 - `architecture/visual-beat-system.md`：Visual Beat 分层编辑的数据合同、兼容策略、校验边界和验收标准。
+- `architecture/llm-director-pipeline.md`：LLM 导演源稿、确定性编译器、Remotion 执行层和 intent-to-frame 复核之间的责任边界。
 
 ## 工作流索引
 

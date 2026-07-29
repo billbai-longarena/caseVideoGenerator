@@ -1,5 +1,7 @@
 # Case Video Production Agent Guide
 
+**第一原则：具体人物 + 具体事件。** 每个案例旁白必须有至少 3 个有名字的人物和具体的场景事件。关键转折必须绑定人物在哪里、做了什么、说了什么话。不能用"团队觉得""大家认为"等抽象集体表述替代具体人物反应。违反即为缺陷。
+
 This repository is the dedicated workspace for generating case-story videos with Azure Speech TTS, Remotion, Azure image generation, and ffmpeg QA. Do video work here instead of in `/Users/bill.bai/Desktop/CeibsSalesTouch`.
 
 ## Primary Workflow
@@ -12,7 +14,7 @@ docs/knowledge-base/production-principles.md
 workflows/new-case-video.md or workflows/revise-video.md
 ```
 
-Use `.agents/skills/produce-case-video/SKILL.md` for production, revision, rendering, and QA tasks. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
+Use `.agents/skills/produce-case-video/SKILL.md` for sales-column (`销售不复杂`) production, revision, rendering, and QA tasks. Use `.agents/skills/produce-fde-video/SKILL.md` for FDE-column (`FDE不复杂`) production — it shares the same rendering pipeline but has its own narration guide, column identity, and content rules. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
 
 For new narration or video generation, do not inspect or imitate old generated narration, timelines, storyboards, rendered videos, QA frames, or other completed `output/<project>/` artifacts as examples. Many historical outputs are known to be wrong. Read the production Skill and current source materials, then generate from the current workflow; only read an existing project's artifacts when the user explicitly asks to revise or audit that project.
 
@@ -23,7 +25,8 @@ case source/materials
 -> title.txt + rewritten narration
 -> numeric-normalized TTS script
 -> Azure Speech TTS narration wav + narration.timeline.json
--> unit-anchored rich_storyboard.json
+-> schema-v2 unit-anchored storyboard_plan.json
+-> deterministic rich_storyboard.json render IR
 -> fresh project visual generation plus post-QA visual-pool archive
 -> Remotion motion-graphics render
 -> ffprobe/ffmpeg visual QA
@@ -32,11 +35,13 @@ case source/materials
 ## Source Of Truth
 
 - Keep the final human-authored article/video title in `title.txt`; create and review it together with `narration.txt`.
-- Keep `rich_storyboard.json` or the equivalent storyboard JSON as the source of truth for scenes, layouts, subtitles, keyword timing, and background cues.
+- Keep schema-v2 `storyboard_plan.json` as the authored visual source of truth for direction, scenes, layouts, Visual Beats, assets, camera, timing, layers, chrome, subtitles, keywords, and backgrounds.
+- Treat `rich_storyboard.json` as deterministic render IR when a v2 plan exists. Do not hand-edit it or let the compiler invent creative choices; rich-only legacy projects remain compatible until migrated.
 - Keep `storyboard.cover.title` as the rendered copy of `title.txt`, not a separately authored later title.
 - Keep `narration.timeline.json` as the only timing baseline.
 - Keep `assets/visual-pool/taxonomy.json` as the shared visual-label source and `asset_pool_usage.json` as project-local provenance for deliberate checkout.
 - Do not hard-code scene timing or scene data into Remotion components when JSON-driven data exists.
+- Do not choose layouts, motions, transitions, beat counts, card surfaces, or asset quotas by scene/beat index in builders, adapters, or Remotion. The LLM director plan must state those choices explicitly.
 - Use narration unit numbers (`atUnit`, `units`) instead of handwritten seconds.
 
 ## Duration Defaults
@@ -94,8 +99,13 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 - Do not print secrets or commit `.env`.
 - Use abstract visual prompts. Do not send restricted PDF source text, long excerpts, or sample-video voice data to external providers.
 - Sales videos use the approved blue/yellow watercolor family: bright cobalt/sky blue, cadmium yellow highlights, high contrast, cream paper, translucent watercolor/gouache washes, dry-brush edges, clear foreground subject, and semi-abstract low-detail background.
+- FDE (AI-adoption) series videos use the bright variant of that watercolor family (`fde-bright-watercolor`): higher-key luminous sky/light cobalt blue, generous cream-paper negative space, sunny cadmium-yellow highlights, thin translucent washes, and light backgrounds without deep navy or heavy shadow areas.
+- Custom-column videos (e.g. the E.Q.STAR 蒙淇星 family-growth column) may define a client brand family such as `montessori-bright-watercolor`: high-key cream paper, warm cadmium-yellow highlights, fresh grass-green accents, near-black foreground elements, generous negative space, no deep navy or heavy shadows. Carry the custom image style via the top-level `stylePrefix` in `image_prompts.json` and route Remotion chrome colors (`brandSurface`, `emphasis`, `networkEmphasis`) through `visualTheme` in `engine/remotion/src/theme.ts`, keeping legacy defaults unchanged.
+- The baijiu column (`杯中故事`) uses `baijiu-bright-watercolor`: high-key cream-paper bright watercolor, warm amber/sorghum-gold highlights, light cobalt sky accents, generous negative space, no deep navy or heavy shadows; chrome routes through the `baijiu` branch of `visualTheme` (deep sorghum-amber `brandSurface`, amber `emphasis`/`networkEmphasis`).
+- Character portraits in every series (sales, sales-management, FDE) must depict Chinese people; generation prompts must explicitly declare a Chinese subject along with the pure-white background and half-body framing, and render readiness blocks portrait prompts missing any of the three.
 - Sales-management videos use the local warm manager-silhouette family by default: near-black foreground silhouettes, deep navy layers, cobalt blue, burnt orange/gray-peach backlight, cream-to-amber glow, cut-paper/screen-print feel, clean negative space, and no detailed faces. Do not convert manager videos into the sales watercolor style unless the user explicitly asks.
 - Keep generated background prompts free of logos, readable text, numerals, letters, watermarks, UI screenshots, and source-document screenshots. Numbers, percentages, money, and acronyms belong in Remotion text layers, not in generated background art.
+- Background images carry scene and atmosphere only: no clear human faces and no story characters in background art. People always appear as separate character-portrait assets (white background, half-body); never embed main characters or recognizable faces in generated backgrounds.
 - Final backgrounds must be AI-generated or curated narrative illustrations. Do not use PIL/Canvas/SVG/programmatic diagrams, icon sets, flowcharts, dashboards, or placeholders as final video backgrounds.
 - If image generation fails, fix the Azure image deployment/configuration or stop for review; do not fall back to programmatic images.
 - For new video/background work, generate fresh project-local backgrounds first. Do not search or checkout the shared pool as the first step; use pool assets only when the user explicitly requests reuse, a revision needs visual continuity, or a scene intentionally calls back to a prior asset.
@@ -132,6 +142,18 @@ After rendering, run ffprobe and extract a contact sheet or key frames. Check:
 - subtitles, headlines, keywords, and info cards do not overlap
 - narration duration and video duration are close
 - years, money, percentages, and ranges are spoken correctly
+
+## Delivery
+
+- Every delivered video must include a compressed sharing copy at roughly 50 MB next to the master: `video/case_video_compressed_50m.mp4`.
+- Produce it with two-pass x264 after the master passes QA; scale the video bitrate to the actual duration (`target ≈ 50 MB × 8 ÷ duration`, minus ~96 kbps AAC audio; about 980 kbps video for a 6-minute video):
+
+```bash
+ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 1 -an -f mp4 /dev/null
+ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 2 -c:a aac -b:a 96k -movflags +faststart case_video_compressed_50m.mp4
+```
+
+- Verify the compressed copy keeps 1920x1080/30fps, both streams, and full duration before delivery.
 
 ## Locality
 

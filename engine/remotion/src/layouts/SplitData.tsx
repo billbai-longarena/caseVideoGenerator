@@ -28,7 +28,7 @@ export const SplitData: React.FC<LayoutProps> = ({scene, sceneStartFrame}) => {
           style={{position: "absolute", left: 700 + idx * 248, top: 240 + idx * 86}}
         >
           <KeywordPop
-            text={keyword.text}
+            cue={keyword}
             startFrame={unitStartFrame(keyword.atUnit, keyword.offset ?? 0) - sceneStartFrame}
             index={idx}
             large

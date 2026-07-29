@@ -6,9 +6,16 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import sys
 from typing import Any
 
 from PIL import Image, UnidentifiedImageError
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from server.app.services.visual_adapter import prompt_image_path
 
 FORBIDDEN_BACKGROUND_MARKERS = (
     "images/management_cutout/",
@@ -89,6 +96,8 @@ HYBRID_ALLOWED_LAYER_KINDS = {"tint"}
 MAX_BAR_ITEMS = 4
 MAX_NETWORK_NODES = 4
 NETWORK_LAYOUTS = {"auto", "row", "column", "triangle", "hub", "grid"}
+CANVAS_TONES = {"transparent", "light", "dark"}
+OPAQUE_TEXT_SURFACES = {"paper", "solid", "accent"}
 LAYER_SLOTS = {
     "canvas",
     "left",
@@ -143,11 +152,13 @@ def prompt_files(project: Path) -> set[str] | None:
         raise SystemExit(f"image_prompts.json must define a prompts list: {prompt_path}")
     files: set[str] = set()
     for position, spec in enumerate(prompt_specs, start=1):
-        if not isinstance(spec, dict) or not isinstance(spec.get("file"), str):
-            raise SystemExit(f"image prompt {position} must define file")
-        image = spec["file"].replace("\\", "/")
+        if not isinstance(spec, dict):
+            raise SystemExit(f"image prompt {position} must be an object")
+        image = prompt_image_path(spec)
+        if not image:
+            raise SystemExit(f"image prompt {position} must define a safe file or scene_id")
         if image.startswith("/") or ".." in Path(image).parts:
-            raise SystemExit(f"image prompt {position} has unsafe file path: {spec['file']}")
+            raise SystemExit(f"image prompt {position} has unsafe file path: {image}")
         validate_final_image_path(image, f"image prompt {position}")
         files.add(image)
     return files
@@ -486,6 +497,83 @@ def visual_quality_issue(
     (errors if strict else warnings).append(message)
 
 
+# Text-surface contrast guardrail. The Remotion text surfaces have known
+# backgrounds (see textSurfaceStyle in VisualBeatTrack.tsx): glass/solid and the
+# legacy default card are dark navy, paper is light cream and accent is the
+# palette yellow. A declared text color must stay legible on its surface.
+TEXT_SURFACE_BACKGROUNDS = {
+    "glass": ((5, 17, 31), 0.68),
+    "solid": ((5, 17, 31), 0.92),
+    "paper": ((246, 239, 218), 0.96),
+    "accent": ((255, 212, 90), 1.0),
+}
+LEGACY_TEXT_SURFACE_BACKGROUND = ((5, 17, 31), 0.9)
+MIN_TEXT_SURFACE_CONTRAST = 3.0
+
+
+def hex_text_color(value: object) -> tuple[int, int, int] | None:
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"#([0-9a-fA-F]{6})", value.strip())
+    if not match:
+        return None
+    raw = match.group(1)
+    return (int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16))
+
+
+def srgb_luminance(rgb: tuple[int, int, int]) -> float:
+    def channel(value: int) -> float:
+        c = value / 255.0
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (channel(component) for component in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def text_surface_contrast(layer: dict) -> float | None:
+    """Contrast ratio between a text layer color and its rendered surface."""
+    color = hex_text_color(layer.get("color"))
+    if color is None:
+        return None
+    surface = layer.get("surface")
+    if surface == "none":
+        return None
+    background = TEXT_SURFACE_BACKGROUNDS.get(surface) if surface else None
+    if background is None:
+        background = LEGACY_TEXT_SURFACE_BACKGROUND if surface is None else None
+    if background is None:
+        return None
+    (fg, alpha) = background
+    # Composite the translucent surface over the bright cream canvas default.
+    base = (246, 239, 218)
+    effective = tuple(round(alpha * f + (1 - alpha) * b) for f, b in zip(fg, base))
+    text_lum = srgb_luminance(color)
+    surface_lum = srgb_luminance(effective)
+    high, low = max(text_lum, surface_lum), min(text_lum, surface_lum)
+    return (high + 0.05) / (low + 0.05)
+
+
+def is_background_like_asset(asset_id: str | None, asset: dict | None) -> bool:
+    text = str(asset_id or "").strip().lower()
+    src = str((asset or {}).get("src", "")).strip().lower()
+    name = Path(src).name
+    stem = Path(src).stem
+    markers = ("bg-", "bg_", "background-", "background_")
+    suffixes = ("-bg", "_bg", "-background", "_background")
+    infixes = ("-bg-", "_bg_", "-background-", "_background_")
+    return (
+        text.startswith(markers)
+        or text.endswith(suffixes)
+        or any(marker in text for marker in infixes)
+        or name.startswith(markers)
+        or name.endswith(suffixes)
+        or stem.startswith(markers)
+        or stem.endswith(suffixes)
+        or any(marker in src for marker in ("/bg-", "/bg_", "\\bg-", "\\bg_"))
+        or any(marker in src for marker in infixes)
+    )
+
+
 def validate_visual_beats(
     scenes: list[dict],
     assets: dict[str, dict],
@@ -563,6 +651,23 @@ def validate_visual_beats(
             base_asset = beat.get("baseAsset")
             if base_asset is not None and base_asset not in assets:
                 raise SystemExit(f"{label} references unknown baseAsset: {base_asset!r}")
+            raw_render = beat.get("render")
+            if raw_render is not None:
+                if not isinstance(raw_render, dict):
+                    raise SystemExit(f"{label} render must be an object")
+                canvas_tone = raw_render.get("canvasTone")
+                if canvas_tone is not None and canvas_tone not in CANVAS_TONES:
+                    raise SystemExit(f"{label} has invalid render.canvasTone: {canvas_tone!r}")
+                if is_background_like_asset(base_asset, assets.get(base_asset)) and canvas_tone != "transparent":
+                    visual_quality_issue(
+                        f"{label} uses background-like baseAsset {base_asset!r} with opaque "
+                        f"render.canvasTone {canvas_tone!r}; keep the generated background "
+                        "visible with canvasTone 'transparent' and use tint, overlay, or "
+                        "bounded text layers for readability",
+                        strict=strict_visuals,
+                        warnings=warnings,
+                        errors=errors,
+                    )
             raw_layers = beat.get("layers", [])
             if not isinstance(raw_layers, list):
                 raise SystemExit(f"{label} layers must be a list")
@@ -602,6 +707,27 @@ def validate_visual_beats(
                 elif kind == "text":
                     if not isinstance(layer.get("text"), str) or not layer["text"].strip():
                         raise SystemExit(f"{layer_label} text layer must define non-empty text")
+                    if layer.get("surface") in OPAQUE_TEXT_SURFACES and layer.get("box") is None:
+                        visual_quality_issue(
+                            f"{layer_label} uses {layer.get('surface')!r} surface without an explicit "
+                            "box; use compact glass/none text on a slot or bind opaque card "
+                            "surfaces to a declared box so they cannot cover the background",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
+                    contrast = text_surface_contrast(layer)
+                    if contrast is not None and contrast < MIN_TEXT_SURFACE_CONTRAST:
+                        visual_quality_issue(
+                            f"{layer_label} text color {layer.get('color')!r} on "
+                            f"{layer.get('surface') or 'legacy dark'} surface has contrast "
+                            f"{contrast:.2f} (< {MIN_TEXT_SURFACE_CONTRAST}); use light text "
+                            "(e.g. #F7E7C7) on glass/solid/legacy dark surfaces and dark ink "
+                            "(e.g. #12325E) on paper/accent surfaces",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
                 elif kind == "tint":
                     if not isinstance(layer.get("color"), str) or not layer["color"].strip():
                         raise SystemExit(f"{layer_label} tint layer must define color")

@@ -24,6 +24,12 @@ from typing import Any
 
 from PIL import Image
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from server.app.services.visual_adapter import prompt_image_path
+
 try:
     from character_portrait_pool import image_metrics
     from evaluate_visual_storyboard import evaluate_project, write_report
@@ -132,7 +138,7 @@ def prompt_records(project: Path) -> dict[str, dict[str, Any]]:
     for record in records:
         if not isinstance(record, dict):
             continue
-        target = normalize_relative_path(record.get("file") or record.get("src"))
+        target = normalize_relative_path(prompt_image_path(record))
         if target:
             result[target] = record
     return result
@@ -482,12 +488,13 @@ def validate_portraits(
             text = prompt_text(prompt_record)
             has_white = any(term in text for term in ("white background", "pure white", "白色背景", "纯白背景"))
             has_half_body = any(term in text for term in ("half-body", "half body", "chest-up", "waist-up", "半身", "胸像"))
-            if not has_white or not has_half_body:
+            has_chinese = any(term in text for term in ("chinese", "中国"))
+            if not has_white or not has_half_body or not has_chinese:
                 findings.append(
                     Finding(
                         "blocker",
                         "portrait-prompt-contract",
-                        "Generated portrait prompts must explicitly request a white background and a half-body/chest-up subject.",
+                        "Generated portrait prompts must explicitly request a Chinese subject, a white background and a half-body/chest-up subject.",
                         asset_id,
                     )
                 )
@@ -615,8 +622,10 @@ def validate_cover_geometry(metrics: dict[str, Any]) -> list[Finding]:
 
 
 def render_cover_proof(project: Path, repo_root: Path) -> tuple[list[Finding], dict[str, Any]]:
-    remotion_root = repo_root / "engine" / "remotion"
+    engine_root = Path(os.environ.get("CASE_VIDEO_ENGINE_ROOT", repo_root / "engine")).expanduser().resolve()
+    remotion_root = engine_root / "remotion"
     remotion = remotion_root / "node_modules" / ".bin" / "remotion"
+    sync_assets = engine_root / "scripts" / "sync_assets.sh"
     output_dir = project / "qa" / "readiness"
     output_dir.mkdir(parents=True, exist_ok=True)
     frame_path = output_dir / "cover_frame0.png"
@@ -624,11 +633,13 @@ def render_cover_proof(project: Path, repo_root: Path) -> tuple[list[Finding], d
     crop_path = output_dir / "cover_center_square.png"
     if not remotion.is_file():
         return [Finding("blocker", "remotion-missing", f"Remotion CLI not found: {remotion}")], {}
+    if not sync_assets.is_file():
+        return [Finding("blocker", "sync-assets-missing", f"sync_assets.sh not found: {sync_assets}")], {}
 
     env = dict(os.environ)
     env["VIDEO_PROJECT_DIR"] = str(project)
     commands = [
-        ["bash", str(repo_root / "engine" / "scripts" / "sync_assets.sh")],
+        ["bash", str(sync_assets)],
         [str(remotion), "still", "src/index.ts", "CaseVideoVideoOnly", str(frame_path), "--frame=0", "--overwrite"],
         [str(remotion), "still", "src/index.ts", "CaseVideoCoverOverlay", str(overlay_path), "--frame=0", "--overwrite"],
     ]

@@ -2,7 +2,7 @@ import React from "react";
 import {interpolate} from "remotion";
 import type {VisualLayer} from "../../../data/types";
 import {EASE_OUT} from "../../../anim/springs";
-import {fontStack, palette} from "../../../theme";
+import {fontStack, palette, visualTheme} from "../../../theme";
 import {fitTextBlockFontSize} from "../../../textFit";
 
 // Speech bubble bound to a portrait: bubble pops, then the quote types on
@@ -54,7 +54,7 @@ export const DialogueLayer: React.FC<{
         <div
           style={{
             alignSelf: tail === "left" ? "flex-start" : "flex-end",
-            background: palette.blue,
+            background: visualTheme.brandSurface,
             color: palette.white,
             fontSize: 28,
             fontWeight: 900,

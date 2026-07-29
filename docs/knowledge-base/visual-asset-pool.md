@@ -108,7 +108,7 @@ Remotion 不直接读取共享目录。这样单个项目可独立渲染、归�
 | `output/<project>/rich_storyboard.json` | 该视频实际采用什么素材、何时出现以及如何构图 |
 | `output/<project>/image_prompts.json` | 只负责该项目新生成图片的可复现提示词 |
 
-`taxonomy.json` 是标签语义源，`tag_overrides.json` 是人工纠偏源，`rich_storyboard.json` 是单条视频的视觉选择源。`catalog.json`、分镜清单和覆盖报告都由 build 重建，不手工修改。
+`taxonomy.json` 是标签语义源，`tag_overrides.json` 是人工纠偏源，schema-v2 `storyboard_plan.json` 是单条视频的视觉选择与资产 casting 源，`rich_storyboard.json` 是编译后的 render IR。`catalog.json`、分镜清单和覆盖报告都由 build 重建，不手工修改。
 
 ## 归档、检索与取用原则
 
