@@ -331,6 +331,12 @@ def validate_final_image_asset(
                 "images",
                 "characters",
             )
+            # Generated FDE portraits are intentionally stored beside other
+            # project-local assets under images/generated/. Their pure-white
+            # backgrounds can resemble the spacing pattern of a contact sheet
+            # to the generic image heuristic, so identify the explicit char-*
+            # asset naming convention as portrait evidence too.
+            is_character_portrait = is_character_portrait or path.name.startswith(("char-", "portrait-"))
             if not is_character_portrait and looks_like_contact_sheet_or_overview(image):
                 raise SystemExit(
                     f"{label} image appears to be a contact sheet/overview QA image, "

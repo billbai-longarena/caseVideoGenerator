@@ -5,7 +5,8 @@ const visualStyle = (storyboard.visualStyle ?? "").toLowerCase();
 const isSalesWatercolor =
   storyboard.projectType === "sales-case" ||
   visualStyle.includes("bright-editorial-watercolor") ||
-  visualStyle.includes("sales-watercolor");
+  visualStyle.includes("sales-watercolor") ||
+  visualStyle.includes("fde-bright-watercolor");
 const isManagerVisual =
   storyboard.projectType === "sales-management-case" ||
   visualStyle.includes("manager") ||
