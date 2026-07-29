@@ -1,6 +1,7 @@
 .DS_Store
 .env
 .env.*
+!.env.example
 !server/.env.example
 *.log
 __pycache__/
@@ -12,6 +13,8 @@ __pycache__/
 node_modules/
 dist/
 build/
+/tmp/
+ffmpeg2pass-*
 
 output/**/tts_compare/envs/
 output/**/tts_compare/CosyVoice/
@@ -34,6 +37,7 @@ engine/remotion/public/
 engine/remotion/src/generated/
 engine/remotion/src/data/generated/
 engine/remotion/.case-video.lock/
+engine/remotion/out/
 
 # Generated media and QA outputs are local artifacts.
 output/**/video/
@@ -48,6 +52,7 @@ output/**/voice_energy_test/
 output/**/sample_analysis/
 output/tmp_azure_tts_smoke/
 output/remotion_visual_lab/
+output/pdf/
 
 # Shared visual pool binaries and browse views are reproducible local artifacts.
 assets/visual-pool/files/
