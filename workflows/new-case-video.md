@@ -121,6 +121,7 @@ scripts/case-video render output/<project>
 
 ```bash
 scripts/case-video qa output/<project>
+scripts/case-video publish output/<project>
 ```
 
 - 抽 contact sheet 和关键帧（至少覆盖精确第 0 帧、每种语义 layer 首次出现、所有坐标标注帧和结尾）。
@@ -128,5 +129,6 @@ scripts/case-video qa output/<project>
 - 完成视觉检查和数字密集段试听。
 - 表现力检查：标题、图章与信息卡无重叠；关键数字场景出现动画计数或对比条而非静态文字；每个拍点在其时间窗内有可见变化。
 - 记录最终文件、时长、规格和已知限制。
+- 确认项目内 master 仍使用稳定内部名，发布副本已进入 `publish/<主题>/S001_标题.mp4`，主题目录内只有按集数排序的 MP4，并核对发布清单中的栏目、集数和标题。
 
 质量门：满足 `docs/knowledge-base/qa-and-delivery.md` 的全部交付门槛。表现力检查不通过时，回到第 5 步修分镜或第 3 步修旁白，修复后重渲；不得以“技术检查已通过”为由交付。

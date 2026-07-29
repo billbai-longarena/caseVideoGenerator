@@ -145,15 +145,16 @@ After rendering, run ffprobe and extract a contact sheet or key frames. Check:
 
 ## Delivery
 
-- Every delivered video must include a compressed sharing copy at roughly 50 MB next to the master: `video/case_video_compressed_50m.mp4`.
-- Produce it with two-pass x264 after the master passes QA; scale the video bitrate to the actual duration (`target ≈ 50 MB × 8 ÷ duration`, minus ~96 kbps AAC audio; about 980 kbps video for a 6-minute video):
+- Keep stable internal render names under each project: `video/case_video.mp4` for the master and `video/case_video_compressed_50m.mp4` for the upload copy. Both directories are generated artifacts and stay Git-ignored.
+- After the master passes QA, prepare the upload copy and centralized release artifact with:
 
 ```bash
-ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 1 -an -f mp4 /dev/null
-ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 2 -c:a aac -b:a 96k -movflags +faststart case_video_compressed_50m.mp4
+scripts/case-video publish output/<project>
 ```
 
-- Verify the compressed copy keeps 1920x1080/30fps, both streams, and full duration before delivery.
+- The command creates or validates the roughly 50 MB compressed copy, then stages `publish/<topic>/S001_<title>.mp4`. Three-digit numbering keeps a 100-video topic sorted correctly from S001 through S100. Each topic folder contains only uploadable MP4 files so it can be opened directly in YouTube or another publishing site's file picker. The sequence is inferred from names such as `fde_ep01` and `sales_management_case20`; add project-local `publication.json` for custom series, sequence, output-folder, width, or opt-out metadata.
+- For batch website upload, run `scripts/case-video publish-batch output --pattern 'fde_ep*'`. Use the generated `publish/manifest.csv`, `publish/manifest.json`, or `publish/upload-list.txt` as the upload queue.
+- `publish/` is a disposable, Git-ignored release view. Do not treat it as an authored source or commit its video files.
 
 ## Locality
 

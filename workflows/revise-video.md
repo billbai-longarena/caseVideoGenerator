@@ -35,6 +35,7 @@
 ## 收尾
 
 - 执行 `scripts/case-video qa output/<project>`。
+- 执行 `scripts/case-video publish output/<project>`，刷新压缩副本、`S001_标题.mp4` 发布文件和集中清单；标题或集数变化时确认旧发布路径已被清理。
 - 抽查改动前后交界、字幕安全区和受影响数字读法。
 - 对受影响 scene 保留 intent-to-frame 复核结论；不要把“模板换了”当成导演问题已经解决的证据。
 - 复盘时执行 `improve-production-system.md`：任务路由或跨阶段守则才改 Skill；稳定步骤改 workflow；可迁移方法改知识库；机器可判定的不变量改 builder/validator/tests；单案例节奏和参数留在项目目录。

@@ -95,3 +95,7 @@ scripts/case-video ready output/<project> --stage render
 5. 共享视觉系统改动已通过短视频实验室，交付项目已通过长视频综合渲染。
 6. 已查看 contact sheet、第 0 帧、居中 1:1 封面裁切、结尾帧和所有高风险关键帧。
 7. 已完整或重点试听数字密集段与结尾。
+8. 已执行 `scripts/case-video publish output/<project>`；项目内压缩副本和 `publish/<主题>/S001_标题.mp4` 均通过流、时长、分辨率、帧率与大小校验。
+9. 批量发布时已核对 `publish/manifest.csv` 的栏目、主题文件夹、集数、标题和上传路径，且同一主题文件夹不存在重复集数。
+
+集中发布目录、命名规则和批量命令见 `publishing.md`。

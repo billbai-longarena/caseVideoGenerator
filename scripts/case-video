@@ -180,6 +180,8 @@ Commands:
   render-video  Render video-only layer to project/video/case_video_video_only.mp4
   mux           Mux latest audio into the video-only layer
   qa            Print ffprobe stream and duration information
+  publish       Stage one upload-ready S001_title.mp4 and refresh manifests
+  publish-batch Stage rendered projects below a root (use --pattern to filter)
 EOF
 }
 
@@ -207,7 +209,6 @@ if [[ ! -x "$PYTHON_BIN" ]]; then
 fi
 
 export VIDEO_PROJECT_DIR="$PROJECT_ROOT"
-mkdir -p "$PROJECT_ROOT/video"
 detect_local_parallelism
 
 case "$COMMAND" in
@@ -290,6 +291,7 @@ case "$COMMAND" in
       "$PROJECT_ROOT" "$@"
     ;;
   render)
+    mkdir -p "$PROJECT_ROOT/video"
     prefer_native_apple_node
     acquire_remotion_lock
     run_readiness render
@@ -301,6 +303,7 @@ case "$COMMAND" in
     npm --prefix "$REMOTION_ROOT" run render -- "$@"
     ;;
   render-video)
+    mkdir -p "$PROJECT_ROOT/video"
     prefer_native_apple_node
     acquire_remotion_lock
     run_readiness render
@@ -312,6 +315,7 @@ case "$COMMAND" in
     npm --prefix "$REMOTION_ROOT" run render:video -- "$@"
     ;;
   mux)
+    mkdir -p "$PROJECT_ROOT/video"
     prefer_native_apple_node
     export VIDEO_LAYER="${VIDEO_LAYER:-${VIDEO_LAYER_OUTPUT:-$PROJECT_ROOT/video/case_video_video_only.mp4}}"
     export VIDEO_OUTPUT="${VIDEO_OUTPUT:-$PROJECT_ROOT/video/case_video_with_latest_audio.mp4}"
@@ -332,6 +336,14 @@ case "$COMMAND" in
       exit 1
     fi
     ffprobe -v error -show_entries format=duration,size -show_streams -of json "$VIDEO_PATH"
+    ;;
+  publish)
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/prepare_video_publish.py" \
+      "$PROJECT_ROOT" "$@"
+    ;;
+  publish-batch)
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/prepare_video_publish.py" \
+      --discover "$PROJECT_ROOT" "$@"
     ;;
   *)
     usage

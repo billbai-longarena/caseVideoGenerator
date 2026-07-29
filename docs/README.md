@@ -19,6 +19,7 @@
 - `knowledge-base/visual-asset-pool.md`：共享背景素材池、场景词表、多轴标签、归档和可选复用原则。
 - `knowledge-base/rendering.md`：Remotion、素材同步、渲染和快速换轨。
 - `knowledge-base/qa-and-delivery.md`：技术质检、视觉质检和交付门槛。
+- `knowledge-base/publishing.md`：内部成片与集中发布目录、`S001_标题.mp4` 命名、批量上传清单和 Git 边界。
 - `knowledge-base/tooling-decisions.md`：工具选型及历史决策。
 - `knowledge-base/troubleshooting.md`：常见故障与处理顺序。
 - `architecture/server-deployment-design.md`：异步任务服务器、严格模型路由、Phase A 现状，以及 Phase B/C 的数据、审核、UI、扩容、运维与验收合同。

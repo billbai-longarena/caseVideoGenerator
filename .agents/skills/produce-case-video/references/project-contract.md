@@ -32,7 +32,7 @@
 
 - `images/`: Generated or curated visual assets referenced by the storyboard.
 - `audio/`: Narration and optional BGM.
-- `video/`: Rendered deliverables.
+- `video/`: Internal rendered artifacts with stable pipeline names. The master is `case_video.mp4`; the upload copy is `case_video_compressed_50m.mp4`.
 
 ## Optional files
 
@@ -40,7 +40,15 @@
 - `asset_pool_usage.json`: Checkout-generated provenance for shared-pool images, including pool asset ID, project-local path, and SHA-256.
 - `build_storyboard.py`: Case-specific storyboard builder when JSON is generated.
 - `tts_overrides.json`: Explicit local pronunciation or synthesis exceptions.
+- `publication.json`: Optional release metadata. Use it when the series or sequence cannot be inferred from the project directory, to customize the series label or filename prefix, or to disable a superseded render from batch publishing.
 - `sfx/`: Project-specific sound effects.
+
+## Centralized publication output
+
+- `publish/<topic>/S001_<title>.mp4`: Upload-ready release files generated from the project compressed copies. Each topic directory contains only MP4 files and may hold the complete correctly sorted S001-S100 publishing run.
+- `publish/manifest.json`, `publish/manifest.csv`, and `publish/upload-list.txt`: Rebuildable batch-upload metadata.
+- `publish/_masters/<topic>/S001_<title>_master.mp4`: Optional master staging created only with `--include-master`.
+- `publish/` and project `video/` directories are generated, Git-ignored artifacts. `title.txt` and optional `publication.json` are the authored sources for public naming.
 
 ## Validation invariants
 

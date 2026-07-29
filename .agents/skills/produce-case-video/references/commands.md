@@ -16,6 +16,8 @@ scripts/case-video render output/<project>
 scripts/case-video render-video output/<project>
 scripts/case-video mux output/<project>
 scripts/case-video qa output/<project>
+scripts/case-video publish output/<project>
+scripts/case-video publish-batch output --pattern 'fde_ep*'
 ```
 
 After changing a storyboard generator, plan, timeline, or Visual Beat schedule, use the existing local assets for a render-free check first:
@@ -115,14 +117,21 @@ Environment overrides:
 On an arm64 Mac, `scripts/case-video` also prefers an installed native arm64 Node over an x86_64 Node running through Rosetta.
 - `QA_VIDEO`: Video path checked by the `qa` command.
 
-## Delivery: compressed sharing copy
+## Delivery: upload-ready release files
 
-Every delivered video ships with a ~50 MB compressed copy beside the master as `video/case_video_compressed_50m.mp4`. Scale the two-pass x264 video bitrate to the actual duration (target ≈ 50 MB × 8 ÷ duration, minus ~96 kbps for AAC; about 980 kbps video for a 6-minute video):
+Keep the pipeline-facing master at `video/case_video.mp4`. After QA, use the wrapper to create or validate the ~50 MB project copy, verify both media streams, preserve resolution/frame rate/full duration, and stage a public filename derived from `title.txt`:
 
 ```bash
-cd output/<project>/video
-ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 1 -an -f mp4 /dev/null
-ffmpeg -y -i case_video.mp4 -c:v libx264 -b:v <VBITRATE>k -pass 2 -c:a aac -b:a 96k -movflags +faststart case_video_compressed_50m.mp4
+scripts/case-video publish output/<project>
 ```
 
-Verify the copy keeps 1920x1080/30fps, both streams, and the full duration before delivery.
+The default public name is `S001_标题.mp4`. Three-digit zero padding keeps a 100-video topic sorted correctly through S100. Known project names such as `fde_ep01_*`, `baijiu_ep30_*`, `sales_case02_*`, and `sales_management_case20_*` provide the series and sequence automatically.
+
+Batch staging discovers only projects that contain `video/case_video.mp4`:
+
+```bash
+scripts/case-video publish-batch output --pattern 'fde_ep*'
+scripts/case-video publish-batch output --pattern 'sales_management_case*' --include-master
+```
+
+Uploads are placed directly under `publish/<topic>/`; one topic folder can contain the complete sorted S001-S100 run and contains no manifest files, so it can be opened directly in a website file picker. Optional masters go under `publish/_masters/<topic>/`. `publish/manifest.csv`, `publish/manifest.json`, and `publish/upload-list.txt` remain at the release root and are regenerated as the upload queue. The release directory is Git-ignored and rebuildable. See `docs/knowledge-base/publishing.md` for `publication.json` overrides and collision handling.
