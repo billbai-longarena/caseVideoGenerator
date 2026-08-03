@@ -15,6 +15,8 @@
 
 需要在一个 scene 内按人物、证据、机制或后果继续换画面时，使用 `visualAssets`、`visualMode` 和 `visualBeats`。字段合同和兼容策略见 `../architecture/visual-beat-system.md`。
 
+模型创意、编译器、严格校验、Remotion 组件和像素 QA 的职责边界见 `editorial-component-contract.md`。人物 `box` 是导演预留区域；像素正方形、`contain` 适配、卡片材质和碰撞保护属于确定性程序合同。
+
 ## Visual Beat 叙事语法
 
 Visual Beat 先定义当前画面承担的叙事职责，再选择素材和构图。常用职责包括：
@@ -32,7 +34,7 @@ Visual Beat 先定义当前画面承担的叙事职责，再选择素材和构�
 
 视觉丰富度主要来自角色轮换，而不是堆转场：环境全景、人物关系、证据特写、机制拆解、后果画面和短暂留白可以交替出现。转场通常保持克制，局部文字、裁切、推拉和色彩处理负责二级变化。
 
-背景型素材是叙事舞台，不是 Visual Beat 的临时底色。`baseAsset` 使用 `bg-*`、`*-bg`、`background-*` 或类似命名的生成背景时，`render.canvasTone` 必须保持 `transparent`，让插画持续可见；可读性通过 `tint`、`overlay`、局部 `box`、裁切和镜头解决。短信号文字优先 `surface=none` 或 `surface=glass`；`paper`、`solid`、`accent` 只用于带明确 `box` 的局部卡片，不能作为未约束的整屏纸面。
+背景型素材是叙事舞台，不是 Visual Beat 的临时底色。`baseAsset` 使用 `bg-*`、`*-bg`、`background-*` 或类似命名的生成背景时，`render.canvasTone` 必须保持 `transparent`，让插画持续可见；可读性通过 `tint`、`overlay`、局部 `box`、裁切和镜头解决。`render.treatmentColor` 是叠在 baseAsset 之上的整屏色层：省略时按 `treatment` 预设走半透明处理；一旦手写就必须用带透明通道的八位 hex（如 `#12325E40`)，写六位不透明 hex 会把背景整屏盖死——编译器现在直接拒绝带 `baseAsset` 的 beat 使用六位 hex 或 alpha=ff，校验器对已编译 storyboard 记 quality issue。短信号文字优先 `surface=none` 或 `surface=glass`；`paper`、`solid`、`accent` 只用于带明确 `box` 的局部卡片，不能作为未约束的整屏纸面。
 
 ## 商业案例的剪辑结构
 
@@ -67,6 +69,7 @@ Visual Beat 先定义当前画面承担的叙事职责，再选择素材和构�
 - FDE（AI 落地）专题使用明亮版蓝黄水彩：继承销售水彩家族的水彩/水粉语言和商业杂志插画感，但整体更高明度——通透天蓝与亮钴蓝为主、大面积奶油纸面留白、阳光感暖黄高光、叠色轻薄干净、背景更浅更亮，避免深海军蓝等沉重暗色和大面积阴影。
 - 销售管理案例优先使用本地新增的暖色经理剪影风格：近黑前景剪影、深海军蓝层次、钴蓝、焦橙、灰桃色、奶油到琥珀背光、剪纸与丝网印刷感、无细节人脸、为动效留出干净空间。
 - 定制栏目（如蒙淇星 E.Q.STAR 家庭成长案例课）允许定义客户品牌 family，如 `montessori-bright-watercolor`：高明度奶油纸底、暖镉黄高光、新鲜草绿点缀、近黑色前景元素、大量留白，无深 navy 或重阴影。做法：生图侧用 `image_prompts.json` 顶层 `stylePrefix` 承载定制风格前缀（不改 `generate_images.py`）；Remotion 侧在 `theme.ts` 的 `visualTheme` 注册 family，把品牌 chip（`brandSurface`）、语义强调色（`emphasis`）和网络强调节点（`networkEmphasis`）路由到品牌色，默认值保持 legacy 栏目不变。
+- 女性领导力 100 系列统一使用 WL-002 定案的 `women-leadership-five-color-watercolor`：高明度奶油纸底，叶绿 `#59A55D`、暖黄 `#EFDB56`、雾蓝 `#7D9DC6`、暖橙 `#ECA23F`、陶土红 `#CA4D2A`，近黑墨色前景元素与大量留白，无深海军蓝与重阴影；正文使用浅色字配深色承载面。红色水彩旧家族已退出新制作与修订流程。完整规格见 `input/women_leadership_100/series_blueprint.md` §5.1。
 - 销售水彩图提示词不得把红色、珊瑚红、粉色、铁锈橙或橙红作为风格色。除非案例事实必须出现红色警示，红色只能是极小局部。经理剪影风格允许使用本地参考中的焦橙和灰桃色背光，但不得漂移成红色水彩。
 - 最终背景必须是 AI 生成或人工挑选的叙事插画。禁止使用 PIL、Canvas、SVG、程序化几何图、图标集、流程图、仪表盘图或占位图作为最终背景；经理剪影风格中的剪纸/丝网印刷感是允许的视觉语言，不等同于程序图。
 - 如果 AI 生图失败，必须修复生图配置或停止交付，不能用程序图 fallback。

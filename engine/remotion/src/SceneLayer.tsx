@@ -1,5 +1,5 @@
 import React from "react";
-import {AbsoluteFill, interpolate, useCurrentFrame} from "remotion";
+import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import type {LayoutScene, Scene, StoryboardChrome} from "./data/types";
 import {EASE_EXIT, EASE_OUT} from "./anim/springs";
 import {BrandBug, ChapterBadge} from "./components/BrandBug";
@@ -8,14 +8,17 @@ import {TransitionWipe} from "./components/TransitionWipe";
 import {LayoutRouter} from "./layouts/LayoutRouter";
 import {ArchiveTexture, Overlay} from "./layouts/shared";
 import {unitStartFrame} from "./timing/timeline";
+import {coverEndFrame} from "./timing/cover";
 
 export const SceneLayer: React.FC<{
   scene: Scene;
   chrome?: StoryboardChrome;
   sceneStartFrame: number;
   duration: number;
-}> = ({scene, chrome, sceneStartFrame, duration}) => {
+  suppressChromeForCover?: boolean;
+}> = ({scene, chrome, sceneStartFrame, duration, suppressChromeForCover = false}) => {
   const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
   const enterMode = scene.sceneMotion?.enter ?? "fade";
   const exitMode = scene.sceneMotion?.exit ?? "lift";
   const enterFrames = scene.sceneMotion?.enterFrames ?? 14;
@@ -67,6 +70,7 @@ export const SceneLayer: React.FC<{
     activeBeat?.chrome?.chapterBadge ?? scene.chrome?.chapterBadge ?? globalChrome.chapterBadge;
   const showSubtitleBar =
     activeBeat?.chrome?.subtitleBar ?? scene.chrome?.subtitleBar ?? globalChrome.subtitleBar;
+  const coverOwnsChrome = suppressChromeForCover && absoluteFrame < coverEndFrame(fps);
 
   return (
     <AbsoluteFill
@@ -74,12 +78,12 @@ export const SceneLayer: React.FC<{
     >
       {layoutScene ? <Overlay tone={layoutScene.tone} /> : null}
       {layoutScene ? <ArchiveTexture tone={layoutScene.tone} /> : null}
-      {showBrandBug ? <BrandBug kicker={scene.kicker} /> : null}
-      {showChapterBadge ? <ChapterBadge chapter={scene.chapter} /> : null}
+      {showBrandBug && !coverOwnsChrome ? <BrandBug kicker={scene.kicker} /> : null}
+      {showChapterBadge && !coverOwnsChrome ? <ChapterBadge chapter={scene.chapter} /> : null}
       {layoutScene ? (
         <LayoutRouter scene={layoutScene} sceneStartFrame={sceneStartFrame} duration={duration} />
       ) : null}
-      {showSubtitleBar ? (
+      {showSubtitleBar && !coverOwnsChrome ? (
         <SubtitleBar subtitles={scene.subtitles} sceneStartFrame={sceneStartFrame} />
       ) : null}
       <TransitionWipe

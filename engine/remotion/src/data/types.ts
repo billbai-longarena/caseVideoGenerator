@@ -193,6 +193,7 @@ export type VisualLayer = {
   // counter
   value?: CounterValue;
   deltaTone?: "good" | "bad" | "neutral";
+  showDelta?: boolean;
   // bar-compare
   bars?: CompareBar[];
   // network
@@ -372,6 +373,17 @@ export type CoverSpec = {
   throughUnit: number;
 };
 
+export type CoBrandLogo = {
+  // Project-relative path under brand/ (synced into Remotion public/brand/).
+  src: string;
+  alt: string;
+};
+
+export type CoBrandSpec = {
+  logos: [CoBrandLogo, CoBrandLogo];
+  separator?: string;
+};
+
 export type Storyboard = {
   slug?: string;
   title: string;
@@ -390,6 +402,7 @@ export type Storyboard = {
   timeline: string;
   bgm?: BgmSpec;
   cover?: CoverSpec;
+  coBrand?: CoBrandSpec;
   visualAssets?: VisualAsset[];
   scenes: Scene[];
 };

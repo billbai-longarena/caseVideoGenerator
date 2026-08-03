@@ -7,6 +7,16 @@ if [ -z "${VIDEO_PROJECT_DIR:-}" ]; then
   echo "VIDEO_PROJECT_DIR must point to a case project (engine holds no case data)" >&2
   exit 1
 fi
+
+# The canonical engine is source-only. Direct syncs there are unsafe when
+# another render is active; scripts/case-video supplies CASE_VIDEO_ENGINE_ROOT
+# for a job-local workspace. Keep a deliberate escape hatch for one-off local
+# debugging, but never allow it silently.
+if [ -z "${CASE_VIDEO_ENGINE_ROOT:-}" ] \
+  && [ "${CASE_VIDEO_ALLOW_SHARED_ENGINE:-0}" != "1" ]; then
+  echo "Refusing to sync the shared engine. Use scripts/case-video <command> <project>; set CASE_VIDEO_ALLOW_SHARED_ENGINE=1 only for isolated one-off debugging." >&2
+  exit 2
+fi
 ROOT="$(cd "$VIDEO_PROJECT_DIR" && pwd)"
 REMOTION="$ENGINE_ROOT/remotion"
 
@@ -27,6 +37,14 @@ if [ -d "$ROOT/videos" ]; then
 else
   rm -rf "$REMOTION/public/videos"
   mkdir -p "$REMOTION/public/videos"
+fi
+
+# Co-brand partner logos (storyboard.coBrand) live in the project brand/ dir.
+if [ -d "$ROOT/brand" ] && [ -n "$(ls -A "$ROOT/brand" 2>/dev/null)" ]; then
+  mkdir -p "$REMOTION/public/brand"
+  rsync -a --delete "$ROOT/brand/" "$REMOTION/public/brand/"
+else
+  rm -rf "$REMOTION/public/brand"
 fi
 
 AUDIO_PATH="$(python3 - "$ROOT/rich_storyboard.json" <<'PY'

@@ -38,6 +38,16 @@
 - schema、adapter、builder 和 validator 负责确定性工作：验证合同、解析 unit 与引用、复制声明、检查路径和不变量。它们不得按 scene/beat 序号轮换模板，不得自动补三拍、卡片、装饰、转场或相机运动。
 - Remotion layout 是可选能力，不是生产模板。固定业务结构最清楚时使用语义 layout；以图片、人物、证据和自由排版为主时使用 `director-canvas` 与显式 composition/boxes/layers。
 - 若合同无法表达已经确定的导演意图，先扩展共享能力，再生成 render IR。不能因为现有模板有限就把创意压成最近似的布局。
+
+## 一次成型门禁
+
+昂贵渲染前必须完成三段式 preflight：
+
+- `content`: 锁定标题、固定开收场、禁句、acronym、`case_inputs.json` 和时长意图。
+- `plan`: 锁定 schema-v2、画布/布局、scene background cue、beat purpose/baseAsset 和图片尺寸。
+- `render`: 锁定编译后的所有项目内资产、肖像/背景尺寸、intent-frame review 和隔离 Remotion workspace。
+
+意图帧不是可选的灵感检查，而是渲染前的像素级验收；必须把结论写入 `qa/intent-frame-review.json`。一次成型率的复盘按内容合同、schema/校验器、视觉意图、资产/provider、渲染 workspace 五类归因，并把重复出现的缺陷转成 preflight 或 skill 规则。
 - 质量闭环必须比较 `directorialIntent` 与代表帧。门禁分数、元素数量、模板变化和动效数量都不能替代这一判断。
 - 付费生图前批准精确视觉合同；真实素材完成后再渲染覆盖全部 scene 的代表帧，按 frame ID 做多模态意图审片，最后批准实际像素。这两个批准点不能合并。
 - 审片后的自动修复最多一次，只能调整构图、裁切、空间、同场时序、镜头、treatment、转场和局部 chrome；事实、文案、layout、资产 ID、scene 范围和 `directorialIntent` 属于不可变内容。

@@ -678,6 +678,78 @@ class VisualBeatProjectTests(unittest.TestCase):
             self.assertNotEqual(validated.returncode, 0)
             self.assertIn("counter layer must define value.to", validated.stderr)
 
+    def test_validator_rejects_non_boolean_counter_show_delta(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "counter",
+                        "slot": "left",
+                        "value": {"from": 0, "to": 3, "suffix": "个客户"},
+                        "showDelta": "yes",
+                    }
+                ],
+            )
+            validated = self.run_validator(project)
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("counter showDelta must be a boolean", validated.stderr)
+
+    def test_validator_requires_counter_delta_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "counter",
+                        "slot": "left",
+                        "value": {"to": 68, "suffix": "%"},
+                        "showDelta": True,
+                    }
+                ],
+            )
+            validated = self.run_validator(project)
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("showDelta=true requires value.from", validated.stderr)
+
+    def test_validator_treats_zero_from_as_count_up_without_implicit_delta(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "counter",
+                        "slot": "left",
+                        "box": {"x": 0.1, "y": 0.2, "width": 0.4, "height": 0.2},
+                        "value": {"from": 0, "to": 2, "suffix": "年最高绩效"},
+                    }
+                ],
+            )
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertEqual(validated.returncode, 0, validated.stderr)
+            self.assertNotIn("legacy implicit delta", validated.stdout)
+
+    def test_strict_validator_rejects_counter_box_below_readability_floor(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "counter",
+                        "slot": "left",
+                        "box": {"x": 0.1, "y": 0.2, "width": 0.08, "height": 0.2},
+                        "value": {"from": 0, "to": 2, "suffix": "年最高绩效"},
+                    }
+                ],
+            )
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("counter content cannot fit its declared box", validated.stderr)
+
     def test_validator_rejects_network_with_unknown_link_endpoint(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = self.make_project(Path(directory), with_visual_beats=True)
@@ -908,6 +980,88 @@ class VisualBeatProjectTests(unittest.TestCase):
             self.assertNotEqual(validated.returncode, 0)
             self.assertIn("overlaps", validated.stderr)
             self.assertIn("slot 'left'", validated.stderr)
+
+    def test_strict_validator_accepts_non_overlapping_panel_boxes_in_same_slot(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "bar-compare",
+                        "slot": "canvas",
+                        "box": {"x": 0.11, "y": 0.22, "width": 0.78, "height": 0.27},
+                        "bars": [{"label": "原方案", "value": 800}],
+                    },
+                    {
+                        "kind": "text",
+                        "slot": "canvas",
+                        "box": {"x": 0.14, "y": 0.52, "width": 0.72, "height": 0.12},
+                        "surface": "solid",
+                        "color": "#FFF8E8",
+                        "text": "一句质疑，少了三百万",
+                    },
+                ],
+            )
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertEqual(validated.returncode, 0, validated.stderr)
+
+    def test_strict_validator_rejects_person_panel_box_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            write_white_character_portrait(project / "images" / "scene.png")
+            path = self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "asset",
+                        "asset": "scene-image",
+                        "box": {"x": 0.25, "y": 0.18, "width": 0.5, "height": 0.28125},
+                    },
+                    {
+                        "kind": "text",
+                        "text": "副行长三个字突然变得很重",
+                        "surface": "glass",
+                        "color": "#FFF8E8",
+                        "box": {"x": 0.12, "y": 0.42, "width": 0.76, "height": 0.15},
+                    },
+                ],
+            )
+            storyboard = json.loads(path.read_text())
+            storyboard["visualAssets"][0]["role"] = "person"
+            path.write_text(json.dumps(storyboard, ensure_ascii=False), encoding="utf-8")
+
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertNotEqual(validated.returncode, 0)
+            self.assertIn("portrait box overlaps", validated.stderr)
+
+    def test_strict_validator_accepts_reserved_person_panel_boxes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = self.make_project(Path(directory), with_visual_beats=True)
+            write_white_character_portrait(project / "images" / "scene.png")
+            path = self.install_story_layer_beat(
+                project,
+                [
+                    {
+                        "kind": "asset",
+                        "asset": "scene-image",
+                        "box": {"x": 0.25, "y": 0.16, "width": 0.5, "height": 0.28125},
+                    },
+                    {
+                        "kind": "text",
+                        "text": "副行长三个字突然变得很重",
+                        "surface": "glass",
+                        "color": "#FFF8E8",
+                        "box": {"x": 0.12, "y": 0.47, "width": 0.76, "height": 0.15},
+                    },
+                ],
+            )
+            storyboard = json.loads(path.read_text())
+            storyboard["visualAssets"][0]["role"] = "person"
+            path.write_text(json.dumps(storyboard, ensure_ascii=False), encoding="utf-8")
+
+            validated = self.run_validator(project, strict_visuals=True)
+            self.assertEqual(validated.returncode, 0, validated.stderr)
 
     def test_strict_validator_rejects_long_semantic_visual_gap(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

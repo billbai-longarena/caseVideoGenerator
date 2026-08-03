@@ -3,6 +3,7 @@ import {interpolate} from "remotion";
 import type {VisualLayer} from "../../../data/types";
 import {EASE_OUT} from "../../../anim/springs";
 import {fontStack, palette} from "../../../theme";
+import {CANVAS_HEIGHT, CANVAS_WIDTH} from "../../../canvas";
 
 // Directional evidence annotation drawn over the beat's base image. `region`
 // is relative (0-1) to the full canvas so plans stay resolution-independent.
@@ -21,8 +22,8 @@ export const AnnotateLayer: React.FC<{
     extrapolateRight: "clamp",
   });
   const color = layer.color ?? palette.yellow;
-  const W = 1920;
-  const H = 1080;
+  const W = CANVAS_WIDTH;
+  const H = CANVAS_HEIGHT;
   const x = region.x * W;
   const y = region.y * H;
   const w = region.w * W;

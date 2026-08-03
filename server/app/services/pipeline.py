@@ -2087,8 +2087,8 @@ class CaseVideoPipeline:
             failures.append("video stream missing")
         if audio_stream is None:
             failures.append("audio stream missing")
-        if video_stream and (video_stream.get("width"), video_stream.get("height")) != (1920, 1080):
-            failures.append("video resolution is not 1920x1080")
+        if video_stream and (video_stream.get("width"), video_stream.get("height")) not in {(1920, 1080), (1080, 1920)}:
+            failures.append("video resolution is not 1920x1080 or 1080x1920")
         if video_stream:
             rate = str(video_stream.get("avg_frame_rate") or video_stream.get("r_frame_rate") or "0/1")
             try:

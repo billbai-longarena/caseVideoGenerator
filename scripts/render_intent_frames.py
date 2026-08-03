@@ -43,15 +43,16 @@ def render(project: Path, *, max_frames: int, composition: str) -> dict[str, Any
     for old_frame in output_root.glob("frame-*.png"):
         old_frame.unlink()
 
-    remotion_root = REPO_ROOT / "engine" / "remotion"
+    engine_root = Path(os.environ.get("CASE_VIDEO_ENGINE_ROOT", REPO_ROOT / "engine")).expanduser().resolve()
+    remotion_root = engine_root / "remotion"
     remotion_bin = remotion_root / "node_modules" / ".bin" / "remotion"
     if not remotion_bin.is_file():
         raise SystemExit(f"Remotion CLI is missing: {remotion_bin}")
     env = os.environ.copy()
     env["VIDEO_PROJECT_DIR"] = str(project)
     subprocess.run(
-        ["bash", str(REPO_ROOT / "engine" / "scripts" / "sync_assets.sh")],
-        cwd=REPO_ROOT,
+        ["bash", str(engine_root / "scripts" / "sync_assets.sh")],
+        cwd=engine_root,
         env=env,
         check=True,
     )

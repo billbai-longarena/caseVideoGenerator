@@ -1,6 +1,7 @@
 import React from "react";
-import {interpolate} from "remotion";
+import {Img, interpolate, staticFile} from "remotion";
 import type {VisualLayer} from "../../../data/types";
+import {getVisualAsset} from "../../../data/storyboard";
 import {EASE_OUT} from "../../../anim/springs";
 import {fontStack, palette, visualTheme} from "../../../theme";
 import {fitTextBlockFontSize} from "../../../textFit";
@@ -15,6 +16,7 @@ export const DialogueLayer: React.FC<{
   const text = layer.text ?? "";
   if (!text) return null;
   const tail = layer.tail ?? "left";
+  const speakerAsset = layer.asset ? getVisualAsset(layer.asset) : null;
   const pop = interpolate(localFrame, [0, 12], [0, 1], {
     easing: EASE_OUT,
     extrapolateLeft: "clamp",
@@ -50,22 +52,51 @@ export const DialogueLayer: React.FC<{
         fontFamily: fontStack,
       }}
     >
-      {layer.speaker ? (
+      {layer.speaker || speakerAsset ? (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
             alignSelf: tail === "left" ? "flex-start" : "flex-end",
-            background: visualTheme.brandSurface,
-            color: palette.white,
-            fontSize: 28,
-            fontWeight: 900,
-            letterSpacing: 2,
-            padding: "8px 22px",
             marginBottom: -4,
             zIndex: 2,
-            boxShadow: "6px 6px 0 rgba(5,17,31,0.6)",
           }}
         >
-          {layer.speaker}
+          {speakerAsset ? (
+            <div
+              style={{
+                width: 88,
+                height: 88,
+                borderRadius: "50%",
+                overflow: "hidden",
+                flexShrink: 0,
+                border: `4px solid ${palette.ink}`,
+                boxShadow: "6px 6px 0 rgba(5,17,31,0.6)",
+                background: palette.white,
+              }}
+            >
+              <Img
+                src={staticFile(speakerAsset.src)}
+                style={{width: "100%", height: "100%", objectFit: "cover"}}
+              />
+            </div>
+          ) : null}
+          {layer.speaker ? (
+            <div
+              style={{
+                background: visualTheme.brandSurface,
+                color: palette.white,
+                fontSize: 28,
+                fontWeight: 900,
+                letterSpacing: 2,
+                padding: "8px 22px",
+                boxShadow: "6px 6px 0 rgba(5,17,31,0.6)",
+              }}
+            >
+              {layer.speaker}
+            </div>
+          ) : null}
         </div>
       ) : null}
       <div

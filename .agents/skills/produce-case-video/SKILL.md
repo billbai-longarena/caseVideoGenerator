@@ -58,6 +58,20 @@ For a new visual plan or a material revision, use the LLM as the director before
 
 If the current schema or Remotion primitives cannot express an approved directorial idea, extend the reusable contract and engine first. Do not flatten the idea into the nearest template merely to keep the pipeline moving.
 
+## Character Portraits — Required When Dialogue Layers Are Used
+
+Every `dialogue` layer must bind a character portrait before images are generated. A dialogue layer without `asset` will render as a text-only bubble with no speaker image; the validator warns but does not block, so this failure is invisible to readiness gates.
+
+At storyboard authoring time, before calling `scripts/case-video images`:
+
+1. List every named person with a dialogue layer in the plan.
+2. Assign a stable `portrait-<slug>` asset ID per person.
+3. Add each portrait to `image_prompts.json` with explicit `Chinese person` declaration, pure white background, half-body framing, and project visual family style.
+4. Set `"asset": "<portrait-id>"` on every dialogue layer for that person.
+5. Run `scripts/case-video check` — the validator now warns on any dialogue layer missing an `asset`.
+
+Do not proceed to `ready --stage plan` until all dialogue `asset` fields are filled.
+
 ## Apply Production Gates
 
 Use the selected workflow's gates. Do not advance when its current gate fails. At minimum preserve source boundaries, causal consistency, timing integrity, asset validity, render correctness, and delivery QA. Inspect the exact first rendered frame for cover readability and exact annotation frames for evidence targeting. Shared Remotion layout/layer changes must pass the short visual lab before a representative long-video render. The workflow, knowledge base, contract, and validator define the task-specific checks.

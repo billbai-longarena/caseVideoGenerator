@@ -193,8 +193,12 @@ def extract_frame(video: Path, sample: Sample, output: Path) -> None:
 
 def make_contact_sheet(samples: list[Sample], frames: list[Path], output: Path) -> None:
     columns = 4
-    tile_width = 480
-    tile_height = 270
+    with Image.open(frames[0]) as probe:
+        frame_width, frame_height = probe.size
+    if frame_height > frame_width:
+        tile_width, tile_height = 270, 480
+    else:
+        tile_width, tile_height = 480, 270
     label_height = 38
     rows = math.ceil(len(frames) / columns)
     sheet = Image.new("RGB", (columns * tile_width, rows * (tile_height + label_height)), "#07111f")

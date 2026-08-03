@@ -55,6 +55,10 @@ output/tmp_azure_tts_smoke/
 output/remotion_visual_lab/
 output/pdf/
 
+# Aggregate QA contact sheets generated at the output root.
+output/*_contact_sheet.jpg
+output/*_contact_sheet.png
+
 # Shared visual pool binaries and browse views are reproducible local artifacts.
 assets/visual-pool/files/
 assets/visual-pool/views/

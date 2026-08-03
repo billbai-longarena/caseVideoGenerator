@@ -1,6 +1,6 @@
 # Case Video Production Agent Guide
 
-**第一原则：具体人物 + 具体事件。** 每个案例旁白必须有至少 3 个有名字的人物和具体的场景事件。关键转折必须绑定人物在哪里、做了什么、说了什么话。不能用"团队觉得""大家认为"等抽象集体表述替代具体人物反应。违反即为缺陷。
+**第一原则：具体人物 + 具体事件。** 每个案例旁白必须有有名字的人物和具体的场景事件。关键转折必须绑定人物在哪里、做了什么、说了什么话。不能用"团队觉得""大家认为"等抽象集体表述替代具体人物反应。人物数量按剧情需要判断：3 分钟以下的视频可以只用 2 个具名人物，不为凑数硬加第三人；超过 3 分钟的视频默认至少 3 个具名人物。违反具体人物、具体事件或抽象集体表述禁令即为缺陷。
 
 This repository is the dedicated workspace for generating case-story videos with Azure Speech TTS, Remotion, Azure image generation, and ffmpeg QA. Do video work here instead of in `/Users/bill.bai/Desktop/CeibsSalesTouch`.
 
@@ -14,7 +14,7 @@ docs/knowledge-base/production-principles.md
 workflows/new-case-video.md or workflows/revise-video.md
 ```
 
-Use `.agents/skills/produce-case-video/SKILL.md` for sales-column (`销售不复杂`) production, revision, rendering, and QA tasks. Use `.agents/skills/produce-fde-video/SKILL.md` for FDE-column (`FDE不复杂`) production — it shares the same rendering pipeline but has its own narration guide, column identity, and content rules. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
+Use `.agents/skills/produce-case-video/SKILL.md` for sales-column (`销售不复杂`) production, revision, rendering, and QA tasks. Use `.agents/skills/produce-fde-video/SKILL.md` for FDE-column (`FDE不复杂`) production — it shares the same rendering pipeline but has its own narration guide, column identity, and content rules. Use `.agents/skills/produce-xiaohongshu-video/SKILL.md` for Xiaohongshu-first 2-3 minute vertical case videos (小红书竖屏短版) — primarily the 女性领导力 100 series; it inherits the vertical canvas contract and adds Xiaohongshu narration structure, pacing, cover design, and series matrix validation. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
 
 For new narration or video generation, do not inspect or imitate old generated narration, timelines, storyboards, rendered videos, QA frames, or other completed `output/<project>/` artifacts as examples. Many historical outputs are known to be wrong. Read the production Skill and current source materials, then generate from the current workflow; only read an existing project's artifacts when the user explicitly asks to revise or audit that project.
 
@@ -60,6 +60,12 @@ case source/materials
 - The subtitle-bar label must remain on one line; widen or scale the label area rather than wrapping `销售不复杂`.
 - Prefer setting `storyboard.brand` to `销售不复杂` for sales-case videos, keeping per-scene `kicker` for the local chapter label.
 
+## SalesNail × WorkBuddy 联名视频
+
+- SalesNail 小红书系列（`salesnail_sn<NNN>_video`）是 SalesNail × WorkBuddy 联合推广；视频右上角常驻 SalesNail × WorkBuddy 双 Logo 标识，从封面帧到结尾一直显示。
+- 联名系列使用专属明亮水彩家族 `salesnail-workbuddy-watercolor`：SalesNail 蓝（#3671DB/#75A7FF）主调 + WorkBuddy 青绿（#00C090）高光，取色自两个 Logo；chrome 经 `visualTheme` 的 `salesnail-workbuddy` 分支自动切换。
+- 完整联名规范见 `docs/knowledge-base/salesnail-workbuddy-collab.md`；Logo 权威拷贝在 `input/salesnail/SalesNail.svg` 和 `input/salesnail/workbuddy-logo-WhgOvEF7.png`，项目内放 `brand/` 目录并在 schema-v2 plan 顶层声明 `coBrand`。
+
 ## Narration Style
 
 - For Chinese case-video narration and subtitles, do not use the rhetorical contrast pattern `不是……而是……` or close variants such as `不是...而是...`.
@@ -102,6 +108,8 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 - FDE (AI-adoption) series videos use the bright variant of that watercolor family (`fde-bright-watercolor`): higher-key luminous sky/light cobalt blue, generous cream-paper negative space, sunny cadmium-yellow highlights, thin translucent washes, and light backgrounds without deep navy or heavy shadow areas.
 - Custom-column videos (e.g. the E.Q.STAR 蒙淇星 family-growth column) may define a client brand family such as `montessori-bright-watercolor`: high-key cream paper, warm cadmium-yellow highlights, fresh grass-green accents, near-black foreground elements, generous negative space, no deep navy or heavy shadows. Carry the custom image style via the top-level `stylePrefix` in `image_prompts.json` and route Remotion chrome colors (`brandSurface`, `emphasis`, `networkEmphasis`) through `visualTheme` in `engine/remotion/src/theme.ts`, keeping legacy defaults unchanged.
 - The baijiu column (`杯中故事`) uses `baijiu-bright-watercolor`: high-key cream-paper bright watercolor, warm amber/sorghum-gold highlights, light cobalt sky accents, generous negative space, no deep navy or heavy shadows; chrome routes through the `baijiu` branch of `visualTheme` (deep sorghum-amber `brandSurface`, amber `emphasis`/`networkEmphasis`).
+- PPG PMC brand stories use `ppg-bright-watercolor`: high-key cream-paper bright industrial watercolor, clear sky/light steel-blue tones with soft zinc-grey and pale cadmium-yellow highlights, generous negative space, no deep navy, heavy shadows, or red tones; chrome routes through the `ppg` branch of `visualTheme` (deep steel-blue `brandSurface`, steel-blue `emphasis`/`networkEmphasis`). Brand stories about real historical figures may omit character portraits entirely (the Chinese-portrait contract applies to generated portraits); carry person presence with name cards, counters, and quote cards instead.
+- The 女性领导力 100 (women's leadership, Xiaohongshu vertical) series uses `women-leadership-five-color-watercolor`, established by WL-002: high-key cream paper with leaf green `#59A55D`, warm yellow `#EFDB56`, mist blue `#7D9DC6`, warm orange `#ECA23F`, and terracotta red `#CA4D2A`; near-black ink foreground accents, generous negative space, and no deep navy or heavy shadows. Chrome routes through the five-color `women-leadership` theme branch. The earlier red-watercolor family is retired for all new and revised production. Full spec lives in `input/women_leadership_100/series_blueprint.md` §5.1.
 - Character portraits in every series (sales, sales-management, FDE) must depict Chinese people; generation prompts must explicitly declare a Chinese subject along with the pure-white background and half-body framing, and render readiness blocks portrait prompts missing any of the three.
 - Sales-management videos use the local warm manager-silhouette family by default: near-black foreground silhouettes, deep navy layers, cobalt blue, burnt orange/gray-peach backlight, cream-to-amber glow, cut-paper/screen-print feel, clean negative space, and no detailed faces. Do not convert manager videos into the sales watercolor style unless the user explicitly asks.
 - Keep generated background prompts free of logos, readable text, numerals, letters, watermarks, UI screenshots, and source-document screenshots. Numbers, percentages, money, and acronyms belong in Remotion text layers, not in generated background art.
@@ -130,7 +138,18 @@ scripts/case-video preview output/<project>
 scripts/case-video render output/<project>
 ```
 
-`npm run preview` and `npm run render` automatically call `engine/scripts/sync_assets.sh`, which copies storyboard/timeline JSON, images, audio, SFX, and optional BGM into Remotion. `VIDEO_PROJECT_DIR` must point at the case project (set automatically by `scripts/case-video`).
+`scripts/case-video preview` and `scripts/case-video render` create a job-local Remotion workspace and call `engine/scripts/sync_assets.sh` there, copying storyboard/timeline JSON, images, audio, SFX, and optional BGM without touching another render's data. `VIDEO_PROJECT_DIR` is set automatically by the root command. Do not run `npm run sync`, `npm run preview`, `npm run render`, or `npx remotion` concurrently from the shared `engine/remotion/` directory; use the root command for all concurrent work.
+
+## Vertical 9:16 Mobile Video
+
+- Only produce vertical (1080x1920) video when the user explicitly asks for mobile/竖屏/9:16 output; landscape 1920x1080 stays the default.
+- Use `.agents/skills/produce-vertical-video/SKILL.md` and `workflows/new-vertical-video.md`; the canvas contract and mobile best-practice values live in `docs/knowledge-base/vertical-mobile-video.md`.
+- Declare `"canvas": {"width": 1080, "height": 1920}` at the top level of the schema-v2 `storyboard_plan.json`; the compiler passes it into `rich_storyboard.json` and Remotion renders that size automatically. Only 1920x1080 and 1080x1920 are supported.
+- Vertical projects use `editorial` scenes only; the shared template layouts are 16:9-only and the validator rejects them on a vertical canvas.
+- Vertical backgrounds: declare `"size": "864x1536"` in `image_prompts.json` (per-record `size` overrides for mixed assets; portraits stay 1024x1024). The image generator swaps style-prefix composition phrasing for vertical framing automatically. Never crop landscape backgrounds into vertical use.
+- Engine vertical behavior is centralized in `engine/remotion/src/canvas.ts` plus `IS_VERTICAL` branches in `VisualBeatTrack.tsx`, `SubtitleBar.tsx`, `CoverLayer.tsx`, `TransitionWipe.tsx`, `AnnotateLayer.tsx`, and `BrandBug.tsx`; keep the knowledge-base doc in sync when those values change.
+- Pull vertical content toward the center: platform overlay UI (视频号/小红书 top tabs, bottom avatar/description/action rail) covers the edges. The safe area keeps essential content between y 320 and y 1240, the brand chip sits at `top: 310`, and the subtitle bar floats at `bottom: 400`. The top-right ChapterBadge is never rendered on vertical.
+- On-screen labels must be audience-facing: scene `chapter`/`kicker` render as visible text (kicker chip, cover, landscape badge, `chapter-circle` transitions). Never put internal director terms such as `钩子`/`悬念`/`反转` in them; those belong in `dramaticFunction`/`directorialIntent`.
 
 ## QA
 

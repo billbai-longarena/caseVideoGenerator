@@ -3,12 +3,12 @@ import {interpolate} from "remotion";
 import type {VisualLayer} from "../../../data/types";
 import {unitStartFrame} from "../../../timing/timeline";
 import {EASE_OUT} from "../../../anim/springs";
-import {fontStack, palette} from "../../../theme";
+import {fontStack, glassCardBackground, palette, visualTheme} from "../../../theme";
 
 const barColor = (tone?: "good" | "bad" | "neutral") => {
-  if (tone === "good") return "#4cd48a";
-  if (tone === "bad") return "#e2b13c";
-  return palette.cyan;
+  if (tone === "good") return visualTheme.positive;
+  if (tone === "bad") return visualTheme.negative;
+  return visualTheme.neutral;
 };
 
 // Horizontal comparison bars. Each bar grows in when its revealAtUnit arrives
@@ -35,18 +35,30 @@ export const BarCompareLayer: React.FC<{
         maxWidth: "100%",
         maxHeight: "100%",
         minWidth: 0,
+        position: "relative",
         padding: compact ? "22px 28px" : "28px 34px",
         boxSizing: "border-box",
         overflow: "hidden",
-        background: "rgba(5,17,31,0.82)",
-        border: "2px solid rgba(255,255,255,0.5)",
-        boxShadow: "12px 12px 0 rgba(5,17,31,0.66)",
+        background: glassCardBackground,
+        border: "2px solid rgba(255,255,255,0.66)",
+        borderRadius: 8,
+        boxShadow: "12px 12px 0 rgba(5,17,31,0.48), 0 22px 40px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.2)",
         color: palette.white,
         fontFamily: fontStack,
         opacity: visibility,
         transform: `translateY(${(1 - visibility) * 22}px)`,
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 8,
+          background: visualTheme.cardAccent,
+        }}
+      />
       {layer.label ? (
         <div style={{fontSize: compact ? 25 : 30, fontWeight: 800, letterSpacing: 2, color: "rgba(255,255,255,0.78)"}}>
           {layer.label}

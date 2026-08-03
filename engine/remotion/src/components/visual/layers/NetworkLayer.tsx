@@ -200,7 +200,7 @@ export const NetworkLayer: React.FC<{
             fontWeight: 900,
             letterSpacing: compact ? 2 : 4,
             whiteSpace: "nowrap",
-            color: palette.yellow,
+            color: visualTheme.accentSurface,
             background: "rgba(5,17,31,0.84)",
             padding: compact ? "7px 12px" : "9px 18px",
             zIndex: 4,
@@ -341,7 +341,7 @@ export const NetworkLayer: React.FC<{
               boxSizing: "border-box",
               background: node.emphasis ? visualTheme.networkEmphasis : "rgba(5,17,31,0.9)",
               border: node.emphasis
-                ? `${compact ? 4 : 5}px solid ${palette.yellow}`
+                ? `${compact ? 4 : 5}px solid ${visualTheme.accentSurface}`
                 : `${compact ? 2 : 3}px solid rgba(255,255,255,0.66)`,
               boxShadow: compact ? "5px 6px 0 rgba(5,17,31,0.58)" : "10px 10px 0 rgba(5,17,31,0.6)",
               opacity: pop,

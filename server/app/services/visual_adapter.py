@@ -117,6 +117,50 @@ def _validate_box(value: Any, label: str) -> None:
         raise ValueError(f"{label} must stay inside the normalized canvas")
 
 
+def _validate_treatment_color(beat: dict[str, Any], label: str) -> None:
+    """Reject opaque treatment colors on beats that render a base asset.
+
+    The Remotion BeatCanvas paints render.treatmentColor as a full-canvas
+    overlay above the base image. A 6-digit hex (or an 8-digit hex with an
+    opaque alpha channel) therefore hides the generated background entirely —
+    a recurring production defect. Beats without a baseAsset paint a blank
+    canvas, where an opaque color is legitimate.
+    """
+    if not beat.get("baseAsset"):
+        return
+    color = beat.get("render", {}).get("treatmentColor")
+    if not isinstance(color, str):
+        return
+    value = color.strip().lstrip("#")
+    opaque = len(value) == 6 or (len(value) == 8 and value[6:].lower() == "ff")
+    if opaque:
+        raise ValueError(
+            f"{label} treatmentColor {color!r} is opaque and would hide the base asset; "
+            "use 'transparent' or an 8-digit #RRGGBBAA value with a non-opaque alpha channel"
+        )
+
+
+def _validate_co_brand(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError("visual plan coBrand must be an object")
+    logos = value.get("logos")
+    if not isinstance(logos, list) or len(logos) != 2:
+        raise ValueError("visual plan coBrand logos must list exactly two partner logos")
+    for position, logo in enumerate(logos, start=1):
+        if not isinstance(logo, dict):
+            raise ValueError(f"coBrand logo {position} must be an object")
+        src = str(logo.get("src", "")).strip()
+        if not src:
+            raise ValueError(f"coBrand logo {position} requires a non-empty src")
+        if not str(logo.get("alt", "")).strip():
+            raise ValueError(f"coBrand logo {position} requires a non-empty alt")
+    co_brand = deepcopy(value)
+    co_brand.setdefault("separator", "×")
+    return co_brand
+
+
 def _build_v2_rich_storyboard(
     plan: dict[str, Any],
     timeline: dict[str, Any],
@@ -274,6 +318,7 @@ def _build_v2_rich_storyboard(
             base_asset = beat.get("baseAsset")
             if base_asset and base_asset not in assets_by_id:
                 raise ValueError(f"scene {scene_id} beat references undeclared asset {base_asset!r}")
+            _validate_treatment_color(beat, f"scene {scene_id} beat {beat_position}")
             _validate_box(beat.get("baseBox"), f"scene {scene_id} beat {beat_position} baseBox")
             if (
                 not base_asset
@@ -375,7 +420,14 @@ def _build_v2_rich_storyboard(
         for key, value in plan["cover"].items()
         if key in {"title", "subtitle", "kicker", "throughUnit"}
     }
-    return {
+    canvas = plan.get("canvas") or {}
+    canvas_width = int(canvas.get("width") or 1920)
+    canvas_height = int(canvas.get("height") or 1080)
+    if (canvas_width, canvas_height) not in {(1920, 1080), (1080, 1920)}:
+        raise ValueError(
+            "visual plan canvas must be 1920x1080 (landscape) or 1080x1920 (vertical)"
+        )
+    storyboard = {
         "slug": project_name,
         "title": authored_title,
         "subtitle": str(plan["cover"].get("subtitle", "")),
@@ -387,8 +439,8 @@ def _build_v2_rich_storyboard(
         "direction": deepcopy(plan["direction"]),
         "chrome": deepcopy(plan["chrome"]),
         "fps": 30,
-        "width": 1920,
-        "height": 1080,
+        "width": canvas_width,
+        "height": canvas_height,
         "audio": "audio/narration_azure.wav",
         "timeline": "narration.timeline.json",
         "duration": float(timeline.get("duration") or units[-1].get("end") or 0),
@@ -396,6 +448,10 @@ def _build_v2_rich_storyboard(
         "visualAssets": visual_assets,
         "scenes": scenes,
     }
+    co_brand = _validate_co_brand(plan.get("coBrand"))
+    if co_brand is not None:
+        storyboard["coBrand"] = co_brand
+    return storyboard
 
 
 def _build_v1_rich_storyboard(

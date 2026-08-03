@@ -63,6 +63,19 @@ FDE videos use the bright variant of the approved watercolor family (`fde-bright
 
 Same as the sales skill. The FDE narration guide adds FDE-specific beat requirements and theory integration rules, but the director loop, readiness gates, and QA process are shared.
 
+## One-Shot Protocol
+
+Before starting an expensive FDE render, use the explicit staged preflight gates:
+
+1. `scripts/case-video preflight output/<project> --stage content` before TTS. This locks the fixed FDE opener/closer, title shape, `case_inputs.json`, acronym spacing, and the prohibited contrast-pattern scan.
+2. `scripts/case-video preflight output/<project> --stage plan` after `build`, `evaluate`, and `ready --stage plan`. This catches vertical canvas/layout drift, missing scene backgrounds, unsupported beat purposes, and wrong image sizes before image generation or rendering.
+3. Generate assets, run `intent-frames`, and manually review every scene against `directorialIntent`. Record the result in `qa/intent-frame-review.json` with `verdict: pass`.
+4. Run `scripts/case-video preflight output/<project> --stage render` before `render`. It verifies every compiled asset exists locally with the correct dimensions and refuses to render without a passing intent-frame review.
+
+The required order is therefore `content preflight → TTS → plan/build/evaluate/plan preflight → images → typecheck → intent frames/review → render preflight → render → ffprobe/blackdetect/contact-sheet QA → publish`. If a gate fails, fix the source contract or plan and regenerate the affected derived artifacts; do not patch the MP4.
+
+For postmortems, classify a rework as one of: content contract, schema/validator mismatch, visual-intent mismatch, asset/provider failure, or render-workspace/sync failure. Record the category and the new guard in the project QA report and promote reusable guards here or into the shared workflow. In vertical FDE plans, the cheap plan gate also checks transition whitelist, `bg-*`/`portrait-*` role consistency, and reserved dialogue/counter composition boxes before assets are generated.
+
 ## Improve Deliberately
 
 Same classification as the sales skill. FDE-specific findings go to `references/fde-narration-guide.md`; shared pipeline findings go to the common knowledge base and workflows.

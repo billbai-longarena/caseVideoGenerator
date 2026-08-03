@@ -19,6 +19,16 @@
     "version": {"const": "2"},
     "projectType": {"enum": ["sales", "sales-management"]},
     "visualStyle": {"type": "string", "minLength": 1, "maxLength": 500},
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"enum": [1920, 1080]},
+        "height": {"enum": [1080, 1920]}
+      },
+      "additionalProperties": false,
+      "description": "Output canvas. Omit for landscape 1920x1080; set {width:1080,height:1920} for vertical 9:16 mobile video. 1080x1080 and other sizes are not supported."
+    },
     "cover": {
       "type": "object",
       "required": ["title", "throughUnit"],
@@ -26,12 +36,44 @@
         "title": {"type": "string", "minLength": 1},
         "subtitle": {"type": "string"},
         "kicker": {"type": "string"},
-        "throughUnit": {"type": "integer", "minimum": 1},
+        "throughUnit": {"type": "integer", "minimum": 1, "description": "Narration unit inside the first scene through which the frame-0 cover may hold. The engine clamps the cover to a 2.0s splash (COVER_MAX_SECONDS) because narration starts at 0s, so values beyond the first unit only trigger a validator warning — prefer the first unit."},
         "proof": {"type": "string"}
       },
       "additionalProperties": false
     },
     "brand": {"type": "string", "minLength": 1},
+    "coBrand": {
+      "type": "object",
+      "required": ["logos"],
+      "properties": {
+        "logos": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["src", "alt"],
+            "properties": {
+              "src": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Project-relative logo path under brand/ (synced into Remotion public/brand/). SVG or PNG."
+              },
+              "alt": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "separator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4,
+          "description": "Glyph rendered between the two partner logos, e.g. ×. Defaults to ×."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Persistent co-brand bug for joint-partner videos (e.g. SalesNail × WorkBuddy): two partner logos pinned top-right for the entire video, above every layer including the cover. Omit for single-brand videos. Logo files live in the project brand/ directory."
+    },
     "subtitleLabel": {"type": "string", "minLength": 1},
     "direction": {
       "type": "object",
@@ -372,7 +414,7 @@
       ],
       "properties": {
         "cameraPath": {"$ref": "#/$defs/cameraPath"},
-        "treatmentColor": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"},
+        "treatmentColor": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$", "description": "Full-canvas mood tint painted ABOVE the base image. When the beat has a baseAsset, a 6-digit hex (or alpha=ff) is opaque and hides the generated background — the compiler rejects it. Use #RRGGBBAA with a non-opaque alpha (e.g. #06111f66) for readability tints over generated art."},
         "ambientOpacity": {"type": "number", "minimum": 0, "maximum": 1},
         "vignette": {"type": "number", "minimum": 0, "maximum": 0.6},
         "overlay": {"enum": ["none", "soft", "read-left", "read-right"]},

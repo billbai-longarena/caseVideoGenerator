@@ -357,6 +357,95 @@ class VisualAdapterTest(unittest.TestCase):
         self.assertEqual(storyboard["scenes"][1]["backgrounds"], [])
         self.assertNotIn("baseAsset", storyboard["scenes"][0]["visualBeats"][0])
 
+    def test_visual_plan_v2_passes_co_brand_through(self) -> None:
+        plan = self.plan_v2()
+        plan["coBrand"] = {  # type: ignore[assignment]
+            "logos": [
+                {"src": "brand/salesnail.svg", "alt": "SalesNail"},
+                {"src": "brand/workbuddy.png", "alt": "WorkBuddy"},
+            ]
+        }
+        storyboard = build_rich_storyboard(
+            plan,
+            self.timeline(),
+            authored_title="责任落地之后",
+            project_name="co-brand-test",
+            image_prompts={"version": "2", "prompts": []},
+        )
+
+        self.assertEqual(
+            storyboard["coBrand"],
+            {
+                "logos": [
+                    {"src": "brand/salesnail.svg", "alt": "SalesNail"},
+                    {"src": "brand/workbuddy.png", "alt": "WorkBuddy"},
+                ],
+                "separator": "×",
+            },
+        )
+
+        no_co_brand = build_rich_storyboard(
+            self.plan_v2(),
+            self.timeline(),
+            authored_title="责任落地之后",
+            project_name="co-brand-test",
+            image_prompts={"version": "2", "prompts": []},
+        )
+        self.assertNotIn("coBrand", no_co_brand)
+
+        broken = self.plan_v2()
+        broken["coBrand"] = {"logos": [{"src": "brand/a.svg", "alt": "A"}]}  # type: ignore[assignment]
+        with self.assertRaisesRegex(ValueError, "exactly two partner logos"):
+            build_rich_storyboard(
+                broken,
+                self.timeline(),
+                authored_title="责任落地之后",
+                project_name="co-brand-test",
+                image_prompts={"version": "2", "prompts": []},
+            )
+
+    def test_visual_plan_v2_rejects_opaque_treatment_color_over_base_asset(self) -> None:
+        plan = self.plan_v2()
+        beat = plan["scenes"][0]["visualBeats"][0]  # type: ignore[index]
+        beat["render"]["treatmentColor"] = "#06111f"
+        with self.assertRaisesRegex(ValueError, "opaque and would hide the base asset"):
+            build_rich_storyboard(
+                plan,
+                self.timeline(),
+                authored_title="责任落地之后",
+                project_name="treatment-color-test",
+                image_prompts={"version": "2", "prompts": []},
+            )
+
+        translucent = self.plan_v2()
+        translucent["scenes"][0]["visualBeats"][0]["render"]["treatmentColor"] = "#06111f66"  # type: ignore[index]
+        storyboard = build_rich_storyboard(
+            translucent,
+            self.timeline(),
+            authored_title="责任落地之后",
+            project_name="treatment-color-test",
+            image_prompts={"version": "2", "prompts": []},
+        )
+        self.assertEqual(
+            storyboard["scenes"][0]["visualBeats"][0]["render"]["treatmentColor"],
+            "#06111f66",
+        )
+
+        no_base = self.plan_v2()
+        no_base_beat = no_base["scenes"][0]["visualBeats"][0]  # type: ignore[index]
+        no_base_beat.pop("baseAsset")
+        no_base_beat.pop("baseBox")
+        no_base_beat.pop("baseFit")
+        no_base_beat["render"]["treatmentColor"] = "#06111f"
+        no_base_beat["render"]["canvasTone"] = "dark"
+        build_rich_storyboard(
+            no_base,
+            self.timeline(),
+            authored_title="责任落地之后",
+            project_name="treatment-color-test",
+            image_prompts={"version": "2", "prompts": []},
+        )
+
     def test_storyboard_builder_supports_visual_plan_v2(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

@@ -7,6 +7,7 @@ import {BackgroundTrack} from "./components/background/BackgroundTrack";
 import {VisualBeatTrack} from "./components/visual/VisualBeatTrack";
 import {ProgressRail} from "./components/ProgressRail";
 import {CoverLayer} from "./components/CoverLayer";
+import {CoBrandBug} from "./components/CoBrandBug";
 import {AudioTrack} from "./audio/AudioTrack";
 import {SceneLayer} from "./SceneLayer";
 import assets from "./data/generated/assets.json";
@@ -40,11 +41,13 @@ export const RichCaseVideo: React.FC<RichCaseVideoProps> = ({
             chrome={storyboard.chrome}
             sceneStartFrame={bounds[index].from}
             duration={bounds[index].duration}
+            suppressChromeForCover={withCover && (storyboard.chrome?.cover ?? true)}
           />
         </Sequence>
       ))}
       {withProgressRail && (storyboard.chrome?.progressRail ?? true) ? <ProgressRail /> : null}
       {withCover && (storyboard.chrome?.cover ?? true) ? <CoverLayer /> : null}
+      <CoBrandBug />
     </AbsoluteFill>
   );
 };
@@ -57,6 +60,6 @@ export const RichCaseVideoIntentReview: React.FC = () => (
 
 export const CoverProofOverlay: React.FC = () => (
   <AbsoluteFill style={{backgroundColor: "transparent"}}>
-    <CoverLayer />
+    <CoverLayer proofOnly />
   </AbsoluteFill>
 );

@@ -19,6 +19,8 @@
 - `knowledge-base/visual-asset-pool.md`：共享背景素材池、场景词表、多轴标签、归档和可选复用原则。
 - `knowledge-base/rendering.md`：Remotion、素材同步、渲染和快速换轨。
 - `knowledge-base/qa-and-delivery.md`：技术质检、视觉质检和交付门槛。
+- `knowledge-base/vertical-mobile-video.md`：竖屏 9:16 手机视频的画布合同、移动最佳实践和与横屏流水线的差异。
+- `knowledge-base/salesnail-workbuddy-collab.md`：SalesNail × WorkBuddy 联名视频的右上常驻双 Logo 标识合同、Logo 资产来源和 plan `coBrand` 声明。
 - `knowledge-base/publishing.md`：内部成片与集中发布目录、`S001_标题.mp4` 命名、批量上传清单和 Git 边界。
 - `knowledge-base/tooling-decisions.md`：工具选型及历史决策。
 - `knowledge-base/troubleshooting.md`：常见故障与处理顺序。
@@ -26,11 +28,13 @@
 - `acceptance/server-b-c-status.md`：Phase B/C 验收 ID 的实时状态、证据和未完成项；`partial` 不视为放行。
 - `architecture/visual-beat-system.md`：Visual Beat 分层编辑的数据合同、兼容策略、校验边界和验收标准。
 - `architecture/llm-director-pipeline.md`：LLM 导演源稿、确定性编译器、Remotion 执行层和 intent-to-frame 复核之间的责任边界。
+- `kimi-code-azure-k3.md`：Kimi Code 连接 Azure Foundry K3、默认 YOLO，以及 Low/High/Max Thinking 配置与排障。
 
 ## 工作流索引
 
 - `../workflows/generate-case-story.md`：从材料或参数生成销售案例模型和故事正文。
 - `../workflows/new-case-video.md`：从材料到成片。
+- `../workflows/new-vertical-video.md`：竖屏 9:16 手机视频(从标题旁白到竖版成片)。
 - `../workflows/revise-video.md`：旁白、画面和局部修订。
 - `../workflows/reuse-visual-assets.md`：新图 QA 后入池归档，以及在明确需要复用或修订连续性时检索、复核和 checkout。
 - `../workflows/improve-production-system.md`：按证据把复盘结论沉淀到正确层，并完成兼容回归。

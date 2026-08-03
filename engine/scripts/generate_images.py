@@ -84,11 +84,50 @@ FDE_BRIGHT_STYLE_PREFIX = (
     "no UI screenshot, no source-document screenshot."
 )
 
+# SalesNail × WorkBuddy co-brand series: bright watercolor keyed to the two
+# partner logos — SalesNail blue (#3671DB / #75A7FF) and WorkBuddy jade
+# (#00C090) — with near-black ink accents on pale mint/cream paper.
+SALESNAIL_WORKBUDDY_STYLE_PREFIX = (
+    "Bright editorial watercolor and gouache illustration, cinematic 16:9 composition, "
+    "dominant SalesNail blue (#3671DB) and light sky blue (#75A7FF) palette "
+    "with WorkBuddy jade green-teal (#00C090) highlights, "
+    "high-key lighting, light and airy tonality, pale mint and cream paper visible throughout, "
+    "near-black ink (#2C2C2C) foreground accents, crisp dark-light separation, "
+    "generous white negative space, broad translucent washes, clean flat shapes, light dry-brush edges, "
+    "modern business magazine style, foreground subject relatively clear and readable, "
+    "everything beyond the foreground is impressionist and semi-abstract, "
+    "background rendered as loose color fields and soft silhouettes, minimal details, "
+    "optimistic tech-fresh atmosphere, "
+    "no deep navy, no dark backgrounds, no heavy shadows, no large dark areas, "
+    "not heavy oil painting, not photorealistic, no dense rendering, no logos, no brand marks, "
+    "no readable text, no numerals, no letters, no watermark, no detailed faces, "
+    "no UI screenshot, no source-document screenshot."
+)
+
 STYLE_PREFIXES = {
     "sales-watercolor": STYLE_PREFIX,
     "sales-management-silhouette": MANAGEMENT_STYLE_PREFIX,
     "fde-bright-watercolor": FDE_BRIGHT_STYLE_PREFIX,
+    "salesnail-workbuddy-watercolor": SALESNAIL_WORKBUDDY_STYLE_PREFIX,
 }
+
+DEFAULT_IMAGE_SIZE = "1536x864"
+LANDSCAPE_COMPOSITION_PHRASE = "cinematic 16:9 composition"
+VERTICAL_COMPOSITION_PHRASE = (
+    "vertical 9:16 composition, tall portrait framing, "
+    "main subject anchored in the middle vertical band, "
+    "generous breathing room above and below"
+)
+
+
+def orient_style_prefix(style_prefix: str, size: tuple[int, int]) -> str:
+    """Swap the landscape composition phrase for a vertical one on tall canvases."""
+    width, height = size
+    if height <= width or VERTICAL_COMPOSITION_PHRASE in style_prefix:
+        return style_prefix
+    if LANDSCAPE_COMPOSITION_PHRASE in style_prefix:
+        return style_prefix.replace(LANDSCAPE_COMPOSITION_PHRASE, VERTICAL_COMPOSITION_PHRASE)
+    return f"{VERTICAL_COMPOSITION_PHRASE}, {style_prefix}"
 
 DEFAULT_PROMPTS = [
     ("bg_01_ipo_pause", "A confident business executive silhouette on a phone call near a Hong Kong financial district skyline, low-angle heroic framing, abstract IPO roadshow tension, blue suit shapes and yellow sunlight washes."),
@@ -299,7 +338,7 @@ def project_root_from_arg(project: str | None) -> Path:
     return ENGINE_ROOT
 
 
-def legacy_prompt_items(project_root: Path) -> tuple[Path, list[dict[str, str]]]:
+def legacy_prompt_items(project_root: Path) -> tuple[Path, list[dict[str, str]], str]:
     output_dir = project_root / "images" / "watercolor_bright"
     items = []
     for index, (name, scene_prompt) in enumerate(DEFAULT_PROMPTS, start=1):
@@ -311,7 +350,7 @@ def legacy_prompt_items(project_root: Path) -> tuple[Path, list[dict[str, str]]]
                 "prompt": f"{STYLE_PREFIX} Scene: {scene_prompt}",
             }
         )
-    return output_dir, items
+    return output_dir, items, DEFAULT_IMAGE_SIZE
 
 
 def resolve_project_path(project_root: Path, value: str, label: str) -> tuple[Path, str]:
@@ -419,8 +458,15 @@ def existing_image_has_size(path: Path, expected_size: tuple[int, int]) -> bool:
     return actual_size == expected_size
 
 
-def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, list[dict[str, str]]]:
+def project_prompt_items(
+    project_root: Path,
+    prompt_path: Path,
+    cli_size: str | None = None,
+) -> tuple[Path, list[dict[str, str]], str]:
     data = json.loads(prompt_path.read_text(encoding="utf-8"))
+    declared_size = data.get("size") if isinstance(data, dict) else None
+    effective_size = cli_size or declared_size or DEFAULT_IMAGE_SIZE
+    parse_image_size(effective_size)
     if isinstance(data, list):
         style_prefix = STYLE_PREFIX
         prompt_specs = data
@@ -453,13 +499,21 @@ def project_prompt_items(project_root: Path, prompt_path: Path) -> tuple[Path, l
             raise SystemExit(f"image prompt {position} must define a safe file, scene_id, or asset_id")
         output_path, _ = resolve_project_path(project_root, file_name, f"image prompt {position}")
         validate_generated_image_target(project_root, output_path, f"image prompt {position}")
-        record_style = STYLE_PREFIXES.get(str(spec.get("style_family")), style_prefix)
+        record_size = spec.get("size")
+        if record_size is not None:
+            parse_image_size(str(record_size))
+        item_size = str(record_size) if record_size else effective_size
+        record_dims = parse_image_size(item_size)
+        record_style = orient_style_prefix(
+            STYLE_PREFIXES.get(str(spec.get("style_family")), style_prefix),
+            record_dims,
+        )
         prompt = spec.get("fullPrompt") or f"{record_style} Scene: {spec['prompt']}"
         negative_prompt = str(spec.get("negative_prompt") or "").strip()
         if negative_prompt:
             prompt = f"{prompt} Explicitly avoid: {negative_prompt}"
-        items.append({"file": str(output_path), "prompt": prompt})
-    return output_dir, items
+        items.append({"file": str(output_path), "prompt": prompt, "size": item_size})
+    return output_dir, items, effective_size
 
 
 def write_prompt_image(
@@ -478,6 +532,7 @@ def write_prompt_image(
     validate_generated_image_target(project_root, output_path, f"image prompt {index}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prompt = item["prompt"]
+    size = item.get("size") or size
     metadata = {"file": str(output_path.relative_to(project_root)), "prompt": prompt}
     expected_size = parse_image_size(size)
     if output_path.exists() and not force:
@@ -527,7 +582,7 @@ def main() -> None:
     parser.add_argument("--concurrency", type=int, default=1, help="Parallel Azure image requests")
     parser.add_argument("--requests-per-minute", type=int, default=DEFAULT_REQUESTS_PER_MINUTE)
     parser.add_argument("--max-attempts", type=int, default=8)
-    parser.add_argument("--size", default="1536x864", help="Azure image size, for example 1024x1024")
+    parser.add_argument("--size", default=None, help=f"Azure image size, for example 1024x1024 (default {DEFAULT_IMAGE_SIZE} or the prompts file size)")
     parser.add_argument("--quality", choices=("low", "medium", "high"), default="low")
     parser.add_argument("--skip-metadata", action="store_true")
     args = parser.parse_args()
@@ -539,9 +594,11 @@ def main() -> None:
         load_env(env_path)
 
     if prompt_path.exists():
-        output_dir, prompt_items = project_prompt_items(project_root, prompt_path)
+        output_dir, prompt_items, effective_size = project_prompt_items(
+            project_root, prompt_path, cli_size=args.size
+        )
     else:
-        output_dir, prompt_items = legacy_prompt_items(project_root)
+        output_dir, prompt_items, effective_size = legacy_prompt_items(project_root)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -559,7 +616,7 @@ def main() -> None:
     if needs_generation:
         print(
             f"azure image request limit={requests_per_minute}/min "
-            f"max_attempts={attempts} size={args.size} quality={args.quality}",
+            f"max_attempts={attempts} size={effective_size} quality={args.quality}",
             flush=True,
         )
 
@@ -574,7 +631,7 @@ def main() -> None:
                 force=args.force,
                 rate_limiter=rate_limiter,
                 attempts=attempts,
-                size=args.size,
+                size=effective_size,
                 quality=args.quality,
             )
     else:
@@ -590,7 +647,7 @@ def main() -> None:
                     force=args.force,
                     rate_limiter=rate_limiter,
                     attempts=attempts,
-                    size=args.size,
+                    size=effective_size,
                     quality=args.quality,
                 ): index
                 for index, item in selected

@@ -250,8 +250,10 @@ def looks_like_contact_sheet_or_overview(image: Image.Image) -> bool:
     width, height = image.size
     if width < 900 or height < 700:
         return False
-    ratio = width / height
-    if ratio < 0.75 or ratio > 1.35:
+    # Symmetric window: catch grid sheets in both landscape and portrait
+    # orientation while letting native 16:9 / 9:16 backgrounds through.
+    ratio = max(width, height) / min(width, height)
+    if ratio > 1.45:
         return False
 
     sample_width = 320
@@ -515,6 +517,101 @@ TEXT_SURFACE_BACKGROUNDS = {
 }
 LEGACY_TEXT_SURFACE_BACKGROUND = ((5, 17, 31), 0.9)
 MIN_TEXT_SURFACE_CONTRAST = 3.0
+PERSON_PANEL_MIN_GAP = 0.012
+COUNTER_MIN_FONT_SIZE = 42.0
+
+
+def normalized_layer_box(
+    layer: dict[str, Any], label: str
+) -> tuple[float, float, float, float] | None:
+    raw_box = layer.get("box")
+    if raw_box is None:
+        return None
+    if not isinstance(raw_box, dict):
+        raise SystemExit(f"{label} box must be an object")
+
+    x = raw_box.get("x")
+    y = raw_box.get("y")
+    width = raw_box.get("width", raw_box.get("w"))
+    height = raw_box.get("height", raw_box.get("h"))
+    values = {"x": x, "y": y, "width": width, "height": height}
+    for axis, value in values.items():
+        if not isinstance(value, (int, float)) or value < 0 or value > 1:
+            raise SystemExit(
+                f"{label} box.{axis} must be a number between 0 and 1"
+            )
+    if width <= 0 or height <= 0:
+        raise SystemExit(f"{label} box width and height must be greater than 0")
+    if x + width > 1:
+        raise SystemExit(f"{label} box exceeds the right canvas edge")
+    if y + height > 1:
+        raise SystemExit(f"{label} box exceeds the bottom canvas edge")
+    return float(x), float(y), float(width), float(height)
+
+
+def layer_boxes_conflict(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+    *,
+    gap: float = PERSON_PANEL_MIN_GAP,
+) -> bool:
+    first_x, first_y, first_width, first_height = first
+    second_x, second_y, second_width, second_height = second
+    horizontally_separated = (
+        first_x + first_width + gap <= second_x
+        or second_x + second_width + gap <= first_x
+    )
+    vertically_separated = (
+        first_y + first_height + gap <= second_y
+        or second_y + second_height + gap <= first_y
+    )
+    return not (horizontally_separated or vertically_separated)
+
+
+def estimated_counter_text_units(text: str) -> float:
+    units = 0.0
+    for character in text:
+        if character.isspace():
+            units += 0.34
+        elif "\u2e80" <= character <= "\u9fff" or "\uf900" <= character <= "\ufaff":
+            units += 1.0
+        elif character.isupper() or character.isdigit():
+            units += 0.66
+        elif character.islower():
+            units += 0.56
+        else:
+            units += 0.48
+    return max(1.0, units)
+
+
+def counter_fitted_font_size(
+    layer: dict[str, Any],
+    box: tuple[float, float, float, float],
+    canvas_width: int,
+) -> float:
+    value = layer["value"]
+    decimals = int(value.get("decimals", 0))
+    prefix = str(value.get("prefix", ""))
+    suffix = str(value.get("suffix", ""))
+    final_text = f"{prefix}{value['to']:.{decimals}f}{suffix}"
+    width_pixels = box[2] * canvas_width
+    horizontal_padding = min(44.0, max(20.0, width_pixels * 0.08))
+    inner_width = max(96.0, width_pixels - horizontal_padding * 2 - 10.0)
+    legacy_delta = "from" in value and value.get("from") != 0
+    show_delta = layer.get("showDelta", legacy_delta)
+    if not show_delta:
+        return inner_width * 0.84 / estimated_counter_text_units(final_text)
+    delta = abs(value["to"] - value["from"])
+    delta_text = f"{delta:.{decimals}f}{suffix}"
+    combined_units = estimated_counter_text_units(final_text) + (
+        estimated_counter_text_units(delta_text) + 1.15
+    ) * 0.38
+    return (inner_width * 0.84 - 18.0) / max(1.0, combined_units)
+
+# Frame-0 cover splash cap, mirrored from engine/remotion/src/canvas.ts
+# (COVER_MAX_SECONDS). The engine clamps the cover to this window; plans that
+# author a longer hold through cover.throughUnit get a contract warning.
+COVER_SPLASH_MAX_SECONDS = 2.0
 
 
 def hex_text_color(value: object) -> tuple[int, int, int] | None:
@@ -587,6 +684,8 @@ def validate_visual_beats(
     warning_seconds: float,
     max_visual_gap_seconds: float,
     strict_visuals: bool,
+    canvas_width: int,
+    canvas_height: int,
 ) -> tuple[int, list[str], list[str]]:
     beat_ids: set[str] = set()
     beat_count = 0
@@ -674,12 +773,39 @@ def validate_visual_beats(
                         warnings=warnings,
                         errors=errors,
                     )
+                if base_asset is not None:
+                    treatment_color = raw_render.get("treatmentColor")
+                    if isinstance(treatment_color, str):
+                        color_value = treatment_color.strip().lstrip("#")
+                        if len(color_value) == 6 or (
+                            len(color_value) == 8 and color_value[6:].lower() == "ff"
+                        ):
+                            visual_quality_issue(
+                                f"{label} treatmentColor {treatment_color!r} is opaque and "
+                                "hides the base asset; use 'transparent' or an 8-digit "
+                                "#RRGGBBAA value with a non-opaque alpha channel",
+                                strict=strict_visuals,
+                                warnings=warnings,
+                                errors=errors,
+                            )
             raw_layers = beat.get("layers", [])
             if not isinstance(raw_layers, list):
                 raise SystemExit(f"{label} layers must be a list")
             layer_ids: set[str] = set()
             has_asset_layer = False
-            panel_layers: list[tuple[str, str, int, int, str]] = []
+            panel_layers: list[
+                tuple[
+                    str,
+                    str,
+                    int,
+                    int,
+                    str,
+                    tuple[float, float, float, float] | None,
+                ]
+            ] = []
+            person_layers: list[
+                tuple[int, int, str, tuple[float, float, float, float]]
+            ] = []
             for layer_position, layer in enumerate(raw_layers, start=1):
                 layer_label = f"{label} layer {layer_position}"
                 if not isinstance(layer, dict):
@@ -697,6 +823,8 @@ def validate_visual_beats(
                     raise SystemExit(f"{layer_label} has invalid kind: {kind!r}")
                 if slot not in LAYER_SLOTS:
                     raise SystemExit(f"{layer_label} has invalid slot: {slot!r}")
+                layer_box = normalized_layer_box(layer, layer_label)
+                is_person_asset = False
                 if (
                     mode == "hybrid"
                     and kind not in HYBRID_ALLOWED_LAYER_KINDS
@@ -708,6 +836,16 @@ def validate_visual_beats(
                     if layer_asset not in assets:
                         raise SystemExit(
                             f"{layer_label} references unknown asset: {layer_asset!r}"
+                        )
+                    is_person_asset = assets[layer_asset].get("role") == "person"
+                    if is_person_asset and layer_box is None:
+                        visual_quality_issue(
+                            f"{layer_label} renders person asset {layer_asset!r} without an "
+                            "explicit box; the director must reserve the portrait region while "
+                            "Remotion owns deterministic square framing and contain-fit",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
                         )
                     has_asset_layer = True
                 elif kind == "text":
@@ -746,8 +884,31 @@ def validate_visual_beats(
                         raise SystemExit(f"{layer_label} counter layer must define value.to")
                     if "from" in value and not isinstance(value["from"], (int, float)):
                         raise SystemExit(f"{layer_label} counter value.from must be a number")
+                    show_delta = layer.get("showDelta")
+                    if show_delta is not None and not isinstance(show_delta, bool):
+                        raise SystemExit(f"{layer_label} counter showDelta must be a boolean")
+                    if show_delta is True and "from" not in value:
+                        raise SystemExit(
+                            f"{layer_label} counter showDelta=true requires value.from so the delta has a baseline"
+                        )
+                    if show_delta is None and "from" in value and value["from"] != 0:
+                        warnings.append(
+                            f"{layer_label} relies on legacy implicit delta display from non-zero value.from; "
+                            "set showDelta=true explicitly for a comparison or false for count-up only"
+                        )
                     if layer.get("deltaTone") is not None and layer["deltaTone"] not in BAR_TONES:
                         raise SystemExit(f"{layer_label} has invalid deltaTone: {layer['deltaTone']!r}")
+                    if layer_box is not None:
+                        fitted_size = counter_fitted_font_size(layer, layer_box, canvas_width)
+                        if fitted_size < COUNTER_MIN_FONT_SIZE:
+                            visual_quality_issue(
+                                f"{layer_label} counter content cannot fit its declared box at the "
+                                f"{COUNTER_MIN_FONT_SIZE:.0f}px readability floor (estimated "
+                                f"{fitted_size:.1f}px); widen the box, shorten prefix/suffix, or split the beat",
+                                strict=strict_visuals,
+                                warnings=warnings,
+                                errors=errors,
+                            )
                 elif kind == "bar-compare":
                     bars = layer.get("bars")
                     if not isinstance(bars, list) or not bars:
@@ -826,6 +987,11 @@ def validate_visual_beats(
                         raise SystemExit(f"{layer_label} dialogue layer must define speaker")
                     if layer.get("tail") is not None and layer["tail"] not in {"left", "right"}:
                         raise SystemExit(f"{layer_label} has invalid tail: {layer['tail']!r}")
+                    if not layer.get("asset"):
+                        warnings.append(
+                            f"{layer_label} dialogue layer has no 'asset'; "
+                            "bind a character portrait ID so the speaker image renders beside the bubble"
+                        )
                 elif kind == "annotate":
                     shape = layer.get("shape")
                     if shape is None:
@@ -870,24 +1036,86 @@ def validate_visual_beats(
                     )
                 if kind in PANEL_LAYER_KINDS:
                     panel_layers.append(
-                        (slot, kind, reveal, exit_unit if exit_unit is not None else last + 1, layer_label)
+                        (
+                            slot,
+                            kind,
+                            reveal,
+                            exit_unit if exit_unit is not None else last + 1,
+                            layer_label,
+                            layer_box,
+                        )
+                    )
+                if is_person_asset and layer_box is not None:
+                    person_layers.append(
+                        (
+                            reveal,
+                            exit_unit if exit_unit is not None else last + 1,
+                            layer_label,
+                            layer_box,
+                        )
                     )
 
             for panel_position, panel in enumerate(panel_layers):
-                slot, kind, reveal, exit_unit, panel_label = panel
+                slot, kind, reveal, exit_unit, panel_label, panel_box = panel
                 for other in panel_layers[panel_position + 1 :]:
-                    other_slot, other_kind, other_reveal, other_exit, other_label = other
+                    (
+                        other_slot,
+                        other_kind,
+                        other_reveal,
+                        other_exit,
+                        other_label,
+                        other_box,
+                    ) = other
                     if slot != other_slot:
                         continue
                     if max(reveal, other_reveal) >= min(exit_unit, other_exit):
                         continue
+                    if panel_box is not None and other_box is not None:
+                        if not layer_boxes_conflict(panel_box, other_box, gap=0):
+                            continue
+                        detail = "their declared boxes intersect"
+                    else:
+                        detail = "one or both layers omit an explicit box"
                     visual_quality_issue(
                         f"{panel_label} ({kind}) overlaps {other_label} ({other_kind}) in slot "
-                        f"{slot!r}; assign different slots or non-overlapping reveal/exit units",
+                        f"{slot!r}: {detail}; assign non-overlapping boxes, different slots, "
+                        "or non-overlapping reveal/exit units",
                         strict=strict_visuals,
                         warnings=warnings,
                         errors=errors,
                     )
+
+            for person_reveal, person_exit, person_label, person_box in person_layers:
+                for (
+                    _panel_slot,
+                    panel_kind,
+                    panel_reveal,
+                    panel_exit,
+                    panel_label,
+                    panel_box,
+                ) in panel_layers:
+                    if max(person_reveal, panel_reveal) >= min(person_exit, panel_exit):
+                        continue
+                    if panel_box is None:
+                        visual_quality_issue(
+                            f"{panel_label} ({panel_kind}) shares a beat with {person_label} "
+                            "but has no explicit box; reserve both portrait and panel regions "
+                            "so their composition is deterministic",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
+                        continue
+                    if layer_boxes_conflict(person_box, panel_box):
+                        visual_quality_issue(
+                            f"{person_label} portrait box overlaps {panel_label} "
+                            f"({panel_kind}); reserve non-overlapping boxes with at least "
+                            f"{PERSON_PANEL_MIN_GAP:.3f} normalized gap. The director owns "
+                            "composition, while Remotion owns square framing and media fit",
+                            strict=strict_visuals,
+                            warnings=warnings,
+                            errors=errors,
+                        )
 
             if base_asset is None and not has_asset_layer:
                 raise SystemExit(f"{label} must define baseAsset or at least one asset layer")
@@ -1082,6 +1310,21 @@ def main() -> None:
             f"1..{len(units)}"
         )
 
+    storyboard_width = int(storyboard.get("width") or 1920)
+    storyboard_height = int(storyboard.get("height") or 1080)
+    if storyboard_height > storyboard_width:
+        for position, scene in enumerate(scenes, start=1):
+            vertical_mode = scene.get(
+                "visualMode",
+                "editorial" if scene.get("visualBeats") else "layout",
+            )
+            if vertical_mode != "editorial":
+                raise SystemExit(
+                    f"scene {position} uses visualMode {vertical_mode!r} on a vertical "
+                    "canvas; vertical 9:16 projects must use editorial scenes because "
+                    "the shared template layouts are 16:9-only"
+                )
+
     contract_warnings: list[str] = []
     if authored_title is None:
         contract_warnings.append(
@@ -1110,6 +1353,14 @@ def main() -> None:
             raise SystemExit(
                 "storyboard.cover.throughUnit must be inside the first scene units "
                 f"[{first_scene_first}, {first_scene_last}]"
+            )
+        cover_end_seconds = float(unit_by_index[through_unit].get("end") or 0)
+        if through_unit > first_scene_first and cover_end_seconds > COVER_SPLASH_MAX_SECONDS:
+            contract_warnings.append(
+                f"storyboard.cover.throughUnit={through_unit} ends the title cover at "
+                f"{cover_end_seconds:.1f}s; narration starts at 0s, so the engine clamps "
+                f"the cover to the {COVER_SPLASH_MAX_SECONDS:.1f}s splash cap and the "
+                "authored tail beyond the cap never renders"
             )
         for key in ("subtitle", "kicker"):
             if key in cover and not isinstance(cover[key], str):
@@ -1211,6 +1462,8 @@ def main() -> None:
         args.visual_warning_seconds,
         args.max_visual_gap_seconds,
         args.strict_visuals,
+        storyboard_width,
+        storyboard_height,
     )
 
     audio = storyboard.get("audio", "audio/narration_azure.wav")

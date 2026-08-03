@@ -274,8 +274,8 @@ class IsolatedRenderRunner:
         audio = next((stream for stream in streams if stream.get("codec_type") == "audio"), None)
         if not isinstance(video, Mapping) or not isinstance(audio, Mapping):
             raise RenderIsolationError("rendered video must contain both video and audio streams")
-        if int(video.get("width", 0)) != 1920 or int(video.get("height", 0)) != 1080:
-            raise RenderIsolationError("rendered video must be 1920x1080")
+        if (int(video.get("width", 0)), int(video.get("height", 0))) not in {(1920, 1080), (1080, 1920)}:
+            raise RenderIsolationError("rendered video must be 1920x1080 or 1080x1920")
         rate = str(video.get("avg_frame_rate") or video.get("r_frame_rate") or "0/1")
         try:
             numerator, denominator = rate.split("/", 1)

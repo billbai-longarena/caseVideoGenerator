@@ -2,6 +2,7 @@ import React from "react";
 import {AbsoluteFill} from "remotion";
 import type {SceneTransition} from "../data/types";
 import {fontStack, palette, visualTheme} from "../theme";
+import {IS_VERTICAL} from "../canvas";
 
 export const TransitionWipe: React.FC<{
   progress: number;
@@ -28,17 +29,33 @@ export const TransitionWipe: React.FC<{
         }}
       >
         <div
-          style={{
-            position: "absolute",
-            right: 140,
-            top: 360,
-            fontFamily: fontStack,
-            fontSize: 128,
-            fontWeight: 950,
-            color: palette.white,
-            WebkitTextStroke: `4px ${palette.ink}`,
-            textShadow: `10px 10px 0 ${visualTheme.brandSurface}`,
-          }}
+          style={
+            IS_VERTICAL
+              ? {
+                  position: "absolute",
+                  left: 64,
+                  right: 64,
+                  top: "42%",
+                  textAlign: "center",
+                  fontFamily: fontStack,
+                  fontSize: 96,
+                  fontWeight: 950,
+                  color: palette.white,
+                  WebkitTextStroke: `4px ${palette.ink}`,
+                  textShadow: `10px 10px 0 ${visualTheme.brandSurface}`,
+                }
+              : {
+                  position: "absolute",
+                  right: 140,
+                  top: 360,
+                  fontFamily: fontStack,
+                  fontSize: 128,
+                  fontWeight: 950,
+                  color: palette.white,
+                  WebkitTextStroke: `4px ${palette.ink}`,
+                  textShadow: `10px 10px 0 ${visualTheme.brandSurface}`,
+                }
+          }
         >
           {chapter}
         </div>
@@ -58,17 +75,31 @@ export const TransitionWipe: React.FC<{
         }}
       >
         <div
-          style={{
-            position: "absolute",
-            left: 108,
-            bottom: 238,
-            fontFamily: fontStack,
-            fontSize: 112,
-            fontWeight: 950,
-            color: palette.white,
-            WebkitTextStroke: `4px ${palette.ink}`,
-            textShadow: `10px 10px 0 ${palette.red}`,
-          }}
+          style={
+            IS_VERTICAL
+              ? {
+                  position: "absolute",
+                  left: 64,
+                  bottom: 460,
+                  fontFamily: fontStack,
+                  fontSize: 84,
+                  fontWeight: 950,
+                  color: palette.white,
+                  WebkitTextStroke: `4px ${palette.ink}`,
+                  textShadow: `10px 10px 0 ${palette.red}`,
+                }
+              : {
+                  position: "absolute",
+                  left: 108,
+                  bottom: 238,
+                  fontFamily: fontStack,
+                  fontSize: 112,
+                  fontWeight: 950,
+                  color: palette.white,
+                  WebkitTextStroke: `4px ${palette.ink}`,
+                  textShadow: `10px 10px 0 ${palette.red}`,
+                }
+          }
         >
           {chapter}
         </div>
@@ -86,17 +117,31 @@ export const TransitionWipe: React.FC<{
       }}
     >
       <div
-        style={{
-          position: "absolute",
-          left: 90,
-          top: 390,
-          fontFamily: fontStack,
-          fontSize: 120,
-          fontWeight: 950,
-          color: palette.white,
-          WebkitTextStroke: `4px ${palette.ink}`,
-          textShadow: `10px 10px 0 ${palette.ink}`,
-        }}
+        style={
+          IS_VERTICAL
+            ? {
+                position: "absolute",
+                left: 64,
+                top: "40%",
+                fontFamily: fontStack,
+                fontSize: 88,
+                fontWeight: 950,
+                color: palette.white,
+                WebkitTextStroke: `4px ${palette.ink}`,
+                textShadow: `10px 10px 0 ${palette.ink}`,
+              }
+            : {
+                position: "absolute",
+                left: 90,
+                top: 390,
+                fontFamily: fontStack,
+                fontSize: 120,
+                fontWeight: 950,
+                color: palette.white,
+                WebkitTextStroke: `4px ${palette.ink}`,
+                textShadow: `10px 10px 0 ${palette.ink}`,
+              }
+        }
       >
         {chapter}
       </div>

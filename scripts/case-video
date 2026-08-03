@@ -128,7 +128,7 @@ run_readiness() {
     "$PROJECT_ROOT" --stage "$stage" --min-score "$(readiness_min_score "$stage")"
 }
 
-REMOTION_LOCK_DIR="$REMOTION_ROOT/.case-video.lock"
+REMOTION_LOCK_DIR=""
 REMOTION_LOCK_HELD=0
 
 release_remotion_lock() {
@@ -170,11 +170,13 @@ Commands:
   build         Build rich_storyboard.json from storyboard_plan.json
   check         Validate project files and unit coverage
   evaluate      Score Visual Beat pacing, semantics, diversity, and asset use
+  preflight     Run cheap contract gates before an expensive stage
   ready         Run staged one-pass readiness checks (default: render)
   tts           Generate Azure narration and timeline
   images        Generate project images with adaptive safe concurrency
   typecheck     Run Remotion TypeScript checks
   preview       Open Remotion preview for the project
+  still         Render one isolated Remotion still for the project
   intent-frames Render representative scene/beat frames for intent review
   render        Render complete video to project/video/case_video.mp4
   render-video  Render video-only layer to project/video/case_video_video_only.mp4
@@ -204,6 +206,29 @@ PROJECT_ROOT="$(cd "$PROJECT_ROOT" 2>/dev/null && pwd)" || {
   exit 1
 }
 
+needs_isolated_remotion_workspace() {
+  case "$1" in
+    ready|preview|still|intent-frames|render|render-video|typecheck)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# The canonical engine is source-only. Every Remotion-facing CLI invocation
+# gets a disposable copy so generated JSON/media cannot be replaced by a
+# neighboring project. Server-side isolated runners set CASE_VIDEO_ENGINE_ROOT
+# already and therefore skip this extra copy.
+if [[ -z "${CASE_VIDEO_ISOLATED_WORKSPACE:-}" && -z "${CASE_VIDEO_ENGINE_ROOT:-}" ]] \
+  && needs_isolated_remotion_workspace "$COMMAND"; then
+  "$REPO_ROOT/scripts/with-remotion-workspace.sh" "$COMMAND" "$PROJECT_INPUT" "$@"
+  exit $?
+fi
+
+REMOTION_LOCK_DIR="$PROJECT_ROOT/.case-video.lock"
+
 if [[ ! -x "$PYTHON_BIN" ]]; then
   PYTHON_BIN="$(command -v python3)"
 fi
@@ -225,17 +250,19 @@ case "$COMMAND" in
     "$PYTHON_BIN" "$REPO_ROOT/scripts/evaluate_visual_storyboard.py" \
       "$PROJECT_ROOT" "$@"
     ;;
+  preflight)
+    "$PYTHON_BIN" "$REPO_ROOT/scripts/case_video_preflight.py" \
+      "$PROJECT_ROOT" "$@"
+    ;;
   ready)
-    sync_storyboard_if_needed
     readiness_stage="$(readiness_stage_from_args "$@")"
     readiness_args=("$@")
     if ! has_cli_option "--min-score" "$@"; then
       readiness_args+=(--min-score "$(readiness_min_score "$readiness_stage")")
     fi
-    if [[ "$readiness_stage" == "render" ]]; then
-      prefer_native_apple_node
-      acquire_remotion_lock
-    fi
+    prefer_native_apple_node
+    acquire_remotion_lock
+    sync_storyboard_if_needed
     "$PYTHON_BIN" "$REPO_ROOT/scripts/case_video_readiness.py" \
       "$PROJECT_ROOT" "${readiness_args[@]}"
     ;;
@@ -276,12 +303,29 @@ case "$COMMAND" in
     ;;
   typecheck)
     prefer_native_apple_node
+    sync_storyboard_if_needed
+    VIDEO_PROJECT_DIR="$PROJECT_ROOT" bash "$ENGINE_ROOT/scripts/sync_assets.sh"
     npm --prefix "$REMOTION_ROOT" run typecheck -- "$@"
     ;;
   preview)
     prefer_native_apple_node
     acquire_remotion_lock
     npm --prefix "$REMOTION_ROOT" run preview -- "$@"
+    ;;
+  still)
+    if [[ $# -lt 1 ]]; then
+      echo "Usage: scripts/case-video still <project> <output.png> [--frame=N] [Remotion still options]" >&2
+      exit 2
+    fi
+    STILL_OUTPUT="$1"
+    shift
+    prefer_native_apple_node
+    acquire_remotion_lock
+    sync_storyboard_if_needed
+    VIDEO_PROJECT_DIR="$PROJECT_ROOT" bash "$ENGINE_ROOT/scripts/sync_assets.sh"
+    cd "$REMOTION_ROOT"
+    "$REMOTION_ROOT/node_modules/.bin/remotion" still \
+      src/index.ts CaseVideoVideoOnly "$STILL_OUTPUT" --overwrite "$@"
     ;;
   intent-frames)
     prefer_native_apple_node

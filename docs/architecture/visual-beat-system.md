@@ -188,7 +188,7 @@ scene-relative `offset`、`revealOffset`、`exitOffset` 和自动 purpose 预设
 渲染顺序从下到上为：
 
 1. 旧 `BackgroundTrack`，提供兼容背景和 Visual Beat 空缺时的兜底。
-2. `VisualBeatTrack`，按 unit 播放主素材、构图、镜头运动和拍点内图层。
+2. `VisualBeatTrack`，按 unit 播放主素材、构图、镜头运动和拍点内图层；背景型 `baseAsset`(包括 `bg-*`、`*-bg-*`、`background-*` 命名)按全画布舞台渲染,不进入竖屏上半屏卡片构图,避免与兼容背景轨形成上下叠图。
 3. scene 业务 layout；仅 `layout` 和 `hybrid` 模式显示。
 4. 品牌、章节、关键词、字幕和全局进度层；v2 按顶层与 scene chrome 开关显示，其中字幕栏必须保持开启。
 

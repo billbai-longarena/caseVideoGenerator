@@ -3,18 +3,25 @@ import {spring, useCurrentFrame, useVideoConfig} from "remotion";
 import {fontStack, palette, visualTheme} from "../theme";
 import {SPRING_SETTLE} from "../anim/springs";
 import {storyboard} from "../data/storyboard";
+import {IS_VERTICAL, VERTICAL_CHROME_TOP} from "../canvas";
 
-export const BrandBug: React.FC<{kicker: string}> = ({kicker}) => {
+export const BrandBug: React.FC<{kicker?: string; immediate?: boolean}> = ({
+  kicker,
+  immediate = false,
+}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const s = spring({frame: frame - 2, fps, config: SPRING_SETTLE, durationInFrames: 36});
+  const s = immediate
+    ? 1
+    : spring({frame: frame - 2, fps, config: SPRING_SETTLE, durationInFrames: 36});
 
   return (
     <div
       style={{
         position: "absolute",
         left: 70,
-        top: 48,
+        // Vertical: drop below the platform's top overlay (tabs/back button).
+        top: IS_VERTICAL ? VERTICAL_CHROME_TOP : 48,
         display: "flex",
         alignItems: "center",
         gap: 16,
@@ -37,16 +44,19 @@ export const BrandBug: React.FC<{kicker: string}> = ({kicker}) => {
       >
         {storyboard.brand}
       </div>
-      <div
-        style={{
-          padding: "10px 18px",
-          background: "rgba(0,0,0,0.42)",
-          border: "2px solid rgba(255,255,255,0.68)",
-          fontSize: 26,
-        }}
-      >
-        {kicker}
-      </div>
+      {kicker ? (
+        <div
+          style={{
+            padding: "10px 18px",
+            background: "rgba(0,0,0,0.58)",
+            border: "2px solid rgba(255,255,255,0.68)",
+            boxShadow: "5px 6px 0 rgba(5,17,31,0.48)",
+            fontSize: 26,
+          }}
+        >
+          {kicker}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -55,6 +65,10 @@ export const ChapterBadge: React.FC<{chapter: string}> = ({chapter}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const s = spring({frame: frame - 4, fps, config: SPRING_SETTLE, durationInFrames: 36});
+
+  // Vertical: the top-right corner sits under platform overlay UI, and
+  // chapter words are director-facing labels — keep them off the phone screen.
+  if (IS_VERTICAL) return null;
 
   return (
     <div

@@ -22,7 +22,8 @@ import type {
   VisualLayerSlot,
 } from "../../data/types";
 import {resolvedVisualBeats, unitStartFrame} from "../../timing/timeline";
-import {clamp, fontStack, palette, visualTheme} from "../../theme";
+import {clamp, fontStack, glassCardBackground, palette, visualTheme} from "../../theme";
+import {CANVAS_HEIGHT, CANVAS_WIDTH, IS_VERTICAL} from "../../canvas";
 import {idleFloat} from "../../anim/springs";
 import {CounterLayer} from "./layers/CounterLayer";
 import {BarCompareLayer} from "./layers/BarCompareLayer";
@@ -83,14 +84,80 @@ const normalizedBoxStyle = (box: VisualBox): React.CSSProperties => ({
   height: `${box.height * 100}%`,
 });
 
+const squareBoxWithin = (box: VisualBox): VisualBox => {
+  const side = Math.min(box.width * CANVAS_WIDTH, box.height * CANVAS_HEIGHT);
+  const width = side / CANVAS_WIDTH;
+  const height = side / CANVAS_HEIGHT;
+  return {
+    x: box.x + (box.width - width) / 2,
+    y: box.y + (box.height - height) / 2,
+    width,
+    height,
+  };
+};
+
 const isThreeColumnSlot = (slot: VisualLayerSlot = "canvas") =>
   slot === "left" || slot === "center" || slot === "right";
+
+// Vertical 9:16 slots: full-width stacked bands inside the mobile safe area
+// (top below the platform overlay at y 320, bottom above the content floor
+// y 1240; the subtitle bar floats at bottom:400 below the floor).
+const verticalSlotStyle = (
+  slot: VisualLayerSlot = "canvas",
+  composition?: VisualBeatComposition,
+  reserveBottom = false,
+): React.CSSProperties => {
+  const common: React.CSSProperties = {position: "absolute"};
+  if (composition === "triptych" && isThreeColumnSlot(slot)) {
+    const rowHeight = reserveBottom ? 240 : 300;
+    const rowTops = reserveBottom ? [330, 600, 870] : [340, 650, 960];
+    const rowIndex = slot === "left" ? 0 : slot === "center" ? 1 : 2;
+    return {...common, left: 90, width: 900, top: rowTops[rowIndex], height: rowHeight};
+  }
+  switch (slot) {
+    case "left":
+      return {...common, left: 64, right: 64, top: 400, bottom: reserveBottom ? 1040 : 920};
+    case "right":
+      return {...common, left: 64, right: 64, top: reserveBottom ? 780 : 860, bottom: reserveBottom ? 790 : 680};
+    case "center":
+      return {...common, left: 64, right: 64, top: 640, bottom: reserveBottom ? 930 : 680};
+    case "inset-left":
+    case "inset-right":
+      return {...common, left: 90, top: 400, width: 900, height: 780};
+    case "top-left":
+    case "top-right":
+      return {...common, left: 72, right: 72, top: 400, minHeight: 200};
+    case "bottom":
+      return {...common, left: 80, right: 80, bottom: 680, minHeight: 170};
+    case "canvas":
+    default:
+      return {...common, inset: 0};
+  }
+};
+
+const verticalSlotDimensions = (
+  slot: VisualLayerSlot = "canvas",
+  composition?: VisualBeatComposition,
+  reserveBottom = false,
+) => {
+  if (composition === "triptych" && isThreeColumnSlot(slot)) {
+    return {width: 900, height: reserveBottom ? 240 : 300};
+  }
+  if (slot === "left") return {width: 952, height: reserveBottom ? 480 : 600};
+  if (slot === "right") return {width: 952, height: reserveBottom ? 350 : 380};
+  if (slot === "center") return {width: 952, height: reserveBottom ? 350 : 600};
+  if (slot === "inset-left" || slot === "inset-right") return {width: 900, height: 780};
+  if (slot === "top-left" || slot === "top-right") return {width: 936, height: 220};
+  if (slot === "bottom") return {width: 920, height: 190};
+  return {width: 1080, height: 1920};
+};
 
 const slotStyle = (
   slot: VisualLayerSlot = "canvas",
   composition?: VisualBeatComposition,
   reserveBottom = false,
 ): React.CSSProperties => {
+  if (IS_VERTICAL) return verticalSlotStyle(slot, composition, reserveBottom);
   const common: React.CSSProperties = {position: "absolute"};
   if (composition === "triptych" && isThreeColumnSlot(slot)) {
     const bottom = reserveBottom ? 386 : 244;
@@ -134,9 +201,12 @@ const compactTextPositionStyle = (
 ): React.CSSProperties => {
   const style = {...layerPositionStyle(layer, composition, reserveBottom)};
   if (!layer.box) {
-    delete style.bottom;
     delete style.height;
     delete style.minHeight;
+    // Top-anchored lanes stack compact cards downward from the lane top;
+    // bottom-anchored lanes (no top, e.g. the vertical bottom band) must keep
+    // `bottom` or the card floats to the frame edge and gets clipped.
+    if (style.top !== undefined) delete style.bottom;
   }
   return style;
 };
@@ -147,7 +217,7 @@ const layerDimensions = (
   reserveBottom = false,
 ) =>
   layer.box
-    ? {width: Math.round(layer.box.width * 1920), height: Math.round(layer.box.height * 1080)}
+    ? {width: Math.round(layer.box.width * CANVAS_WIDTH), height: Math.round(layer.box.height * CANVAS_HEIGHT)}
     : slotDimensions(layer.slot, composition, reserveBottom);
 
 const slotDimensions = (
@@ -155,6 +225,7 @@ const slotDimensions = (
   composition?: VisualBeatComposition,
   reserveBottom = false,
 ) => {
+  if (IS_VERTICAL) return verticalSlotDimensions(slot, composition, reserveBottom);
   if (composition === "triptych" && isThreeColumnSlot(slot)) {
     return {width: 515, height: 1080 - 232 - (reserveBottom ? 386 : 244)};
   }
@@ -233,7 +304,22 @@ const canvasBackground = (tone: VisualBeatRender["canvasTone"]) => {
   return "rgba(246,239,218,0.18)";
 };
 
+const VERTICAL_READ_OVERLAY =
+  "linear-gradient(180deg, transparent 34%, rgba(4,14,28,0.5) 62%, rgba(4,14,28,0.74))";
+
 const overlayBackground = (beat: VisualBeat, overlay: VisualBeatRender["overlay"]) => {
+  if (IS_VERTICAL) {
+    // Mobile reading pattern: text sits low, so readability gradients rise
+    // from the bottom instead of sweeping sideways.
+    if (overlay === "read-left" || overlay === "read-right") return VERTICAL_READ_OVERLAY;
+    if (!beat.render && (beat.composition === "portrait-left" || beat.composition === "portrait-right" || beat.composition === "split" || beat.composition === "evidence-collage")) {
+      return VERTICAL_READ_OVERLAY;
+    }
+    if (overlay === "soft") {
+      return "linear-gradient(180deg, rgba(4,14,28,0.02), rgba(4,14,28,0.16))";
+    }
+    return "transparent";
+  }
   if (!beat.render) {
     if (beat.composition === "portrait-left") {
       return "linear-gradient(90deg, transparent 34%, rgba(4,14,28,0.46) 68%, rgba(4,14,28,0.62))";
@@ -266,6 +352,52 @@ const compositionStyle = (
     overflow: "hidden",
   };
   if (baseBox) return {...common, ...normalizedBoxStyle(baseBox)};
+  if (IS_VERTICAL) {
+    // Vertical compositions use a top image band for framed/card media. A
+    // background-like baseAsset bypasses this function and is full-canvas so
+    // it never gets stacked with the compatibility background underneath.
+    if (composition === "portrait-left" || composition === "portrait-right") {
+      return {...common, left: 0, right: 0, top: 0, height: "56%"};
+    }
+    if (composition === "split") {
+      return {...common, left: 0, right: 0, top: 0, height: "60%"};
+    }
+    if (composition === "triptych") {
+      return {
+        ...common,
+        left: 150,
+        right: 150,
+        top: 560,
+        bottom: 560,
+        border: `4px solid ${palette.white}`,
+        boxShadow: `14px 14px 0 rgba(5,17,31,0.64)`,
+      };
+    }
+    if (composition === "document-focus") {
+      return {
+        ...common,
+        left: 120,
+        right: 120,
+        top: 320,
+        bottom: 440,
+        border: `8px solid rgba(249,251,255,0.94)`,
+        boxShadow: `18px 20px 0 rgba(5,17,31,0.72)`,
+        backgroundColor: "rgba(246,239,218,0.92)",
+      };
+    }
+    if (composition === "evidence-collage") {
+      return {
+        ...common,
+        left: 64,
+        right: 64,
+        top: 300,
+        bottom: 440,
+        border: `5px solid rgba(249,251,255,0.9)`,
+        boxShadow: `16px 16px 0 rgba(5,17,31,0.66)`,
+      };
+    }
+    return {...common, inset: 0};
+  }
   if (composition === "portrait-left") {
     return {...common, left: 0, top: 0, bottom: 0, width: "64%"};
   }
@@ -337,8 +469,31 @@ const AssetMedia: React.FC<{
   return <Img src={staticFile(asset.src)} style={mediaStyle} />;
 };
 
-const isBackgroundLikeAsset = (asset: VisualAsset) =>
-  asset.id.startsWith("bg-") || /(^|\/)bg[-_]/.test(asset.src);
+// Keep this in sync with scripts/validate_case_project.py. Project-local
+// generated backgrounds commonly use ids such as `wl06-bg-01`, so checking
+// only `bg-*` would misclassify them as portrait/card media. That makes the
+// vertical portrait compositions shrink the background into the upper band
+// while the compatibility BackgroundTrack remains visible underneath.
+const isBackgroundLikeAsset = (asset: VisualAsset) => {
+  const id = asset.id.trim().toLowerCase();
+  const src = asset.src.trim().toLowerCase();
+  const name = src.split(/[\\/]/).pop() ?? src;
+  const stem = name.replace(/\.[^.]+$/, "");
+  const markers = ["bg-", "bg_", "background-", "background_"];
+  const suffixes = ["-bg", "_bg", "-background", "_background"];
+  const infixes = ["-bg-", "_bg_", "-background-", "_background_"];
+  return (
+    markers.some((marker) => id.startsWith(marker)) ||
+    suffixes.some((suffix) => id.endsWith(suffix)) ||
+    infixes.some((infix) => id.includes(infix)) ||
+    markers.some((marker) => name.startsWith(marker)) ||
+    suffixes.some((suffix) => name.endsWith(suffix)) ||
+    markers.some((marker) => stem.startsWith(marker)) ||
+    suffixes.some((suffix) => stem.endsWith(suffix)) ||
+    ["/bg-", "/bg_", "\\\\bg-", "\\\\bg_"].some((marker) => src.includes(marker)) ||
+    infixes.some((infix) => src.includes(infix))
+  );
+};
 
 // v2 makes the cascade explicit. Historical plans retain their purpose preset.
 const layerRevealFrame = (layer: VisualLayer, beat: VisualBeat, layerIndex: number) => {
@@ -388,9 +543,11 @@ const textSurfaceStyle = (
   if (layer.surface === "none") return {background: "transparent", border: "none", boxShadow: "none"};
   if (layer.surface === "glass") {
     return {
-      background: "rgba(5,17,31,0.68)",
-      border: "1px solid rgba(255,255,255,0.42)",
-      boxShadow: "0 12px 30px rgba(0,0,0,0.24)",
+      background: glassCardBackground,
+      border: "2px solid rgba(255,255,255,0.66)",
+      borderRadius: 8,
+      boxShadow: "10px 11px 0 rgba(5,17,31,0.44), 0 22px 42px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.2)",
+      backdropFilter: "blur(8px)",
     };
   }
   if (layer.surface === "paper") {
@@ -402,7 +559,7 @@ const textSurfaceStyle = (
   }
   if (layer.surface === "accent") {
     return {
-      background: palette.yellow,
+      background: visualTheme.accentSurface,
       border: `2px solid ${palette.ink}`,
       boxShadow: `8px 10px 0 ${palette.ink}`,
     };
@@ -496,12 +653,31 @@ const TextLayer: React.FC<{
   const text = layer.text ?? "";
   const textLines = text.split("\n");
   const longestLine = Math.max(1, ...textLines.map((line) => [...line.trim()].length));
-  const maxTextSize = isMetric ? 94 : isHeadline ? (isTriptychText ? 43 : 58) : isStamp ? 54 : variant === "quote" ? 43 : 36;
+  const maxTextSize = IS_VERTICAL
+    ? isMetric
+      ? 120
+      : isHeadline
+        ? (isTriptychText ? 48 : 72)
+        : isStamp
+          ? 64
+          : variant === "quote"
+            ? 50
+            : 42
+    : isMetric
+      ? 94
+      : isHeadline
+        ? (isTriptychText ? 43 : 58)
+        : isStamp
+          ? 54
+          : variant === "quote"
+            ? 43
+            : 36;
+  const minTextSize = IS_VERTICAL ? 34 : 30;
   const textFontSize =
     layer.fontSize ??
     (isMetric
       ? maxTextSize
-      : clamp(maxTextSize - Math.max(0, longestLine - 7) * 2.2 - Math.max(0, textLines.length - 2) * 3, 30, maxTextSize));
+      : clamp(maxTextSize - Math.max(0, longestLine - 7) * 2.2 - Math.max(0, textLines.length - 2) * 3, minTextSize, maxTextSize));
   const float = beat.render ? 0 : idleFloat(frame, revealFrame + 12);
   const emphasis = renderFor(beat).emphasisScale;
   const scaleTarget = isMetric || isStamp ? emphasis : 1;
@@ -509,6 +685,7 @@ const TextLayer: React.FC<{
   const darkText = layer.surface === "paper" || layer.surface === "accent";
   const foreground = layer.color ?? (darkText ? palette.ink : isMetric ? palette.yellow : palette.white);
   const surface = textSurfaceStyle(layer, isStamp, isHeadline);
+  const showCardAccent = layer.surface === "glass" || layer.surface === "solid";
   const position = beat.render
     ? compactTextPositionStyle(layer, beat.composition, reserveBottom)
     : layerPositionStyle(layer, beat.composition, reserveBottom);
@@ -521,7 +698,7 @@ const TextLayer: React.FC<{
         justifyContent: "center",
         alignItems: alignItemsFor(align),
         boxSizing: "border-box",
-        padding: isMetric ? "30px 38px" : "24px 30px",
+        padding: IS_VERTICAL ? (isMetric ? "34px 40px" : "26px 32px") : isMetric ? "30px 38px" : "24px 30px",
         opacity: visibility,
         transform: entryTransform(layer, visibility, float, scaleTarget),
         transformOrigin: align === "right" ? "right center" : align === "center" ? "center" : "left center",
@@ -533,10 +710,24 @@ const TextLayer: React.FC<{
         maxWidth: "100%",
       }}
     >
+      {showCardAccent ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 8,
+            background: visualTheme.cardAccent,
+          }}
+        />
+      ) : null}
       {layer.label ? (
         <div
           style={{
-            fontSize: isMetric ? 28 : 23,
+            position: "relative",
+            zIndex: 1,
+            fontSize: IS_VERTICAL ? (isMetric ? 30 : 25) : isMetric ? 28 : 23,
             lineHeight: 1.2,
             fontWeight: 800,
             letterSpacing: 0,
@@ -549,6 +740,8 @@ const TextLayer: React.FC<{
       ) : null}
       <div
         style={{
+          position: "relative",
+          zIndex: 1,
           fontSize: textFontSize,
           lineHeight: layer.lineHeight ?? (isMetric ? 0.98 : 1.18),
           fontWeight: layer.fontWeight ?? (isMetric || isHeadline || isStamp ? 950 : 800),
@@ -628,9 +821,16 @@ const VisualLayerView: React.FC<{
     );
   }
   if (layer.kind === "counter") {
+    const dimensions = layerDimensions(layer, beat.composition, reserveBottom);
     return (
       <SlotWrap layer={layer} composition={beat.composition} reserveBottom={reserveBottom} visibility={visibility}>
-        <CounterLayer layer={layer} visibility={visibility} localFrame={localFrame} />
+        <CounterLayer
+          layer={layer}
+          visibility={visibility}
+          localFrame={localFrame}
+          width={dimensions.width}
+          height={dimensions.height}
+        />
       </SlotWrap>
     );
   }
@@ -679,20 +879,27 @@ const VisualLayerView: React.FC<{
   }
   if (!layer.asset) return null;
   const asset = getVisualAsset(layer.asset);
+  const isPerson = asset.role === "person";
+  const position =
+    isPerson && layer.box
+      ? normalizedBoxStyle(squareBoxWithin(layer.box))
+      : layerPositionStyle(layer, beat.composition, reserveBottom);
   const float = beat.render ? 0 : idleFloat(frame, revealFrame + 10);
   const legacyFrame = !layer.frame && layer.slot !== "canvas" ? assetFrameStyle("white") : {};
   return (
     <div
       style={{
-        ...layerPositionStyle(layer, beat.composition, reserveBottom),
+        ...position,
         overflow: "hidden",
+        boxSizing: "border-box",
+        background: isPerson ? "rgba(255,255,255,0.98)" : undefined,
         opacity: visibility,
         transform: entryTransform(layer, visibility, float),
         ...legacyFrame,
         ...assetFrameStyle(layer.frame),
       }}
     >
-      <AssetMedia asset={asset} fit={layer.fit ?? "cover"} />
+      <AssetMedia asset={asset} fit={isPerson ? "contain" : layer.fit ?? "cover"} />
     </div>
   );
 };
@@ -788,8 +995,10 @@ export const VisualBeatTrack: React.FC = () => {
     {extrapolateLeft: "clamp", extrapolateRight: "clamp"},
   );
   const previousIsContiguous = previous?.endFrame === current.startFrame;
-  const currentX = transition === "push" ? (1 - progress) * 120 : 0;
-  const previousX = transition === "push" ? progress * -72 : 0;
+  // Mobile feeds scroll vertically, so vertical canvases push beats along Y.
+  const pushAxis = IS_VERTICAL ? "Y" : "X";
+  const currentOffset = transition === "push" ? (1 - progress) * (IS_VERTICAL ? 140 : 120) : 0;
+  const previousOffset = transition === "push" ? progress * (IS_VERTICAL ? -84 : -72) : 0;
 
   return (
     <AbsoluteFill style={{overflow: "hidden"}}>
@@ -799,7 +1008,8 @@ export const VisualBeatTrack: React.FC = () => {
             position: "absolute",
             inset: 0,
             opacity: 1 - progress * (transition === "dissolve" ? 0.9 : 0.35),
-            transform: `translateX(${previousX}px)`,
+            transform:
+              pushAxis === "Y" ? `translateY(${previousOffset}px)` : `translateX(${previousOffset}px)`,
           }}
         >
           <BeatCanvas
@@ -815,7 +1025,8 @@ export const VisualBeatTrack: React.FC = () => {
           position: "absolute",
           inset: 0,
           opacity: transition === "cut" ? 1 : progress,
-          transform: `translateX(${currentX}px)`,
+          transform:
+            pushAxis === "Y" ? `translateY(${currentOffset}px)` : `translateX(${currentOffset}px)`,
         }}
       >
         <BeatCanvas
