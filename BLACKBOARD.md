@@ -6,6 +6,7 @@
 - Raw customer source files, private brand assets, billing/support correspondence, release evidence, and other project outputs are intentionally excluded from the public tree and its rewritten history.
 - Credentials, generated media, local runtime state, and team-only handoff files remain local and ignored.
 - The public WL-003 rendered video is distributed through GitHub Release `demo-wl003`; `publish/` remains a local build output.
+- A 5MB preview copy and a static HTML player live under `demo/` and are deployed through GitHub Pages.
 
 ## Working rule
 

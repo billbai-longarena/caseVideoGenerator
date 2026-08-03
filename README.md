@@ -10,7 +10,8 @@ Case Video Generator 是一个本地优先（local-first）的生产工具链：
 
 **她从不说“不”，直到当众放错数据**
 
-- 公开下载：[视频文件](https://github.com/billbai-longarena/caseVideoGenerator/releases/download/demo-wl003/WL-003_.mp4) · [Release 说明](https://github.com/billbai-longarena/caseVideoGenerator/releases/tag/demo-wl003)
+- 在线预览：[WL-003 视频页面](https://billbai-longarena.github.io/caseVideoGenerator/)
+- 公开下载：[5MB 预览版](https://billbai-longarena.github.io/caseVideoGenerator/wl003-5m.mp4) · [高清 Release 版](https://github.com/billbai-longarena/caseVideoGenerator/releases/download/demo-wl003/WL-003_.mp4)
 - 画布：1080 × 1920，30 fps
 - 编码：H.264 + AAC
 - 时长：142.293 秒
@@ -19,11 +20,11 @@ Case Video Generator 是一个本地优先（local-first）的生产工具链：
 - 旁白：Azure Speech，`zh-CN-Xiaochen:DragonHDLatestNeural`，dragon-broadcast
 - 视觉：`women-leadership-five-color-watercolor`
 
-[下载/观看公开示例视频](https://github.com/billbai-longarena/caseVideoGenerator/releases/download/demo-wl003/WL-003_.mp4)
+[打开在线预览页面](https://billbai-longarena.github.io/caseVideoGenerator/)
 
 这条视频展示了项目的完整路径：赵梦琪在客户会议中把 A 项目数据放进 B 项目 PPT，Patrick Liu 在事故后追问她最后一次拒绝请求的时间，随后由具体的资源排期行为完成转折。它不是一个只展示渲染器的空壳样片，而是一个包含人物、事件、旁白、分镜、视觉资产和交付 QA 的完整案例项目。
 
-`publish/` 是本地交付目录，默认被 Git 忽略；公开示例成片通过 GitHub Release 提供下载。建议把大视频放在 Release、对象存储或团队文件库，不要把所有渲染产物塞进 Git 历史。
+`publish/` 是本地交付目录，默认被 Git 忽略；公开示例通过 GitHub Pages 提供 5MB 在线预览，并通过 GitHub Release 提供高清下载。建议把其他大视频放在 Release、对象存储或团队文件库，不要把所有渲染产物塞进 Git 历史。
 
 ## 能做什么
 

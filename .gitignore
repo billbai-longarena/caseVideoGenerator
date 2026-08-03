@@ -71,6 +71,7 @@ assets/character-portraits/contact-sheets/
 *.m4v
 *.wav
 *.aiff
+!demo/wl003-5m.mp4
 !output/**/sfx/*.wav
 
 # Termite Protocol runtime state. The Markdown/YAML blackboard is versioned;
