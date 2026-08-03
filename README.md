@@ -1,14 +1,73 @@
 # Case Video Generator
 
-把案例材料生产为中文案例故事视频的本地工作区。仓库内置的默认流水线是：案例改写 → Azure Speech TTS → unit 时间轴 → JSON 分镜 → AI 视觉资产 → Remotion → ffmpeg/ffprobe QA。
+把案例材料稳定地生产成可交付的中文案例故事视频。
 
-本仓库不提供云服务账号、密钥、额度或代理服务。使用者需要自行选择并开通 Azure、字节/火山引擎或其他合规服务，并自行承担实名、计费、配额、数据区域和内容合规责任。
+Case Video Generator 是一个本地优先（local-first）的生产工具链：它把标题、旁白、TTS 时间轴、schema-v2 分镜、AI 视觉资产、Remotion 动效和 ffmpeg/ffprobe 质量检查串成一条可复现流水线。项目同时提供可复用的 Agent Skills，适合销售案例、FDE 变革案例、品牌故事、竖屏短视频和小红书案例视频。
 
-## 5 分钟快速上手
+## 先看成片
 
-### 1. 准备本机环境
+仓库内已经验证过的竖屏示例是“女性领导力 100”系列 WL-003：
 
-需要 Python 3、Node.js/npm、ffmpeg 和 ffprobe。安装项目依赖：
+**她从不说“不”，直到当众放错数据**
+
+- 本地文件：`publish/女性领导力/WL-003_她从不说“不”，直到当众放错数据.mp4`
+- 画布：1080 × 1920，30 fps
+- 编码：H.264 + AAC
+- 时长：142.293 秒
+- 文件大小：约 47 MB
+- 结构：8 个编辑场景、28 个 Visual Beats、2 位具名人物
+- 旁白：Azure Speech，`zh-CN-Xiaochen:DragonHDLatestNeural`，dragon-broadcast
+- 视觉：`women-leadership-five-color-watercolor`
+
+[打开本地示例视频](<publish/女性领导力/WL-003_她从不说“不”，直到当众放错数据.mp4>)
+
+这条视频展示了项目的完整路径：赵梦琪在客户会议中把 A 项目数据放进 B 项目 PPT，Patrick Liu 在事故后追问她最后一次拒绝请求的时间，随后由具体的资源排期行为完成转折。它不是一个只展示渲染器的空壳样片，而是一个包含人物、事件、旁白、分镜、视觉资产和交付 QA 的完整案例项目。
+
+`publish/` 是本地交付目录，默认被 Git 忽略。因此，在线仓库中的 README 链接只有在本地生成或单独下载该交付文件后可用。建议把大视频放在 Release、对象存储或团队文件库，不要把所有渲染产物塞进 Git 历史。
+
+## 能做什么
+
+- 从案例材料或已批准旁白生成完整故事视频。
+- 用 Azure Speech 生成规范化中文旁白和唯一时间基线 `narration.timeline.json`。
+- 用 schema-v2 `storyboard_plan.json` 表达场景、Visual Beats、图层、布局、镜头、字幕和资产语义。
+- 用 Azure OpenAI `gpt-image-2` 生成背景和人物肖像，并执行尺寸、白底、人物和提示词合同检查。
+- 用共享 Remotion 引擎渲染横屏 16:9 或竖屏 9:16 视频。
+- 在渲染前执行 plan/render readiness，在渲染后执行 ffprobe、黑帧、时长、字幕和关键帧 QA。
+- 将通过 QA 的成片压缩为上传副本，并按 `publish/<主题>/S001_标题.mp4` 组织发布文件。
+- 通过本地 Skills 复用生产规则，而不是让每个案例重新发明一套脚本。
+
+## 流水线
+
+```text
+案例材料 / 已批准旁白
+        ↓
+title.txt + narration.txt
+        ↓
+数字与缩写归一化 → Azure Speech TTS → narration.timeline.json
+        ↓
+schema-v2 storyboard_plan.json
+        ↓
+deterministic rich_storyboard.json
+        ↓
+Azure image2 视觉资产 + 资产 QA
+        ↓
+Remotion 动效渲染
+        ↓
+ffprobe / ffmpeg / 关键帧与黑帧 QA
+        ↓
+video/case_video.mp4 + publish/<主题>/S001_标题.mp4
+```
+
+## 5 分钟启动
+
+### 1. 安装本地依赖
+
+需要：
+
+- Python 3
+- Node.js 和 npm
+- ffmpeg 与 ffprobe
+- 可访问 Azure Speech 和 Azure OpenAI image2 的账号
 
 ```bash
 python3 -m venv .venv
@@ -20,149 +79,177 @@ npm install
 cd ../..
 ```
 
-只有运行可部署服务器时才需要额外安装 `requirements-server.txt`。
+可部署服务器是可选组件，只有运行 `server/` 时才需要：
 
-### 2. 配置自己的云服务
+```bash
+.venv/bin/python -m pip install -r requirements-server.txt
+```
 
-复制环境变量模板，不要把真实密钥提交到 Git：
+### 2. 配置服务凭据
+
+不要把真实密钥提交到 Git：
 
 ```bash
 cp .env.example .env
 ```
 
-内置的一键命令目前使用 Azure：
+最小配置是：
 
-- TTS：填写 `AZURE_SPEECH_KEY` 和 `AZURE_SPEECH_REGION`。
-- 生图：填写 `AZURE_OPENAI_ENDPOINT` 和 `AZURE_OPENAI_API_KEY`。
+```dotenv
+# Azure Speech
+AZURE_SPEECH_KEY=...
+AZURE_SPEECH_REGION=eastus
 
-当前生图脚本期望 Azure 资源中存在名为 `gpt-image-2` 的部署。若你的部署名称不同，需要先调整本地适配配置或实现自己的 provider adapter。
+# Azure OpenAI image2
+AZURE_OPENAI_ENDPOINT=https://<your-resource-name>.openai.azure.com/
+AZURE_OPENAI_API_KEY=...
+```
 
-根目录 `.env` 会被本地命令读取并被 Git 忽略。项目目录下也可以放 `.env` 来补充缺少的变量，但建议把常用凭据统一放在根目录。
+生图脚本当前固定调用 `gpt-image-2` 部署，接口版本和部署常量位于 `engine/scripts/generate_images.py`。Azure 资源、部署名称、地区、额度和计费由使用者自行负责。
 
-### 3. 准备项目目录
+### 3. 检查一个已有项目
 
-每个案例放在 `output/<project>/`。最重要的人工源文件是：
+```bash
+scripts/case-video check output/women_leadership_03_video
+scripts/case-video typecheck output/women_leadership_03_video
+scripts/case-video qa output/women_leadership_03_video
+```
+
+### 4. 从一个新项目开始
+
+一个标准项目至少需要人工维护：
 
 ```text
 output/<project>/
-├── title.txt
-├── narration.txt
-├── storyboard_plan.json
-├── image_prompts.json
-└── images/
+├── title.txt                 # 一行标题，也是封面标题来源
+├── narration.txt             # 人类可读的旁白源稿
+├── storyboard_plan.json      # schema-v2 视觉导演源稿
+├── image_prompts.json        # 视觉资产声明
+└── images/                   # 本地生成或明确 checkout 的资产
 ```
 
-项目也可以把生图声明拆成 `background_prompts.json` 和 `portrait_prompts.json`。完整结构和字段要求见 `docs/architecture/project-contract.md`。
+完整的项目合同见 [`docs/knowledge-base/production-principles.md`](docs/knowledge-base/production-principles.md)、[`docs/knowledge-base/storyboard-and-visuals.md`](docs/knowledge-base/storyboard-and-visuals.md) 和 [`docs/architecture/visual-beat-system.md`](docs/architecture/visual-beat-system.md)。
 
-## TTS 使用说明
+## 常用命令
 
-默认生成单一女声、广播风格的完整旁白：
+所有生产命令都从仓库根目录执行：
 
 ```bash
+# 内容、分镜和准备度
+scripts/case-video build output/<project>
+scripts/case-video evaluate output/<project>
+scripts/case-video ready output/<project> --stage plan
+
+# TTS：生成音频和唯一时间基线
 scripts/case-video tts output/<project> \
   --gender female \
   --single-voice \
   --force
-```
 
-命令会先规范数字和缩写读法，再生成：
-
-- `audio/narration_azure.wav`：旁白音频。
-- `narration.tts.txt`：实际送入 TTS 的文本。
-- `narration.tts.plan.txt`：分段合成计划。
-- `narration.timeline.json`：后续分镜和字幕唯一使用的时间基线。
-
-使用时注意：
-
-- 人工修改 `narration.txt`，不要直接把 `narration.tts.txt` 当作源文件。
-- `CEO`、`CRM`、`ERP` 等缩写保持连续，不要写成带空格的字母。
-- 屏幕字幕可以保留阿拉伯数字；TTS 文本由规范器转换成适合朗读的中文。
-- 空行用于控制段落停顿。旁白变化后必须重新生成 TTS 和时间轴。
-- 只想重生成部分句段缓存时可增加 `--only 3` 或 `--only 3,5-7`；正式全量生成时使用 `--force`。
-
-## 生图使用说明
-
-生图是付费、可能限流的步骤。先确保 schema-v2 分镜计划、Visual Beats 和图片提示词已完成：
-
-```bash
-scripts/case-video build output/<project>
-scripts/case-video evaluate output/<project>
-scripts/case-video ready output/<project> --stage plan
-```
-
-先生成一张做连通性和风格测试：
-
-```bash
+# 生图：先限量测试，再全量生成
 scripts/case-video images output/<project> --limit 1
-```
-
-确认账号、部署、尺寸和风格正常后，再全量生成：
-
-```bash
 scripts/case-video images output/<project>
-```
 
-`images` 命令会自动再次执行 plan-readiness 检查。默认图片写入项目自己的 `images/`，不要把其他项目的旧图当作新项目的默认素材。
-
-提示词和资产需要遵守这些基本规则：
-
-- 背景图只承载场景和气氛，不放可读文字、数字、Logo、水印、UI 截图或源文档截图。
-- 主角不要直接画进背景。人物使用独立的中国人物半身肖像，纯白背景，并保持项目统一风格。
-- 最终背景应为 AI 生成或人工策划的叙事插画，不使用占位图、程序化流程图或仪表盘替代。
-- 对受限材料只发送抽象后的视觉提示词，不向外部服务上传原始机密文档或长段原文。
-- 如遇限流，可设置 `IMAGE_GENERATION_CONCURRENCY=1` 或 `2` 后重试；不要通过重复并发调用制造额外费用。
-
-## 使用字节/火山引擎或其他国内服务
-
-可以使用，但当前仓库没有可直接切换的字节/火山引擎一键适配器。使用者需要自行：
-
-1. 注册并完成服务商要求的实名认证或企业认证。
-2. 开通对应的语音合成、图片生成 API、计费和调用额度。
-3. 确认可用地域、模型权限、内容审核、数据保存和跨境传输要求。
-4. 保管密钥、设置费用告警和最小权限；不要把密钥写进脚本、提示词或仓库。
-5. 编写适配器，或手动把结果整理成仓库要求的产物契约。
-
-替换 TTS 服务时，仅有音频文件还不够。适配器必须同时产出可用 WAV 和与 `narration.txt` unit 对齐的 `narration.timeline.json`；若沿用默认渲染配置，最省事的兼容路径是输出到 `audio/narration_azure.wav`，否则需要同步更新项目中的音频引用。
-
-替换生图服务时，输出文件应放在项目 `images/` 下，文件名必须与提示词声明和分镜引用一致。背景、人物肖像、尺寸、白底和风格约束仍然适用。
-
-## 完成渲染与检查
-
-TTS 和图片准备好后，使用统一命令继续：
-
-```bash
-scripts/case-video check output/<project>
-scripts/case-video typecheck output/<project>
-scripts/case-video preview output/<project>
+# 渲染前后检查
+scripts/case-video ready output/<project> --stage render
 scripts/case-video render output/<project>
 scripts/case-video qa output/<project>
+
+# 预览、关键帧和发布
+scripts/case-video preview output/<project>
+scripts/case-video intent-frames output/<project>
+scripts/case-video publish output/<project>
 ```
 
-查看所有命令和参数：
+完整命令列表：
 
 ```bash
 scripts/case-video
 ```
 
-## Git 与生成物
+## Source of truth
 
-应该版本化人工源文件，例如 `title.txt`、`narration.txt`、`storyboard_plan.json` 和图片提示词声明。项目若已把时间轴或确定性 render IR 纳入版本管理，应继续遵守该项目现有契约。
+项目故意把“创意决策”和“渲染机械”分开：
 
-音频、图片、视频、QA 帧、Remotion 临时输出、PDF 导出、根目录 `tmp/` 和 ffmpeg 两遍压缩日志等可重建产物默认被忽略。不要用 `git add -f` 强行提交这些大文件，也不要提交 `.env`。
+- `title.txt` 和 `narration.txt` 是人类创作源稿。
+- `narration.timeline.json` 是所有分镜和字幕的时间基线。
+- `storyboard_plan.json` 是视觉方向、场景、Visual Beats、图层、资产、镜头和字幕的源稿。
+- `rich_storyboard.json` 是确定性编译得到的 render IR；v2 项目不要手改它来替代 plan。
+- `image_prompts.json` 和 `asset_pool_usage.json` 记录视觉资产的生成与来源。
+- Remotion 负责可重复的像素布局、插值、合成和输出，不负责替模型补写创意。
 
-检查忽略情况：
+这个边界是项目可复现性的核心：改旁白先重新生成 TTS 和 timeline；改视觉先更新 plan，再重新 build、ready、生成资产和 render。
 
-```bash
-git status --short --ignored
+## 目录速览
+
+```text
+.
+├── .agents/skills/             # 可复用生产 Skills
+├── engine/                     # TTS、生图、Remotion 共享引擎
+├── scripts/case-video          # 统一 CLI 入口
+├── workflows/                  # 新建、修订、竖屏和资产复用工作流
+├── docs/                       # 长期生产知识库与架构合同
+├── output/<project>/           # 案例源稿、计划、时间轴和项目元数据
+├── assets/                     # 经过 QA 的共享视觉资产索引
+├── input/                      # 原始材料和系列选题
+├── server/                     # 可选的异步服务端实现
+└── publish/                    # 本地上传副本，默认 Git-ignored
 ```
+
+## 质量门
+
+不要只看“文件渲染出来了没有”。交付前至少检查：
+
+- 视频和音频流存在，编码、分辨率、帧率和时长正确。
+- 旁白时长与视频接近，`narration.timeline.json` 没有漂移。
+- 没有黑帧、空白画布或被不透明蒙层遮住的背景。
+- 标题、字幕、关键词、人物肖像和信息卡不互相覆盖。
+- 竖屏项目使用 1080 × 1920 和移动安全区，不把横图硬裁成竖图。
+- 生图提示词和人物肖像满足中文人物、纯白背景、半身构图等项目合同。
+- 公开仓库不包含 API Key、`.env`、客户原文或未经授权的品牌资产。
+
+## Agent Skills
+
+仓库内的 Skill 适用于 Codex 或其他遵循同类目录协议的代理：
+
+- [`produce-case-video`](.agents/skills/produce-case-video/SKILL.md)：销售与销售管理案例。
+- [`produce-fde-video`](.agents/skills/produce-fde-video/SKILL.md)：FDE / AI 组织转型案例。
+- [`produce-brand-story-video`](.agents/skills/produce-brand-story-video/SKILL.md)：品牌故事视频。
+- [`produce-salesnail-video`](.agents/skills/produce-salesnail-video/SKILL.md)：SalesNail 产品案例。
+- [`produce-vertical-video`](.agents/skills/produce-vertical-video/SKILL.md)：通用 9:16 竖屏视频。
+- [`produce-xiaohongshu-video`](.agents/skills/produce-xiaohongshu-video/SKILL.md)：小红书 2–3 分钟案例视频。
+- [`produce-english-case-video`](.agents/skills/produce-english-case-video/SKILL.md)：英文案例视频。
+
+代理开始生产前，先读取对应 Skill、知识库和工作流。不要把旧的 `output/` 成片当成新项目的创意模板；历史输出只用于用户明确要求的审计或修订。
 
 ## 深入阅读
 
-- 项目知识库：`docs/README.md`
-- 新视频工作流：`workflows/new-case-video.md`
-- 视频修订工作流：`workflows/revise-video.md`
-- TTS 与时间轴：`docs/knowledge-base/tts-and-timing.md`
-- 分镜与视觉：`docs/knowledge-base/storyboard-and-visuals.md`
-- Agent Skill：`.agents/skills/produce-case-video/SKILL.md`
-- 共享引擎：`engine/README.md`
-- 可部署服务器：`server/README.md`
+- [`docs/README.md`](docs/README.md)：知识库与工作流索引。
+- [`workflows/new-case-video.md`](workflows/new-case-video.md)：横屏案例视频完整流程。
+- [`workflows/new-vertical-video.md`](workflows/new-vertical-video.md)：9:16 竖屏流程。
+- [`workflows/new-xiaohongshu-case-video.md`](workflows/new-xiaohongshu-case-video.md)：小红书短版流程。
+- [`engine/README.md`](engine/README.md)：共享引擎边界。
+- [`server/README.md`](server/README.md)：可选异步服务端。
+- [`AGENTS.md`](AGENTS.md)：本仓库的生产约束和协作协议。
+
+## 开源与素材边界
+
+代码和生产工具以 [`MIT License`](LICENSE) 发布。MIT 许可证只覆盖项目代码及其原创脚本，不自动授予以下内容的额外权利：
+
+- 客户提供的 DOCX、PPTX、PDF、原始案例材料和内部数据。
+- SalesNail、WorkBuddy 或其他品牌 Logo、字体和第三方素材。
+- 具体案例旁白、成片、上传副本和客户定制内容。
+- Azure、Remotion、ffmpeg 及其他第三方依赖本身的许可证和服务条款。
+
+在把 GitHub 仓库设为 Public 之前，请先完成一次公开发布清单：
+
+1. 移除或替换 `input/customization/`、客户原文、账单/支持沟通记录和不具备公开授权的品牌素材。
+2. 清理 Git 历史中的同类文件；仅从当前工作树删除并不能从历史提交中移除它们。
+3. 保留 `.env`、`.envskill`、密钥、数据库配置、登录凭据和本地运行状态在仓库之外。
+4. 将大视频放到 Release 或对象存储，并确认示例案例和人物/品牌素材具有公开授权。
+
+这是一个生产工具仓库，不是云服务。使用者需要自行承担云服务账号、计费、配额、数据区域、隐私、版权和内容合规责任。
+
+## 许可证
+
+除第三方内容和明确注明其他许可证的文件外，项目代码按 [`MIT License`](LICENSE) 发布。
