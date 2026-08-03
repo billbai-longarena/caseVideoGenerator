@@ -233,7 +233,7 @@ def test_distributed_readiness_capabilities_and_strict_model_routes(phase_c_api)
     routes = capabilities.json()["model_routes"]
     assert routes["narration"] == {
         "provider": "azure_anthropic",
-        "model": "salesnail-cs-46",
+        "model": "case-video-claude",
         "task_family": "narration",
         "api_version": routes["narration"]["api_version"],
         "transport": "anthropic_messages",
@@ -795,7 +795,7 @@ def test_model_revision_is_queued_only_for_pinned_azure_anthropic_route(phase_c_
     job = repository.get_job("ten_a", job_id)
     route = job["task_registry"]["narration.rewrite"]
     assert route["provider"] == "azure_anthropic"
-    assert route["model"] == "salesnail-cs-46"
+    assert route["model"] == "case-video-claude"
     assert route["transport"] == "anthropic_messages"
     message = next(item for item in repository.pending_outbox() if item["aggregate_id"] == stage_run_id)
     assert message["topic"] == "queue.planning"

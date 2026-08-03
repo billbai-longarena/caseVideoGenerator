@@ -61,8 +61,8 @@ TASK_SPECS: tuple[TaskSpec, ...] = (
 
 
 EXPECTED_ROUTES: dict[str, tuple[str, str]] = {
-    "narration": ("azure_anthropic", "salesnail-cs-46"),
-    "remotion": ("azure_anthropic", "salesnail-cs-46"),
+    "narration": ("azure_anthropic", "case-video-claude"),
+    "remotion": ("azure_anthropic", "case-video-claude"),
     "general": ("openai", "gpt-5.5"),
 }
 

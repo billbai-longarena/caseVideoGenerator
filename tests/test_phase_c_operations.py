@@ -26,8 +26,8 @@ def _manifest(job_id: str, status: str) -> dict[str, object]:
         "input_mode": "source",
         "approval_mode": "editorial",
         "model_routes": {
-            "narration": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
-            "remotion": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
+            "narration": {"provider": "azure_anthropic", "model": "case-video-claude"},
+            "remotion": {"provider": "azure_anthropic", "model": "case-video-claude"},
             "general": {"provider": "openai", "model": "gpt-5.5"},
         },
         "budget": {"currency": "USD", "limit_micros": None, "spent_micros": 0},

@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "series": "women-leadership-100",
+  "seriesLabel": "女性领导力100",
+  "outputFolder": "女性领导力",
+  "sequence": 3,
+  "sequenceWidth": 3,
+  "filenamePrefix": "WL-"
+}

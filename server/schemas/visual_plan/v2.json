@@ -72,7 +72,7 @@
         }
       },
       "additionalProperties": false,
-      "description": "Persistent co-brand bug for joint-partner videos (e.g. SalesNail × WorkBuddy): two partner logos pinned top-right for the entire video, above every layer including the cover. Omit for single-brand videos. Logo files live in the project brand/ directory."
+      "description": "Persistent co-brand bug for joint-partner videos: two authorized partner logos pinned top-right for the entire video, above every layer including the cover. Omit for single-brand videos. Logo files live in the project-local brand/ directory and are not part of the public repository."
     },
     "subtitleLabel": {"type": "string", "minLength": 1},
     "direction": {

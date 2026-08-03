@@ -24,12 +24,12 @@ EXPECTED_TASK_ROUTES = {
     "case.model": ("openai", "gpt-5.5"),
     "editorial.review": ("openai", "gpt-5.5"),
     "image_prompt.refine": ("openai", "gpt-5.5"),
-    "remotion.frame-review": ("azure_anthropic", "salesnail-cs-46"),
+    "remotion.frame-review": ("azure_anthropic", "case-video-claude"),
     "delivery.summarize": ("openai", "gpt-5.5"),
-    "narration.compose": ("azure_anthropic", "salesnail-cs-46"),
-    "narration.rewrite": ("azure_anthropic", "salesnail-cs-46"),
-    "remotion.plan": ("azure_anthropic", "salesnail-cs-46"),
-    "remotion.repair": ("azure_anthropic", "salesnail-cs-46"),
+    "narration.compose": ("azure_anthropic", "case-video-claude"),
+    "narration.rewrite": ("azure_anthropic", "case-video-claude"),
+    "remotion.plan": ("azure_anthropic", "case-video-claude"),
+    "remotion.repair": ("azure_anthropic", "case-video-claude"),
 }
 
 
@@ -168,7 +168,7 @@ class ServerContractTest(unittest.TestCase):
         for spec in remotion_specs:
             self.assertEqual(spec.route_family, "remotion")
             self.assertEqual(snapshot[spec.name]["provider"], "azure_anthropic")
-            self.assertEqual(snapshot[spec.name]["model"], "salesnail-cs-46")
+            self.assertEqual(snapshot[spec.name]["model"], "case-video-claude")
 
     def test_unregistered_task_and_wrong_route_are_rejected_without_fallback(self) -> None:
         with self.assertRaises(ModelGatewayError) as unknown:

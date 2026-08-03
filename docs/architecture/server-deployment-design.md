@@ -10,7 +10,7 @@
 
 Phase B 的单租户生产能力已具备：原始材料/结构化输入提交、固定 prompt/schema/model registry、标题/旁白与视觉方案 revision、人工审批、依赖失效、模型修订、TTS/visual/render/QA 编排和产物下载。Phase C 的生产部署能力已具备：PostgreSQL/object storage 权威存储、Redis 可重建传输、stage lease/outbox/dead letter、横向 worker 拆分、租户/RBAC/审计/费用/保留期和灾备演练。
 
-发布证据记录在 `docs/acceptance/server-b-c-status.md` 和 `release-evidence/20260725-server-bc-rc1/`。默认自动化验收使用 stub/dry-run 避免重复消费付费外部服务；部署前真实 Azure Anthropic/OpenAI/Azure Speech/图像/Remotion smoke 按 runbook 执行并追加到 release evidence。
+发布证据应由部署环境按 runbook 生成并保存在外部 release-evidence 目录。默认自动化验收使用 stub/dry-run 避免重复消费付费外部服务；部署前真实 Azure Anthropic/OpenAI/Azure Speech/图像/Remotion smoke 按 runbook 执行并追加证据。
 
 本文件保留三阶段定义，用于解释演进边界和回滚策略：
 
@@ -35,17 +35,17 @@ Phase B 的单租户生产能力已具备：原始材料/结构化输入提交�
 
 ### 2.1 路由原则
 
-- 标题与旁白的创作、修改使用 Azure 上的 `salesnail-cs-46`。
-- Remotion 相关的分镜、Visual Beat、布局选择、计划修复和 intent-frame 审查使用 Azure 上的 `salesnail-cs-46`。
+- 标题与旁白的创作、修改使用 Azure 上的 `case-video-claude`。
+- Remotion 相关的分镜、Visual Beat、布局选择、计划修复和 intent-frame 审查使用 Azure 上的 `case-video-claude`。
 - 其他需要文本或推理模型的任务默认使用 `gpt-5.5`。
 - 没有自动模型降级。指定模型不可用、超时或返回不合格结构时，任务进入可重试失败状态。
 - 模型名只存在于配置和任务路由表中，不散落在业务脚本或 prompt 内。
 
-`salesnail-cs-46` 是 Azure 上 Claude 的实际部署名，也是本系统固定使用的业务路由名。调用协议固定为 Azure Anthropic Messages API：完整请求地址来自 `.env` 的 `AZURE_ANTHROPIC_ENDPOINT`（通常以 `/anthropic/v1/messages` 结尾），密钥来自 `AZURE_ANTHROPIC_API_KEY`，请求体的 `model` 必须直接填写部署名 `salesnail-cs-46`。Azure 的 Messages API 使用部署名定位模型，部署名不要求与底层 `claude-*` 型号 ID 相同。运行记录以 `deployment=salesnail-cs-46` 标识该路由，同时记录 `transport=anthropic_messages`；不得把该路由发往 Azure OpenAI Chat/Responses 接口。`gpt-5.5` 使用 OpenAI Responses API，provider 和 base URL 保持可配置。
+`case-video-claude` 是 Azure 上 Claude 的实际部署名，也是本系统固定使用的业务路由名。调用协议固定为 Azure Anthropic Messages API：完整请求地址来自 `.env` 的 `AZURE_ANTHROPIC_ENDPOINT`（通常以 `/anthropic/v1/messages` 结尾），密钥来自 `AZURE_ANTHROPIC_API_KEY`，请求体的 `model` 必须直接填写部署名 `case-video-claude`。Azure 的 Messages API 使用部署名定位模型，部署名不要求与底层 `claude-*` 型号 ID 相同。运行记录以 `deployment=case-video-claude` 标识该路由，同时记录 `transport=anthropic_messages`；不得把该路由发往 Azure OpenAI Chat/Responses 接口。`gpt-5.5` 使用 OpenAI Responses API，provider 和 base URL 保持可配置。
 
 ### 2.2 “Remotion 使用模型”的准确边界
 
-Remotion 渲染本身是确定性的 React/Chromium 计算，不应在逐帧渲染时调用模型。`salesnail-cs-46` 负责生成或修复 Remotion 的结构化输入：
+Remotion 渲染本身是确定性的 React/Chromium 计算，不应在逐帧渲染时调用模型。`case-video-claude` 负责生成或修复 Remotion 的结构化输入：
 
 - `storyboard_plan.json`
 - 场景边界与 narration unit 锚点
@@ -60,12 +60,12 @@ Remotion 渲染本身是确定性的 React/Chromium 计算，不应在逐帧渲�
 | 任务 | 路由 | 输出约束 |
 | --- | --- | --- |
 | 材料分类、结构化事实提取 | `gpt-5.5` | `case_inputs.json` / `case_model.json` schema |
-| 标题与旁白初稿 | Azure `salesnail-cs-46` | 一行 `title.txt` 与 `narration.txt` |
+| 标题与旁白初稿 | Azure `case-video-claude` | 一行 `title.txt` 与 `narration.txt` |
 | 标题、事实支持、口播风险独立审查 | `gpt-5.5` | 只输出结构化问题清单，不直接改稿 |
-| 根据审查意见修改标题与旁白 | Azure `salesnail-cs-46` | 更新后的标题、旁白与修改说明 |
-| Remotion 分镜与 Visual Beat 计划 | Azure `salesnail-cs-46` | `storyboard_plan.json` schema |
-| Remotion 计划修复 | Azure `salesnail-cs-46` | 仅修改被允许的 JSON 字段 |
-| Remotion 帧/布局意图审查 | Azure `salesnail-cs-46` | `remotion.frame-review` 结构化报告；不得改用通用模型 |
+| 根据审查意见修改标题与旁白 | Azure `case-video-claude` | 更新后的标题、旁白与修改说明 |
+| Remotion 分镜与 Visual Beat 计划 | Azure `case-video-claude` | `storyboard_plan.json` schema |
+| Remotion 计划修复 | Azure `case-video-claude` | 仅修改被允许的 JSON 字段 |
+| Remotion 帧/布局意图审查 | Azure `case-video-claude` | `remotion.frame-review` 结构化报告；不得改用通用模型 |
 | 抽象生图 prompt 精炼 | `gpt-5.5` | `image_prompts.json` schema |
 | 交付摘要、非 Remotion 语义 QA | `gpt-5.5` | 结构化报告 |
 | 未列出的文本/推理任务 | `gpt-5.5` | 必须声明 schema 或文本合同 |
@@ -84,11 +84,11 @@ Remotion 渲染本身是确定性的 React/Chromium 计算，不应在逐帧渲�
 ```text
 source / structured input
 -> extraction and case model
--> Azure Anthropic salesnail-cs-46 title + narration
+-> Azure Anthropic case-video-claude title + narration
 -> gpt-5.5 independent editorial review
 -> revision / approval / invalidation
 -> Azure Speech TTS and timeline
--> Azure Anthropic salesnail-cs-46 Remotion/Visual Beat planning
+-> Azure Anthropic case-video-claude Remotion/Visual Beat planning
 -> image prompt refinement + image generation
 -> readiness, typecheck, render, QA
 -> artifact download and retention
@@ -123,7 +123,7 @@ flowchart LR
     RS --> RW[Render Worker]
     RS --> QW[QA Worker]
     PW --> G[Model Gateway]
-    G --> AZ[Azure Anthropic / Claude<br/>salesnail-cs-46]
+    G --> AZ[Azure Anthropic / Claude<br/>case-video-claude]
     G --> GP[gpt-5.5 Responses]
     MW --> TTS[Azure Speech]
     MW --> IMG[Azure Image Generation]
@@ -182,9 +182,9 @@ result = model_gateway.run(
 
 ```dotenv
 CASE_VIDEO_NARRATION_PROVIDER=azure_anthropic
-CASE_VIDEO_NARRATION_MODEL=salesnail-cs-46
+CASE_VIDEO_NARRATION_MODEL=case-video-claude
 CASE_VIDEO_REMOTION_PROVIDER=azure_anthropic
-CASE_VIDEO_REMOTION_MODEL=salesnail-cs-46
+CASE_VIDEO_REMOTION_MODEL=case-video-claude
 
 CASE_VIDEO_GENERAL_PROVIDER=openai
 CASE_VIDEO_GENERAL_MODEL=gpt-5.5
@@ -192,13 +192,13 @@ CASE_VIDEO_GENERAL_AUTH_MODE=api-key
 
 CASE_VIDEO_AZURE_ANTHROPIC_ENDPOINT=<https://.../anthropic/v1/messages>
 CASE_VIDEO_AZURE_ANTHROPIC_API_KEY=<secret>
-CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT=salesnail-cs-46
+CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT=case-video-claude
 CASE_VIDEO_AZURE_ANTHROPIC_VERSION=2023-06-01
 AZURE_OPENAI_ENDPOINT=<https://.../openai/v1>
 AZURE_OPENAI_API_KEY=<secret>
 ```
 
-若未设置 `CASE_VIDEO_AZURE_ANTHROPIC_*`，服务读取仓库根 `.env` 中现有的 `AZURE_ANTHROPIC_ENDPOINT`、`AZURE_ANTHROPIC_API_KEY` 和 `AZURE_ANTHROPIC_VERSION`；部署名默认并固定为 `salesnail-cs-46`。请求必须发送到 Azure Anthropic Messages endpoint，并在请求体的 `model` 字段中使用该部署名；仓库 `.env` 中历史遗留的 `AZURE_ANTHROPIC_MODEL` 不再参与服务器路由，禁止把底层型号 ID 或该部署名发送到 Azure OpenAI deployment URL。
+若未设置 `CASE_VIDEO_AZURE_ANTHROPIC_*`，服务读取仓库根 `.env` 中现有的 `AZURE_ANTHROPIC_ENDPOINT`、`AZURE_ANTHROPIC_API_KEY` 和 `AZURE_ANTHROPIC_VERSION`；部署名默认并固定为 `case-video-claude`。请求必须发送到 Azure Anthropic Messages endpoint，并在请求体的 `model` 字段中使用该部署名；仓库 `.env` 中历史遗留的 `AZURE_ANTHROPIC_MODEL` 不再参与服务器路由，禁止把底层型号 ID 或该部署名发送到 Azure OpenAI deployment URL。
 
 其余模型任务通过 Azure OpenAI Responses API 使用 `gpt-5.5`。默认读取 `AZURE_OPENAI_ENDPOINT` 与 `AZURE_OPENAI_API_KEY`，使用 `api-key` header；服务不会隐式读取通用的 `LLM_BASE_URL`。只有接入其他 Responses-compatible 服务时，才显式设置 `CASE_VIDEO_GENERAL_BASE_URL`、`CASE_VIDEO_GENERAL_API_KEY` 和 `CASE_VIDEO_GENERAL_AUTH_MODE=bearer`。图片生成可继续共用同一 Azure OpenAI 资源，但其任务与文本模型路由仍由各自模块独立管理。
 
@@ -209,7 +209,7 @@ AZURE_OPENAI_API_KEY=<secret>
 worker readiness 必须检查：
 
 - 路由表中两个必需模型均已配置。
-- Azure Anthropic Messages endpoint 与部署 `salesnail-cs-46` 能完成最小 tool-schema 结构化响应测试，且 provenance 显示 deployment `salesnail-cs-46`。
+- Azure Anthropic Messages endpoint 与部署 `case-video-claude` 能完成最小 tool-schema 结构化响应测试，且 provenance 显示 deployment `case-video-claude`。
 - `gpt-5.5` provider 能完成最小结构化响应测试。
 - Node、npm、ffmpeg、ffprobe 和 Chromium/Remotion 可执行。
 - 中文字体可被 Chromium 发现。
@@ -331,12 +331,12 @@ worker 按阶段执行：
 1. 校验文件类型、大小、项目名和路径，计算 source hash。
 2. 本地提取可解析文本，建立来源边界。
 3. 用 `gpt-5.5` 生成结构化案例模型。
-4. 用 Azure `salesnail-cs-46` 同期生成 `title.txt` 和 `narration.txt`。
-5. 用 `gpt-5.5` 输出独立编辑审查；如有问题，交回 `salesnail-cs-46` 修改。
+4. 用 Azure `case-video-claude` 同期生成 `title.txt` 和 `narration.txt`。
+5. 用 `gpt-5.5` 输出独立编辑审查；如有问题，交回 `case-video-claude` 修改。
 6. 执行现有 Azure Speech TTS，生成唯一 timeline。
-7. 用 Azure `salesnail-cs-46` 生成 Remotion/Visual Beat 计划。
+7. 用 Azure `case-video-claude` 生成 Remotion/Visual Beat 计划。
 8. 用确定性 builder 生成 `rich_storyboard.json`，运行 build/evaluate/plan readiness。
-9. 属于分镜的 blocker 交回 `salesnail-cs-46`，最多两轮；仍失败则停机等待人工处理。
+9. 属于分镜的 blocker 交回 `case-video-claude`，最多两轮；仍失败则停机等待人工处理。
 10. 用 `gpt-5.5` 精炼抽象图片 prompt，调用现有 Azure 图片生成。
 11. 运行 render readiness、typecheck、Remotion render 和 ffmpeg/ffprobe QA。
 12. 写入最终 manifest、产物索引和交付摘要。
@@ -517,12 +517,12 @@ requirements-server.txt
 - 按段落分隔的旁白，固定开场和结尾有明确标记。
 - `gpt-5.5` 独立审查的问题清单，按事实支持、标题吸引力、口语自然度、禁用句式、缩写空格和数字读法分类。
 - 每个问题关联到具体标题或段落；点击问题可定位文本。
-- 当前文稿由 Azure `salesnail-cs-46` 生成、审查由 `gpt-5.5` 完成的只读 provenance。
+- 当前文稿由 Azure `case-video-claude` 生成、审查由 `gpt-5.5` 完成的只读 provenance。
 
 用户可执行：
 
 - **批准并继续**：锁定当前版本并进入 TTS。
-- **提交修改意见**：填写自然语言反馈，交给 `salesnail-cs-46` 修改；返回后展示逐段 diff，不直接覆盖未确认版本。
+- **提交修改意见**：填写自然语言反馈，交给 `case-video-claude` 修改；返回后展示逐段 diff，不直接覆盖未确认版本。
 - **直接编辑**：保存为新版本，运行确定性文本检查和 `gpt-5.5` 独立审查后再允许批准。
 - **恢复上一版本**：创建一个基于旧内容的新版本，保留完整历史，不删除后续审计记录。
 
@@ -542,7 +542,7 @@ requirements-server.txt
 
 用户可以按“全部、blocker、warning、已修改”筛选，点击卡片进入大图预览，并在时间轴上查看相邻场景。允许的操作包括：
 
-- 对单个场景提交布局、节奏或信息层修改意见，由 `salesnail-cs-46` 生成受 schema 限制的修订建议。
+- 对单个场景提交布局、节奏或信息层修改意见，由 `case-video-claude` 生成受 schema 限制的修订建议。
 - 对图片意图提交意见；由 `gpt-5.5` 精炼 prompt 后调用现有图片生成服务。
 - 重新生成单张图、恢复上一版或批准全部视觉方案。
 - 对允许的枚举、文案和 narration unit 锚点进行表单化编辑；不提供任意 JSON、TypeScript 或 JavaScript 执行入口。
@@ -622,8 +622,8 @@ requirements-server.txt
 
 | ID | 优先级 | 验收条件 |
 | --- | --- | --- |
-| MR-01 | P0 | 标题、旁白及其修改任务的 `model_runs.jsonl` 均记录 Azure deployment `salesnail-cs-46`。 |
-| MR-02 | P0 | Remotion 分镜、Visual Beat、布局选择、计划修复和 intent-frame 审查均记录 Azure deployment `salesnail-cs-46`。 |
+| MR-01 | P0 | 标题、旁白及其修改任务的 `model_runs.jsonl` 均记录 Azure deployment `case-video-claude`。 |
+| MR-02 | P0 | Remotion 分镜、Visual Beat、布局选择、计划修复和 intent-frame 审查均记录 Azure deployment `case-video-claude`。 |
 | MR-03 | P0 | 其他文本/推理任务均记录 `gpt-5.5`，且任务 manifest 固化实际 provider、model、prompt 和 schema 版本。 |
 | MR-04 | P0 | 任一路由不可用、超时或结构修复耗尽时明确失败；运行记录中不存在替代模型调用。 |
 | MR-05 | P0 | 用户不能从 API 或 UI 覆盖模型名、provider、base URL 或 Remotion 入口。 |
@@ -678,7 +678,7 @@ requirements-server.txt
 
 1. `editorial` 模式从上传材料、审核文稿到正式成片的完整成功路径。
 2. 用户直接修改旁白后，TTS 及所有下游阶段正确失效并只重跑必要阶段。
-3. `salesnail-cs-46` 不可用时任务明确失败，UI 提示稍后重试，系统不调用 `gpt-5.5` 代替。
+3. `case-video-claude` 不可用时任务明确失败，UI 提示稍后重试，系统不调用 `gpt-5.5` 代替。
 4. `gpt-5.5` 不可用时通用推理阶段明确失败，不影响已完成且输入有效的旁白阶段产物。
 5. worker 在 TTS 完成后和渲染进行中分别重启，任务都能恢复且不产生重复付费产物。
 6. 两个任务并发提交，模型阶段可并行，Remotion 渲染按队列串行，产物不交叉。
@@ -699,7 +699,7 @@ requirements-server.txt
 
 - 实现原始材料上传、文本提取、来源边界和结构化案例模型。
 - 实现 prompt registry、schema registry、同模型结构修复和 model provenance。
-- 接入 `salesnail-cs-46` 的标题/旁白与 Remotion 计划、修复、intent-frame 审查任务。
+- 接入 `case-video-claude` 的标题/旁白与 Remotion 计划、修复、intent-frame 审查任务。
 - 接入 `gpt-5.5` 的事实提取、独立审查、prompt 精炼和交付摘要任务。
 - 加入不可变版本、diff、人工审批门、阶段依赖失效和付费阶段去重。
 - 完成 `auto`、`editorial`、`full` 三条端到端路径的真实成片验收。
@@ -714,7 +714,7 @@ requirements-server.txt
 ## 17. 配置事实与默认决策
 
 - `gpt-5.5` 默认是 OpenAI Responses API 的直接模型名；可配置 base URL，但路由合同仍要求请求模型为 `gpt-5.5`。
-- `salesnail-cs-46` 已确认是 Azure 上 Claude 的实际部署名；服务必须使用 Azure Anthropic Messages endpoint，并把 `salesnail-cs-46` 直接作为请求体中的 `model`。
+- `case-video-claude` 已确认是 Azure 上 Claude 的实际部署名；服务必须使用 Azure Anthropic Messages endpoint，并把 `case-video-claude` 直接作为请求体中的 `model`。
 - 首次上线默认 `approval_mode=editorial`；创建任务时可选择 `auto` 或 `full`，服务端可按租户策略禁用 `auto`。
 - Phase B 单机部署继续使用文件 job storage；Phase C 默认迁移到 PostgreSQL + S3/Azure Blob 兼容对象存储。
 
@@ -910,11 +910,11 @@ Phase B 的模型任务集合固定如下：
 | `editorial.review` | `gpt-5.5` | 独立标题/旁白审查 |
 | `image_prompt.refine` | `gpt-5.5` | 抽象视觉 prompt |
 | `delivery.summarize` | `gpt-5.5` | 交付摘要与 QA 摘要 |
-| `narration.compose` | Azure `salesnail-cs-46` | 同期生成标题与旁白 |
-| `narration.rewrite` | Azure `salesnail-cs-46` | 根据结构化 issue 定向修订 |
-| `remotion.plan` | Azure `salesnail-cs-46` | unit-anchored Remotion/Visual Beat 计划 |
-| `remotion.repair` | Azure `salesnail-cs-46` | 根据 readiness blocker 修订计划 |
-| `remotion.frame-review` | Azure `salesnail-cs-46` | 对 Remotion intent frames 做结构化帧/布局意图审查 |
+| `narration.compose` | Azure `case-video-claude` | 同期生成标题与旁白 |
+| `narration.rewrite` | Azure `case-video-claude` | 根据结构化 issue 定向修订 |
+| `remotion.plan` | Azure `case-video-claude` | unit-anchored Remotion/Visual Beat 计划 |
+| `remotion.repair` | Azure `case-video-claude` | 根据 readiness blocker 修订计划 |
+| `remotion.frame-review` | Azure `case-video-claude` | 对 Remotion intent frames 做结构化帧/布局意图审查 |
 
 禁止跨路由 fallback。某个必需 deployment 不可用时，任务进入可重试失败并显示明确依赖；系统不得为了“跑完”而改用另一个模型。
 
@@ -937,19 +937,19 @@ Phase B worker 顺序固定为：
 1. `ingest.validate`：验证上传、MIME、大小、解压边界和哈希。
 2. `source.extract`：本地提取文本，生成 source manifest 和来源边界。
 3. `case.model`：由 `gpt-5.5` 分类、提取事实并生成结构化案例模型。
-4. `editorial.compose`：由 `salesnail-cs-46` 同期生成 title 和 narration。
+4. `editorial.compose`：由 `case-video-claude` 同期生成 title 和 narration。
 5. `editorial.lint`：运行确定性文稿检查。
 6. `editorial.review`：由 `gpt-5.5` 做独立事实与表达审查。
-7. `editorial.rewrite`：如有可自动修订 issue，由 `salesnail-cs-46` 定向修订并重新 lint/review，最多 2 轮。
+7. `editorial.rewrite`：如有可自动修订 issue，由 `case-video-claude` 定向修订并重新 lint/review，最多 2 轮。
 8. `editorial.approval`：按审批模式自动通过或等待用户批准精确 revision。
 9. `tts.generate`：旁白批准后运行 normalizer 和 Azure Speech，生成唯一 timeline。
-10. `visual.plan`：由 `salesnail-cs-46` 生成 unit-anchored 计划。
+10. `visual.plan`：由 `case-video-claude` 生成 unit-anchored 计划。
 11. `visual.build`：确定性 builder 生成 storyboard，运行 evaluate 和 plan readiness。
-12. `visual.repair`：blocker 交回 `salesnail-cs-46`，最多 2 轮。
+12. `visual.repair`：blocker 交回 `case-video-claude`，最多 2 轮。
 13. `visual.contract-approval`：`full` 模式在任何付费生图前等待批准精确 visual revision。
 14. `assets.generate`：由 `gpt-5.5` 精炼合规 prompt，再调用 Azure 图片生成；执行视觉素材 validator，但不得改写已批准导演合同。
 15. `visual.preview`：用真实素材渲染 `CaseVideoIntentReview` 代表帧，保证每个 scene 至少一帧并覆盖关键 Visual Beat。
-16. `visual.intent-review`：调用注册任务 `remotion.frame-review`，由 Azure `salesnail-cs-46` 通过 Azure Anthropic Messages API 做结构化帧/布局意图审查，逐帧对照 `directorialIntent`；如需修改，仅允许一次不改变内容、资产 ID、layout 和导演意图的 composition-only 修订，然后重新渲染复核。
+16. `visual.intent-review`：调用注册任务 `remotion.frame-review`，由 Azure `case-video-claude` 通过 Azure Anthropic Messages API 做结构化帧/布局意图审查，逐帧对照 `directorialIntent`；如需修改，仅允许一次不改变内容、资产 ID、layout 和导演意图的 composition-only 修订，然后重新渲染复核。
 17. `visual.approval`：`full` 模式在真实像素通过意图审片后等待最终视觉批准。
 18. `render.prepare`：运行 render readiness、asset sync 和 typecheck。
 19. `render.execute`：执行 Remotion 渲染。
@@ -991,7 +991,7 @@ Phase B worker 顺序固定为：
 用户操作语义：
 
 - “保存新版本”：提交完整 title/narration 与 `base_revision`，创建新 revision。
-- “让模型按反馈修改”：提交结构化反馈，由 `salesnail-cs-46` 生成子 revision。
+- “让模型按反馈修改”：提交结构化反馈，由 `case-video-claude` 生成子 revision。
 - “批准”：只批准当前页面显示的 revision；请求必须携带 revision 和内容 ETag。
 - “驳回”：记录原因并保持在审核页，不自动调用模型，除非用户明确选择模型修订。
 - “恢复历史版本”：从历史内容派生新 revision，不改变历史记录。
@@ -1136,7 +1136,7 @@ Phase B 在第 15 节通用验收之外增加以下 P0：
 | ID | 验收条件 |
 | --- | --- |
 | B-CONTRACT-01 | source、case model、editorial、timeline、visual plan 和 artifact index 均通过版本化 schema 校验。 |
-| B-ROUTE-01 | 所有标题/旁白和 Remotion 计划、修复、intent-frame 审查均通过 Azure Anthropic Messages API；运行记录为 `provider=azure_anthropic`、`deployment=salesnail-cs-46`、`transport=anthropic_messages`。其余模型任务均通过 Responses API 使用 `gpt-5.5`。 |
+| B-ROUTE-01 | 所有标题/旁白和 Remotion 计划、修复、intent-frame 审查均通过 Azure Anthropic Messages API；运行记录为 `provider=azure_anthropic`、`deployment=case-video-claude`、`transport=anthropic_messages`。其余模型任务均通过 Responses API 使用 `gpt-5.5`。 |
 | B-ROUTE-02 | 任一路由不可用时不发生跨模型 fallback，错误码和 UI 动作正确。 |
 | B-REV-01 | 直接编辑、模型修订、回退都会创建不可变新版本；历史哈希保持不变。 |
 | B-REV-02 | 两个浏览器基于同一 revision 修改时，后提交者收到可合并的 `409 revision_conflict`。 |
@@ -1601,12 +1601,12 @@ release-evidence/<release_id>/
 
 ### 20.4 2026-07-25 Phase B/C 发布证据
 
-本次候选发布的 evidence root 是 `release-evidence/20260725-server-bc-rc1/`：
+候选发布的 evidence root 应位于部署环境的 `release-evidence/<release_id>/`：
 
 | 证据 | 路径 | 覆盖 |
 | --- | --- | --- |
 | UI acceptance | `ui/ui-acceptance-report.json`、`ui/*.png`、`ui/accessibility-audit.json` | UI-01 至 UI-14、B-UI-01、模型修订轮询和下载 |
-| Model route summary | `ops/model-routing-summary.json` | B-ROUTE-01/02、MR-01 至 MR-05；确认 `salesnail-cs-46` 走 Azure Anthropic Messages，`gpt-5.5` 走 Responses |
+| Model route summary | `ops/model-routing-summary.json` | B-ROUTE-01/02、MR-01 至 MR-05；确认 `case-video-claude` 走 Azure Anthropic Messages，`gpt-5.5` 走 Responses |
 | Backup summary | `ops/backup-summary.json` | 备份完整性、对象数量、数据库 dump sha256 |
 | Restore drill | `ops/restore-drill-summary.json` | C-DR-01；RPO/RTO、对象引用和 Redis 重建 |
 | Upgrade verify | `ops/upgrade-summary.json` | C-UPGRADE-01；schema、route/prompt/schema/engine snapshot 不漂移 |
@@ -1615,7 +1615,7 @@ release-evidence/<release_id>/
 
 已验证的固定模型边界：
 
-- `narration.compose`、`narration.rewrite`、`remotion.plan`、`remotion.repair`、`remotion.frame-review`：`provider=azure_anthropic`，`deployment/model=salesnail-cs-46`，`transport=anthropic_messages`，请求体 `model` 使用部署名 `salesnail-cs-46`。
+- `narration.compose`、`narration.rewrite`、`remotion.plan`、`remotion.repair`、`remotion.frame-review`：`provider=azure_anthropic`，`deployment/model=case-video-claude`，`transport=anthropic_messages`，请求体 `model` 使用部署名 `case-video-claude`。
 - `source.classify`、`case.extract`、`case.model`、`editorial.review`、`image_prompt.refine`、`delivery.summarize`：`provider=openai`，`model=gpt-5.5`，`transport=openai_responses`。
 - TTS、图像生成、Remotion render 和 ffprobe/ffmpeg QA 不是文本模型 fallback 路径。
 
@@ -1672,7 +1672,7 @@ B1 至 B4 优先形成 API 和状态闭环，B5 可在稳定 mock contract 上�
 “服务器版本完成”必须同时满足：
 
 1. 用户可在浏览器上传新案例材料，在不接触命令行的情况下完成审核、生成、恢复和下载。
-2. 标题/旁白与 Remotion 规划、修复、intent-frame 审查只由 Azure `salesnail-cs-46` 完成；其他模型驱动任务只由 `gpt-5.5` 完成，且每次运行可追溯、无跨路由 fallback。
+2. 标题/旁白与 Remotion 规划、修复、intent-frame 审查只由 Azure `case-video-claude` 完成；其他模型驱动任务只由 `gpt-5.5` 完成，且每次运行可追溯、无跨路由 fallback。
 3. title、narration、timeline、storyboard 和视觉素材保持现有生产合同，成片通过真实媒体 QA。
 4. 版本、批准、失效、重试、取消和费用均具有明确且可复验的语义。
 5. Phase B 在单机/容器持久化模式通过全部 P0；Phase C 在生产等价多实例环境通过全部 P0，并保存 `release-evidence/<release_id>/`。

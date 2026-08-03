@@ -135,8 +135,8 @@ class ServerAppTest(unittest.TestCase):
 
     def test_model_gateway_routes_and_required_config(self) -> None:
         gateway = ModelGateway(self.settings, self.storage)
-        self.assertEqual(gateway.route_for_task("narration.compose").model, "salesnail-cs-46")
-        self.assertEqual(gateway.route_for_task("remotion.plan").model, "salesnail-cs-46")
+        self.assertEqual(gateway.route_for_task("narration.compose").model, "case-video-claude")
+        self.assertEqual(gateway.route_for_task("remotion.plan").model, "case-video-claude")
         self.assertEqual(gateway.route_for_task("case.extract").model, "gpt-5.5")
 
         strict = replace(

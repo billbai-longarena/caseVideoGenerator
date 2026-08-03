@@ -1,6 +1,6 @@
 # 项目知识库
 
-这里是案例视频项目的长期知识入口。可复用规则放在 `docs/`，操作步骤放在 `workflows/`，Agent 执行规范放在 `.agents/skills/produce-case-video/`，具体案例数据放在 `output/<project>/`。
+这里是案例视频项目的长期知识入口。可复用规则放在 `docs/`，操作步骤放在 `workflows/`，Agent 执行规范放在 `.agents/skills/produce-case-video/`，公开示例元数据放在 `output/<project>/`。
 
 ## 新任务阅读顺序
 
@@ -20,12 +20,11 @@
 - `knowledge-base/rendering.md`：Remotion、素材同步、渲染和快速换轨。
 - `knowledge-base/qa-and-delivery.md`：技术质检、视觉质检和交付门槛。
 - `knowledge-base/vertical-mobile-video.md`：竖屏 9:16 手机视频的画布合同、移动最佳实践和与横屏流水线的差异。
-- `knowledge-base/salesnail-workbuddy-collab.md`：SalesNail × WorkBuddy 联名视频的右上常驻双 Logo 标识合同、Logo 资产来源和 plan `coBrand` 声明。
 - `knowledge-base/publishing.md`：内部成片与集中发布目录、`S001_标题.mp4` 命名、批量上传清单和 Git 边界。
 - `knowledge-base/tooling-decisions.md`：工具选型及历史决策。
 - `knowledge-base/troubleshooting.md`：常见故障与处理顺序。
 - `architecture/server-deployment-design.md`：异步任务服务器、严格模型路由、Phase A 现状，以及 Phase B/C 的数据、审核、UI、扩容、运维与验收合同。
-- `acceptance/server-b-c-status.md`：Phase B/C 验收 ID 的实时状态、证据和未完成项；`partial` 不视为放行。
+- `architecture/server-deployment-design.md`：服务器化架构、验收合同和公开实现边界。
 - `architecture/visual-beat-system.md`：Visual Beat 分层编辑的数据合同、兼容策略、校验边界和验收标准。
 - `architecture/llm-director-pipeline.md`：LLM 导演源稿、确定性编译器、Remotion 执行层和 intent-to-frame 复核之间的责任边界。
 - `kimi-code-azure-k3.md`：Kimi Code 连接 Azure Foundry K3、默认 YOLO，以及 Low/High/Max Thinking 配置与排障。
@@ -42,6 +41,6 @@
 
 ## 历史资料
 
-`output/budweiser_apac_story_video/VIDEO_PRODUCTION_WORKFLOW.md` 保留为第一条完整流水线的案例实现记录。它不再承担项目总入口职责。新的通用规则应更新到本知识库，百威专属细节继续留在该案例目录。
+`output/women_leadership_03_video/` 是仓库当前保留的公开示例项目。它只承担示例元数据和生产合同演示，不是新的项目总入口。新的通用规则应更新到本知识库，客户原文和品牌专属材料应放在仓库之外。
 
-根目录的 `案例写作方法论.md`、`案例转旁白脚本方法论.md` 和 `AZURE_SPEECH_TTS_GUIDE.md` 是历史长文参考。它们暂时保留原路径以避免破坏外部引用；当前生产规范以本知识库和工作流为准。
+根目录的 `AZURE_SPEECH_TTS_GUIDE.md` 是 TTS 长文参考；当前生产规范以本知识库和工作流为准。

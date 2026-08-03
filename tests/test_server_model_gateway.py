@@ -47,21 +47,21 @@ class ServerModelGatewayTest(unittest.TestCase):
             require_model_config=True,
             narration_route=ModelRoute(
                 provider="azure_anthropic",
-                model="salesnail-cs-46",
+                model="case-video-claude",
                 task_family="narration",
                 endpoint="https://example.services.ai.azure.com/anthropic/v1/messages",
                 api_key_env="TEST_AZURE_ANTHROPIC_KEY",
                 api_version="2023-06-01",
-                request_model="salesnail-cs-46",
+                request_model="case-video-claude",
             ),
             remotion_route=ModelRoute(
                 provider="azure_anthropic",
-                model="salesnail-cs-46",
+                model="case-video-claude",
                 task_family="remotion",
                 endpoint="https://example.services.ai.azure.com/anthropic/v1/messages",
                 api_key_env="TEST_AZURE_ANTHROPIC_KEY",
                 api_version="2023-06-01",
-                request_model="salesnail-cs-46",
+                request_model="case-video-claude",
             ),
             general_route=ModelRoute(
                 provider="openai",
@@ -124,7 +124,7 @@ class ServerModelGatewayTest(unittest.TestCase):
         self.assertNotIn("Authorization", headers)
         payload = captured["json"]
         self.assertIsInstance(payload, dict)
-        self.assertEqual(payload["model"], "salesnail-cs-46")
+        self.assertEqual(payload["model"], "case-video-claude")
         self.assertEqual(payload["tool_choice"], {"type": "tool", "name": "emit_contract_output"})
         self.assertEqual(payload["tools"][0]["input_schema"]["$id"], "urn:case-video:editorial:v1")
 
@@ -424,7 +424,7 @@ class ServerModelGatewayTest(unittest.TestCase):
         self.assertNotIn("Authorization", headers)
         payload = captured["json"]
         self.assertIsInstance(payload, dict)
-        self.assertEqual(payload["model"], "salesnail-cs-46")
+        self.assertEqual(payload["model"], "case-video-claude")
         self.assertEqual(payload["tool_choice"], {"type": "tool", "name": "emit_contract_output"})
         content = payload["messages"][0]["content"]
         self.assertIsInstance(content, list)
@@ -476,14 +476,14 @@ class ServerModelGatewayTest(unittest.TestCase):
                 self.settings.narration_route,
                 endpoint=(
                     "https://example.openai.azure.com/openai/deployments/"
-                    "salesnail-cs-46/chat/completions"
+                    "case-video-claude/chat/completions"
                 ),
             ),
             remotion_route=replace(
                 self.settings.remotion_route,
                 endpoint=(
                     "https://example.openai.azure.com/openai/deployments/"
-                    "salesnail-cs-46/chat/completions"
+                    "case-video-claude/chat/completions"
                 ),
             ),
         )
@@ -501,7 +501,7 @@ class ServerModelGatewayTest(unittest.TestCase):
             narration_route=replace(self.settings.narration_route, request_model="claude-sonnet-test"),
             remotion_route=replace(self.settings.remotion_route, request_model="claude-sonnet-test"),
         )
-        with self.assertRaisesRegex(ModelGatewayError, "deployment salesnail-cs-46"):
+        with self.assertRaisesRegex(ModelGatewayError, "deployment case-video-claude"):
             ModelGateway(invalid).validate_required_routes()
 
     def test_model_cache_reuses_output_and_never_persists_secrets(self) -> None:
@@ -526,7 +526,7 @@ class ServerModelGatewayTest(unittest.TestCase):
             for line in (storage.job_root(job_id) / "model_runs.jsonl").read_text(encoding="utf-8").splitlines()
         ]
         self.assertEqual([record["status"] for record in records], ["started", "succeeded", "reused"])
-        self.assertEqual(records[1]["deployment"], "salesnail-cs-46")
+        self.assertEqual(records[1]["deployment"], "case-video-claude")
         self.assertEqual(records[1]["transport"], "anthropic_messages")
         serialized = json.dumps(records, ensure_ascii=False)
         self.assertNotIn("anthropic-secret", serialized)

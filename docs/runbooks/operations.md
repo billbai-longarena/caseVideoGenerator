@@ -47,7 +47,7 @@ Owner：`platform-oncall`（平台依赖）、`application-oncall`（API）、`w
 ## Model route
 
 1. 只检查配置项是否存在、endpoint 可达和 provider 返回的请求 ID；不得打印 key。
-2. `narration` 与 `remotion` 必须为 `azure_anthropic`，部署名/请求体 `model` 都使用 `salesnail-cs-46`，endpoint 必须是 Azure Anthropic Messages（通常为 `/anthropic/v1/messages`），transport 记录为 `anthropic_messages`。不得把该路由发往 Azure OpenAI，也不得把 request model 改成底层 `claude-*` 型号 ID。`general` 必须为 `gpt-5.5` Responses API。
+2. `narration` 与 `remotion` 必须为 `azure_anthropic`，部署名/请求体 `model` 都使用 `case-video-claude`，endpoint 必须是 Azure Anthropic Messages（通常为 `/anthropic/v1/messages`），transport 记录为 `anthropic_messages`。不得把该路由发往 Azure OpenAI，也不得把 request model 改成底层 `claude-*` 型号 ID。`general` 必须为 `gpt-5.5` Responses API。
 3. 任一路由不可用就暂停相应 stage；禁止切到另一模型或历史 fallback。
 4. 用不含敏感材料的最小请求验证，再检查 model run 的 provider/deployment/transport 和 route snapshot hash。
 

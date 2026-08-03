@@ -215,7 +215,6 @@ scripts/case-video
 - [`produce-case-video`](.agents/skills/produce-case-video/SKILL.md)：销售与销售管理案例。
 - [`produce-fde-video`](.agents/skills/produce-fde-video/SKILL.md)：FDE / AI 组织转型案例。
 - [`produce-brand-story-video`](.agents/skills/produce-brand-story-video/SKILL.md)：品牌故事视频。
-- [`produce-salesnail-video`](.agents/skills/produce-salesnail-video/SKILL.md)：SalesNail 产品案例。
 - [`produce-vertical-video`](.agents/skills/produce-vertical-video/SKILL.md)：通用 9:16 竖屏视频。
 - [`produce-xiaohongshu-video`](.agents/skills/produce-xiaohongshu-video/SKILL.md)：小红书 2–3 分钟案例视频。
 - [`produce-english-case-video`](.agents/skills/produce-english-case-video/SKILL.md)：英文案例视频。
@@ -237,16 +236,18 @@ scripts/case-video
 代码和生产工具以 [`MIT License`](LICENSE) 发布。MIT 许可证只覆盖项目代码及其原创脚本，不自动授予以下内容的额外权利：
 
 - 客户提供的 DOCX、PPTX、PDF、原始案例材料和内部数据。
-- SalesNail、WorkBuddy 或其他品牌 Logo、字体和第三方素材。
+- 客户或合作方提供的品牌 Logo、字体和第三方素材。
 - 具体案例旁白、成片、上传副本和客户定制内容。
 - Azure、Remotion、ffmpeg 及其他第三方依赖本身的许可证和服务条款。
 
-在把 GitHub 仓库设为 Public 之前，请先完成一次公开发布清单：
+当前公开树已经完成上述边界清理：客户原文、客户/合作方品牌资产、账单与支持沟通、内部发布证据、其他项目成片和旧项目历史均不在公开 Git 历史中。仓库保留 `input/women_leadership_100/` 与 `output/women_leadership_03_video/` 作为明确指定的公开示例元数据；渲染视频仍放在本地 Git-ignored 的 `publish/` 目录。
 
-1. 移除或替换 `input/customization/`、客户原文、账单/支持沟通记录和不具备公开授权的品牌素材。
-2. 清理 Git 历史中的同类文件；仅从当前工作树删除并不能从历史提交中移除它们。
+继续扩展案例时，请遵守以下边界：
+
+1. 不把客户原文、内部数据、品牌 Logo、字体或未授权第三方素材放入 Git。
+2. 提交前检查 Git 历史，而不只检查当前工作树。
 3. 保留 `.env`、`.envskill`、密钥、数据库配置、登录凭据和本地运行状态在仓库之外。
-4. 将大视频放到 Release 或对象存储，并确认示例案例和人物/品牌素材具有公开授权。
+4. 将大视频放到 Release、对象存储或团队文件库，并确认示例案例和素材具有公开授权。
 
 这是一个生产工具仓库，不是云服务。使用者需要自行承担云服务账号、计费、配额、数据区域、隐私、版权和内容合规责任。
 

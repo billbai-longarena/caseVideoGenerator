@@ -68,7 +68,7 @@ Visual Beat 先定义当前画面承担的叙事职责，再选择素材和构�
 - 销售案例优先使用蓝黄水彩：亮钴蓝、天蓝、暖黄、高对比、留白、透明水彩与水粉叠色、商业杂志插画感。
 - FDE（AI 落地）专题使用明亮版蓝黄水彩：继承销售水彩家族的水彩/水粉语言和商业杂志插画感，但整体更高明度——通透天蓝与亮钴蓝为主、大面积奶油纸面留白、阳光感暖黄高光、叠色轻薄干净、背景更浅更亮，避免深海军蓝等沉重暗色和大面积阴影。
 - 销售管理案例优先使用本地新增的暖色经理剪影风格：近黑前景剪影、深海军蓝层次、钴蓝、焦橙、灰桃色、奶油到琥珀背光、剪纸与丝网印刷感、无细节人脸、为动效留出干净空间。
-- 定制栏目（如蒙淇星 E.Q.STAR 家庭成长案例课）允许定义客户品牌 family，如 `montessori-bright-watercolor`：高明度奶油纸底、暖镉黄高光、新鲜草绿点缀、近黑色前景元素、大量留白，无深 navy 或重阴影。做法：生图侧用 `image_prompts.json` 顶层 `stylePrefix` 承载定制风格前缀（不改 `generate_images.py`）；Remotion 侧在 `theme.ts` 的 `visualTheme` 注册 family，把品牌 chip（`brandSurface`）、语义强调色（`emphasis`）和网络强调节点（`networkEmphasis`）路由到品牌色，默认值保持 legacy 栏目不变。
+- 定制栏目允许定义项目专属 visual family。做法：生图侧用 `image_prompts.json` 顶层 `stylePrefix` 承载定制风格前缀（不改 `generate_images.py`）；Remotion 侧在 `theme.ts` 的 `visualTheme` 注册 family，把品牌 chip（`brandSurface`）、语义强调色（`emphasis`）和网络强调节点（`networkEmphasis`）路由到项目私有品牌色，默认值保持公开栏目不变。
 - 女性领导力 100 系列统一使用 WL-002 定案的 `women-leadership-five-color-watercolor`：高明度奶油纸底，叶绿 `#59A55D`、暖黄 `#EFDB56`、雾蓝 `#7D9DC6`、暖橙 `#ECA23F`、陶土红 `#CA4D2A`，近黑墨色前景元素与大量留白，无深海军蓝与重阴影；正文使用浅色字配深色承载面。红色水彩旧家族已退出新制作与修订流程。完整规格见 `input/women_leadership_100/series_blueprint.md` §5.1。
 - 销售水彩图提示词不得把红色、珊瑚红、粉色、铁锈橙或橙红作为风格色。除非案例事实必须出现红色警示，红色只能是极小局部。经理剪影风格允许使用本地参考中的焦橙和灰桃色背光，但不得漂移成红色水彩。
 - 最终背景必须是 AI 生成或人工挑选的叙事插画。禁止使用 PIL、Canvas、SVG、程序化几何图、图标集、流程图、仪表盘图或占位图作为最终背景；经理剪影风格中的剪纸/丝网印刷感是允许的视觉语言，不等同于程序图。

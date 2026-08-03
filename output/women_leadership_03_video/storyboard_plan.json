@@ -1,0 +1,2503 @@
+{
+  "version": "2",
+  "projectType": "sales-management",
+  "visualStyle": "women-leadership-five-color-watercolor",
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "cover": {
+    "title": "她从不说“不”，直到当众放错数据",
+    "subtitle": "一个高绩效顾问的边界课",
+    "kicker": "女性领导力",
+    "throughUnit": 1,
+    "proof": "客户汇报现场把A项目数据放进B项目PPT，标题由第一场事故直接支撑。"
+  },
+  "brand": "女性领导力",
+  "subtitleLabel": "女性领导力",
+  "direction": {
+    "visualThesis": "用五色水彩把过度承诺表现为叠加挤压的任务线，再用绿色边界收束。",
+    "pacingArc": "开场快速呈现数据错位，中段逐层加压，第一次拒绝后放松，金句稳定停留。",
+    "densityStrategy": "每拍只表达一个事实或行为；人物与面板分区；数字和关系使用语义组件。",
+    "continuityRules": [
+      "陶土红标记错误与过载，雾蓝承载数据，暖橙承载压力，暖黄标记洞察，叶绿标记边界与恢复。",
+      "人物使用独立纯白方形半身肖像，背景不嵌入故事人物。",
+      "正文使用奶油色文字和深色glass承载面，不加全屏不透明蒙层。",
+      "三个项目的任务线最终收束为两个清晰项目。"
+    ],
+    "avoid": [
+      "裸露正文压水彩背景",
+      "横屏式多主体",
+      "装饰性重复文字",
+      "抽象集体反应",
+      "深海军蓝和大面积暗背景"
+    ]
+  },
+  "chrome": {
+    "brandBug": true,
+    "chapterBadge": false,
+    "subtitleBar": true,
+    "progressRail": false,
+    "cover": true
+  },
+  "assets": [
+    {
+      "id": "bg-client-room",
+      "sceneId": "s01-data-error",
+      "role": "context",
+      "promptIntent": "明亮客户会议室，投影汇报被打断，无人物无文字。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-data-misplaced",
+      "sceneId": "s01-data-error",
+      "role": "evidence",
+      "promptIntent": "一组项目数据错位滑入另一份演示文稿的抽象隐喻。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-achievement-office",
+      "sceneId": "s02-high-performer",
+      "role": "context",
+      "promptIntent": "咨询办公空间，以暖黄纸片表达连续高绩效，无人物无文字。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-overload-night",
+      "sceneId": "s03-three-projects",
+      "role": "context",
+      "promptIntent": "深夜办公桌与三个交叠项目文件夹，高明度疲惫感。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-project-collision",
+      "sceneId": "s04-system-overload",
+      "role": "metaphor",
+      "promptIntent": "三条项目轨道在周五节点碰撞，纸片与时间线叠压。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-closed-office",
+      "sceneId": "s05-closed-door",
+      "role": "context",
+      "promptIntent": "安静合伙人办公室，关闭的门、排期纸张与两把椅子。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-commitment-table",
+      "sceneId": "s06-boundary-insight",
+      "role": "evidence",
+      "promptIntent": "拥挤承诺清单在桌面上逐渐整理成清晰分栏。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-resource-board",
+      "sceneId": "s07-first-no",
+      "role": "context",
+      "promptIntent": "明亮资源排期板，四条项目卡重新分配。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-boundary-lines",
+      "sceneId": "s08-theory",
+      "role": "metaphor",
+      "promptIntent": "三条拥挤任务线收束为两条绿色边界线。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "bg-closing-space",
+      "sceneId": "s09-cta",
+      "role": "metaphor",
+      "promptIntent": "打开的日程本留出一块稳定空白。",
+      "continuity": "保持五色水彩语义和高明度奶油纸"
+    },
+    {
+      "id": "person-zhao",
+      "sceneId": "s02-high-performer",
+      "role": "person",
+      "promptIntent": "二十七岁中国女性咨询顾问赵梦琪，纯白背景半身胸像，五色水彩。",
+      "continuity": "肩长黑发、浅色西装、克制表情"
+    },
+    {
+      "id": "person-patrick",
+      "sceneId": "s05-closed-door",
+      "role": "person",
+      "promptIntent": "中国男性咨询公司合伙人Patrick Liu，纯白背景半身胸像，五色水彩。",
+      "continuity": "短黑发、深灰西装、沉稳表情"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s01-data-error",
+      "units": [
+        1,
+        5
+      ],
+      "chapter": "数据错位",
+      "kicker": "周五客户汇报",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "把观众直接放进客户质问与数据错位现场。",
+      "directorialIntent": "专业秩序被具体数据错误打破。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-client-room",
+          "atUnit": 1,
+          "transition": "wash",
+          "motion": "breathe"
+        },
+        {
+          "asset": "bg-data-misplaced",
+          "atUnit": 5,
+          "transition": "push",
+          "motion": "drift"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "none",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s01-b1",
+          "atUnit": 1,
+          "visualIntent": "context",
+          "purpose": "establish",
+          "directorialIntent": "封面退出后只交代客户汇报现场。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-client-room",
+          "baseFit": "cover",
+          "transition": "cut",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.045,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s01-l1",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.21,
+                "width": 0.84,
+                "height": 0.11
+              },
+              "text": "周五下午｜客户汇报",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 50,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s01-b2",
+          "atUnit": 2,
+          "visualIntent": "evidence",
+          "purpose": "escalate",
+          "directorialIntent": "客户质问成为画面中心。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-client-room",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "static",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s01-l2",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.84,
+                "height": 0.18
+              },
+              "text": "这组增长率，为什么和昨天确认的不一样？",
+              "speaker": "客户项目负责人",
+              "tail": "left",
+              "align": "left",
+              "enter": "slide-right",
+              "surface": "glass",
+              "color": "#FFF8E8"
+            }
+          ]
+        },
+        {
+          "id": "s01-b3",
+          "atUnit": 4,
+          "visualIntent": "protagonist",
+          "purpose": "identify",
+          "directorialIntent": "赵梦琪的身体反应先于解释。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-client-room",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.05,
+              "startX": 0,
+              "endX": -8,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s01-p",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.2,
+                "width": 0.38,
+                "height": 0.26
+              },
+              "asset": "person-zhao",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s01-t",
+              "kind": "text",
+              "box": {
+                "x": 0.52,
+                "y": 0.23,
+                "width": 0.4,
+                "height": 0.15
+              },
+              "text": "她盯了两秒，胃一下沉了下去",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "left",
+              "enter": "slide-right",
+              "fontSize": 46,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s01-b4",
+          "atUnit": 5,
+          "visualIntent": "relationship",
+          "purpose": "evidence",
+          "directorialIntent": "显示A项目数据进入B项目PPT。",
+          "composition": "evidence-collage",
+          "baseAsset": "bg-data-misplaced",
+          "baseFit": "cover",
+          "transition": "push",
+          "camera": "drift",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.025,
+              "startX": -8,
+              "endX": 8,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s01-n",
+              "kind": "network",
+              "box": {
+                "x": 0.08,
+                "y": 0.2,
+                "width": 0.84,
+                "height": 0.3
+              },
+              "nodes": [
+                {
+                  "id": "a",
+                  "label": "A项目数据",
+                  "sub": "正确来源"
+                },
+                {
+                  "id": "b",
+                  "label": "B项目PPT",
+                  "sub": "错误去向",
+                  "emphasis": true
+                }
+              ],
+              "links": [
+                {
+                  "from": "a",
+                  "to": "b",
+                  "label": "误放"
+                }
+              ],
+              "networkLayout": "row",
+              "align": "center",
+              "enter": "scale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s02-high-performer",
+      "units": [
+        6,
+        8
+      ],
+      "chapter": "最高绩效",
+      "kicker": "从不拒绝",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "建立能力基础和拒绝焦虑。",
+      "directorialIntent": "稳定人物框与绩效事实并列。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-achievement-office",
+          "atUnit": 6,
+          "transition": "paper",
+          "motion": "breathe"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s02-b1",
+          "atUnit": 6,
+          "visualIntent": "protagonist",
+          "purpose": "identify",
+          "directorialIntent": "证明错误源于过载而非能力不足。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-achievement-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "breathe",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.035,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s02-p",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.38,
+                "height": 0.27
+              },
+              "asset": "person-zhao",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s02-c",
+              "kind": "counter",
+              "box": {
+                "x": 0.52,
+                "y": 0.21,
+                "width": 0.4,
+                "height": 0.18
+              },
+              "value": {
+                "from": 0,
+                "to": 2,
+                "prefix": "",
+                "suffix": "年最高绩效",
+                "decimals": 0
+              },
+              "showDelta": false,
+              "deltaTone": "good",
+              "align": "center",
+              "enter": "scale",
+              "label": "赵梦琪"
+            }
+          ]
+        },
+        {
+          "id": "s02-b2",
+          "atUnit": 7,
+          "visualIntent": "claim",
+          "purpose": "evidence",
+          "directorialIntent": "两项能力标签支撑身份。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-achievement-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "static",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s02-t1",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.38,
+                "height": 0.14
+              },
+              "text": "反应快",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 64,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            },
+            {
+              "id": "s02-t2",
+              "kind": "text",
+              "box": {
+                "x": 0.54,
+                "y": 0.22,
+                "width": 0.38,
+                "height": 0.14
+              },
+              "text": "交付稳",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 64,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s02-b3",
+          "atUnit": 8,
+          "visualIntent": "mechanism",
+          "purpose": "explain",
+          "directorialIntent": "放大她对难合作评价的担心。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-achievement-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.04,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": true,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s02-t3",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.23,
+                "width": 0.84,
+                "height": 0.22
+              },
+              "text": "一句“不”\n会留下难合作、难相处的评价？",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 62,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s03-three-projects",
+      "units": [
+        9,
+        14
+      ],
+      "chapter": "三个项目",
+      "kicker": "承诺叠加",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "让一次次答应积累成系统过载。",
+      "directorialIntent": "数量、请求、项目网络和凌晨时间逐级加压。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-overload-night",
+          "atUnit": 9,
+          "transition": "ink",
+          "motion": "drift"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s03-b1",
+          "atUnit": 9,
+          "visualIntent": "evidence",
+          "purpose": "evidence",
+          "directorialIntent": "三个客户以计数进入。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-overload-night",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.04,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s03-c1",
+              "kind": "counter",
+              "box": {
+                "x": 0.2,
+                "y": 0.22,
+                "width": 0.6,
+                "height": 0.2
+              },
+              "value": {
+                "from": 0,
+                "to": 3,
+                "prefix": "",
+                "suffix": "个客户",
+                "decimals": 0
+              },
+              "showDelta": false,
+              "deltaTone": "bad",
+              "align": "center",
+              "enter": "scale",
+              "label": "同一季度"
+            }
+          ]
+        },
+        {
+          "id": "s03-b2",
+          "atUnit": 10,
+          "visualIntent": "relationship",
+          "purpose": "escalate",
+          "directorialIntent": "Patrick新增请求，赵梦琪立即答应。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-overload-night",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pan-right",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.03,
+              "startX": -10,
+              "endX": 10,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s03-p",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.36,
+                "height": 0.25
+              },
+              "asset": "person-patrick",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s03-d",
+              "kind": "dialogue",
+              "asset": "person-patrick",
+              "box": {
+                "x": 0.5,
+                "y": 0.21,
+                "width": 0.42,
+                "height": 0.16
+              },
+              "text": "能不能再接一段市场分析？",
+              "speaker": "Patrick Liu",
+              "tail": "left",
+              "align": "left",
+              "enter": "slide-right",
+              "surface": "glass",
+              "color": "#FFF8E8"
+            },
+            {
+              "id": "s03-a",
+              "kind": "text",
+              "box": {
+                "x": 0.5,
+                "y": 0.4,
+                "width": 0.42,
+                "height": 0.1
+              },
+              "text": "她说：可以",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 46,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s03-b3",
+          "atUnit": 12,
+          "visualIntent": "relationship",
+          "purpose": "explain",
+          "directorialIntent": "三条项目线同时指向赵梦琪。",
+          "composition": "triptych",
+          "baseAsset": "bg-overload-night",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "drift",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.025,
+              "startX": 0,
+              "endX": 0,
+              "startY": 4,
+              "endY": -4
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s03-n",
+              "kind": "network",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.84,
+                "height": 0.34
+              },
+              "nodes": [
+                {
+                  "id": "p1",
+                  "label": "项目A",
+                  "sub": "客户汇报"
+                },
+                {
+                  "id": "p2",
+                  "label": "项目B",
+                  "sub": "市场模型"
+                },
+                {
+                  "id": "p3",
+                  "label": "项目C",
+                  "sub": "访谈记录"
+                },
+                {
+                  "id": "z",
+                  "label": "赵梦琪",
+                  "sub": "全部接下",
+                  "asset": "person-zhao",
+                  "emphasis": true
+                }
+              ],
+              "links": [
+                {
+                  "from": "p1",
+                  "to": "z"
+                },
+                {
+                  "from": "p2",
+                  "to": "z"
+                },
+                {
+                  "from": "p3",
+                  "to": "z"
+                }
+              ],
+              "networkLayout": "hub",
+              "align": "center",
+              "enter": "scale"
+            }
+          ]
+        },
+        {
+          "id": "s03-b4",
+          "atUnit": 14,
+          "visualIntent": "consequence",
+          "purpose": "consequence",
+          "directorialIntent": "凌晨两点收束过载。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-overload-night",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.045,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": true,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s03-c2",
+              "kind": "counter",
+              "box": {
+                "x": 0.08,
+                "y": 0.21,
+                "width": 0.36,
+                "height": 0.2
+              },
+              "value": {
+                "from": 0,
+                "to": 2,
+                "prefix": "凌晨",
+                "suffix": "点",
+                "decimals": 0
+              },
+              "showDelta": false,
+              "deltaTone": "bad",
+              "align": "center",
+              "enter": "scale",
+              "label": ""
+            },
+            {
+              "id": "s03-t",
+              "kind": "text",
+              "box": {
+                "x": 0.5,
+                "y": 0.23,
+                "width": 0.42,
+                "height": 0.17
+              },
+              "text": "三个项目文件夹\n来回切换",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 48,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s04-system-overload",
+      "units": [
+        15,
+        17
+      ],
+      "chapter": "系统过载",
+      "kicker": "错误发生",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "把关系动机与交付风险压到同一画面。",
+      "directorialIntent": "内在交换逻辑后紧接三类交付元素碰撞。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-project-collision",
+          "atUnit": 15,
+          "transition": "push",
+          "motion": "drift"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s04-b1",
+          "atUnit": 15,
+          "visualIntent": "mechanism",
+          "purpose": "explain",
+          "directorialIntent": "提出她的关系交换逻辑。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-project-collision",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pull-out",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1.04,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s04-t",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.84,
+                "height": 0.21
+              },
+              "text": "多答应一次\n就能多守住一段关系？",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 64,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s04-b2",
+          "atUnit": 17,
+          "visualIntent": "consequence",
+          "purpose": "consequence",
+          "directorialIntent": "表格、版本和截止时间共同指向事故。",
+          "composition": "evidence-collage",
+          "baseAsset": "bg-project-collision",
+          "baseFit": "cover",
+          "transition": "push",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.055,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": true,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s04-n",
+              "kind": "network",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.84,
+                "height": 0.34
+              },
+              "nodes": [
+                {
+                  "id": "sheet",
+                  "label": "表格"
+                },
+                {
+                  "id": "version",
+                  "label": "版本"
+                },
+                {
+                  "id": "deadline",
+                  "label": "截止时间"
+                },
+                {
+                  "id": "friday",
+                  "label": "客户会议室",
+                  "sub": "错误出现",
+                  "emphasis": true
+                }
+              ],
+              "links": [
+                {
+                  "from": "sheet",
+                  "to": "friday"
+                },
+                {
+                  "from": "version",
+                  "to": "friday"
+                },
+                {
+                  "from": "deadline",
+                  "to": "friday"
+                }
+              ],
+              "networkLayout": "hub",
+              "align": "center",
+              "enter": "scale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s05-closed-door",
+      "units": [
+        18,
+        24
+      ],
+      "chapter": "关门一问",
+      "kicker": "三分钟沉默",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "从公开事故转入封闭对话。",
+      "directorialIntent": "Patrick的问题与赵梦琪的沉默交替成为焦点。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-closed-office",
+          "atUnit": 18,
+          "transition": "paper",
+          "motion": "breathe"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s05-b1",
+          "atUnit": 18,
+          "visualIntent": "relationship",
+          "purpose": "reset",
+          "directorialIntent": "关闭的门降低公开羞辱感。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closed-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "breathe",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.035,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s05-p1",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.38,
+                "height": 0.26
+              },
+              "asset": "person-patrick",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s05-t1",
+              "kind": "text",
+              "box": {
+                "x": 0.52,
+                "y": 0.22,
+                "width": 0.4,
+                "height": 0.18
+              },
+              "text": "没有在走廊追问\n他关上了办公室的门",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "left",
+              "enter": "slide-right",
+              "fontSize": 46,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s05-b2",
+          "atUnit": 20,
+          "visualIntent": "relationship",
+          "purpose": "escalate",
+          "directorialIntent": "完整呈现Patrick的关键问题。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closed-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.04,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s05-p2",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.36,
+                "height": 0.25
+              },
+              "asset": "person-patrick",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s05-d",
+              "kind": "dialogue",
+              "asset": "person-patrick",
+              "box": {
+                "x": 0.5,
+                "y": 0.2,
+                "width": 0.42,
+                "height": 0.21
+              },
+              "text": "梦琪，你最后一次拒绝别人的请求，是什么时候？",
+              "speaker": "Patrick Liu",
+              "tail": "right",
+              "align": "left",
+              "enter": "slide-right",
+              "surface": "glass",
+              "color": "#FFF8E8"
+            }
+          ]
+        },
+        {
+          "id": "s05-b3",
+          "atUnit": 22,
+          "visualIntent": "protagonist",
+          "purpose": "identify",
+          "directorialIntent": "无言反应替代解释。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closed-office",
+          "baseFit": "cover",
+          "transition": "cut",
+          "camera": "static",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s05-p3",
+              "kind": "asset",
+              "box": {
+                "x": 0.31,
+                "y": 0.19,
+                "width": 0.38,
+                "height": 0.27
+              },
+              "asset": "person-zhao",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "scale"
+            },
+            {
+              "id": "s05-t2",
+              "kind": "text",
+              "box": {
+                "x": 0.18,
+                "y": 0.49,
+                "width": 0.64,
+                "height": 0.13
+              },
+              "text": "她张了张嘴\n找不到答案",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 48,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s05-b4",
+          "atUnit": 24,
+          "visualIntent": "evidence",
+          "purpose": "consequence",
+          "directorialIntent": "三分钟计数可视化沉默长度。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closed-office",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.05,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": true,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s05-c",
+              "kind": "counter",
+              "box": {
+                "x": 0.2,
+                "y": 0.22,
+                "width": 0.6,
+                "height": 0.22
+              },
+              "value": {
+                "from": 0,
+                "to": 3,
+                "prefix": "",
+                "suffix": "分钟",
+                "decimals": 0
+              },
+              "showDelta": false,
+              "deltaTone": "bad",
+              "align": "center",
+              "enter": "scale",
+              "label": "仍然没有答案"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s06-boundary-insight",
+      "units": [
+        25,
+        31
+      ],
+      "chapter": "边界显形",
+      "kicker": "安全感",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "把诊断转化为可见的承诺清单。",
+      "directorialIntent": "从排期依据到边界结论，再揭示关系安全感。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-commitment-table",
+          "atUnit": 25,
+          "transition": "ink",
+          "motion": "drift"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s06-b1",
+          "atUnit": 25,
+          "visualIntent": "relationship",
+          "purpose": "explain",
+          "directorialIntent": "Patrick与项目排期同时可见。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-commitment-table",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pan-right",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.03,
+              "startX": -8,
+              "endX": 8,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s06-p1",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.36,
+                "height": 0.25
+              },
+              "asset": "person-patrick",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s06-t1",
+              "kind": "text",
+              "box": {
+                "x": 0.5,
+                "y": 0.23,
+                "width": 0.42,
+                "height": 0.13
+              },
+              "text": "项目排期放到桌上",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 48,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s06-b2",
+          "atUnit": 27,
+          "visualIntent": "claim",
+          "purpose": "evidence",
+          "directorialIntent": "诊断卡强调交付替边界说话。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-commitment-table",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.045,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": true,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s06-t2",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.84,
+                "height": 0.22
+              },
+              "text": "边界不说出来\n风险就会在交付里替你说",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 62,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s06-b3",
+          "atUnit": 28,
+          "visualIntent": "evidence",
+          "purpose": "explain",
+          "directorialIntent": "承诺从混乱收束为可检查清单。",
+          "composition": "document-focus",
+          "baseAsset": "bg-commitment-table",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pull-out",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1.04,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s06-n",
+              "kind": "network",
+              "box": {
+                "x": 0.08,
+                "y": 0.2,
+                "width": 0.84,
+                "height": 0.31
+              },
+              "nodes": [
+                {
+                  "id": "requests",
+                  "label": "所有请求",
+                  "sub": "逐项列出"
+                },
+                {
+                  "id": "capacity",
+                  "label": "真实容量",
+                  "sub": "第一次可见",
+                  "emphasis": true
+                },
+                {
+                  "id": "boundary",
+                  "label": "边界",
+                  "sub": "开始形成"
+                }
+              ],
+              "links": [
+                {
+                  "from": "requests",
+                  "to": "capacity"
+                },
+                {
+                  "from": "capacity",
+                  "to": "boundary"
+                }
+              ],
+              "networkLayout": "row",
+              "align": "center",
+              "enter": "scale"
+            }
+          ]
+        },
+        {
+          "id": "s06-b4",
+          "atUnit": 31,
+          "visualIntent": "mechanism",
+          "purpose": "explain",
+          "directorialIntent": "揭示过度承诺背后的安全感。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-commitment-table",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "breathe",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.035,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s06-p2",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.36,
+                "height": 0.25
+              },
+              "asset": "person-zhao",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s06-t3",
+              "kind": "text",
+              "box": {
+                "x": 0.5,
+                "y": 0.22,
+                "width": 0.42,
+                "height": 0.19
+              },
+              "text": "只要不让任何人失望\n就不会失去信任？",
+              "variant": "caption",
+              "surface": "glass",
+              "align": "left",
+              "enter": "slide-right",
+              "fontSize": 48,
+              "fontWeight": 760,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s07-first-no",
+      "units": [
+        32,
+        38
+      ],
+      "chapter": "第一次拒绝",
+      "kicker": "资源排期",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "用清晰且带替代方案的拒绝完成重生。",
+      "directorialIntent": "第四个项目触发旧模式，四到二的资源对比证明改变。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-resource-board",
+          "atUnit": 32,
+          "transition": "paper",
+          "motion": "breathe"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s07-b1",
+          "atUnit": 32,
+          "visualIntent": "decision",
+          "purpose": "escalate",
+          "directorialIntent": "第四个项目再次出现。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-resource-board",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.045,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s07-c",
+              "kind": "counter",
+              "box": {
+                "x": 0.2,
+                "y": 0.21,
+                "width": 0.6,
+                "height": 0.22
+              },
+              "value": {
+                "from": 0,
+                "to": 4,
+                "prefix": "",
+                "suffix": "个项目",
+                "decimals": 0
+              },
+              "showDelta": false,
+              "deltaTone": "bad",
+              "align": "center",
+              "enter": "scale",
+              "label": "资源会上再次加码"
+            }
+          ]
+        },
+        {
+          "id": "s07-b2",
+          "atUnit": 33,
+          "visualIntent": "protagonist",
+          "purpose": "evidence",
+          "directorialIntent": "赵梦琪说出边界和替代方案。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-resource-board",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "push-in",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.04,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s07-p",
+              "kind": "asset",
+              "box": {
+                "x": 0.08,
+                "y": 0.19,
+                "width": 0.34,
+                "height": 0.24
+              },
+              "asset": "person-zhao",
+              "frame": "white",
+              "fit": "contain",
+              "enter": "slide-left"
+            },
+            {
+              "id": "s07-d",
+              "kind": "dialogue",
+              "asset": "person-zhao",
+              "box": {
+                "x": 0.48,
+                "y": 0.19,
+                "width": 0.44,
+                "height": 0.24
+              },
+              "text": "我可以保证两个核心项目。第四个项目需要延期，或者增加一名顾问。",
+              "speaker": "赵梦琪",
+              "tail": "left",
+              "align": "left",
+              "enter": "slide-right",
+              "surface": "glass",
+              "color": "#FFF8E8"
+            }
+          ]
+        },
+        {
+          "id": "s07-b3",
+          "atUnit": 36,
+          "visualIntent": "evidence",
+          "purpose": "consequence",
+          "directorialIntent": "四到二的对比显示资源重排。",
+          "composition": "split",
+          "baseAsset": "bg-resource-board",
+          "baseFit": "cover",
+          "transition": "push",
+          "camera": "static",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s07-bars",
+              "kind": "bar-compare",
+              "box": {
+                "x": 0.08,
+                "y": 0.2,
+                "width": 0.84,
+                "height": 0.27
+              },
+              "bars": [
+                {
+                  "label": "原排期",
+                  "value": 4,
+                  "max": 4,
+                  "suffix": "个",
+                  "tone": "bad"
+                },
+                {
+                  "label": "核心交付",
+                  "value": 2,
+                  "max": 4,
+                  "suffix": "个",
+                  "tone": "good"
+                }
+              ],
+              "align": "left",
+              "enter": "slide-left",
+              "label": "资源重新分配"
+            }
+          ]
+        },
+        {
+          "id": "s07-b4",
+          "atUnit": 38,
+          "visualIntent": "consequence",
+          "purpose": "consequence",
+          "directorialIntent": "清晰容量空间收束结果。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-resource-board",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pull-out",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1.04,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.02,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s07-t",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.84,
+                "height": 0.22
+              },
+              "text": "她没有失去信任\n她让别人准确看见了自己的容量",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 60,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s08-theory",
+      "units": [
+        39,
+        40
+      ],
+      "chapter": "关系经得起不",
+      "kicker": "领导力金句",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "把故事机制凝结为可收藏洞见。",
+      "directorialIntent": "绿色边界线与大字号金句完成闭环。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-boundary-lines",
+          "atUnit": 39,
+          "transition": "wash",
+          "motion": "breathe"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "chapter-circle",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s08-b1",
+          "atUnit": 39,
+          "visualIntent": "mechanism",
+          "purpose": "explain",
+          "directorialIntent": "金句成为唯一焦点。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-boundary-lines",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "breathe",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1.018,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 12,
+            "layerEnterFrames": 14,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.01,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s08-t",
+              "kind": "text",
+              "box": {
+                "x": 0.07,
+                "y": 0.22,
+                "width": 0.86,
+                "height": 0.28
+              },
+              "text": "压力会把“照料与结盟”推向过度承诺；\n真正可靠的关系，经得起一句清楚的“不”。",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 66,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s09-cta",
+      "units": [
+        41,
+        44
+      ],
+      "chapter": "给自己留边界",
+      "kicker": "收藏提醒",
+      "layout": "director-canvas",
+      "tone": "bright",
+      "visualMode": "editorial",
+      "dramaticFunction": "把理论转成观众可用的自问。",
+      "directorialIntent": "收藏动作后以问题卡和留白结束。",
+      "keywords": [],
+      "backgrounds": [
+        {
+          "asset": "bg-closing-space",
+          "atUnit": 41,
+          "transition": "paper",
+          "motion": "breathe"
+        }
+      ],
+      "sceneMotion": {
+        "enter": "fade",
+        "exit": "fade",
+        "enterFrames": 10,
+        "exitFrames": 12
+      },
+      "transition": "paper-stripes",
+      "transitionFrames": 16,
+      "chrome": {
+        "brandBug": true,
+        "chapterBadge": false,
+        "subtitleBar": true
+      },
+      "visualBeats": [
+        {
+          "id": "s09-b1",
+          "atUnit": 41,
+          "visualIntent": "claim",
+          "purpose": "reset",
+          "directorialIntent": "简洁收藏提示。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closing-space",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "static",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 8,
+            "layerEnterFrames": 10,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s09-t1",
+              "kind": "text",
+              "box": {
+                "x": 0.2,
+                "y": 0.24,
+                "width": 0.6,
+                "height": 0.14
+              },
+              "text": "收藏这条",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 72,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        },
+        {
+          "id": "s09-b2",
+          "atUnit": 43,
+          "visualIntent": "decision",
+          "purpose": "callback",
+          "directorialIntent": "把边界选择交还观众。",
+          "composition": "full-bleed",
+          "baseAsset": "bg-closing-space",
+          "baseFit": "cover",
+          "transition": "dissolve",
+          "camera": "pull-out",
+          "treatment": "natural",
+          "render": {
+            "cameraPath": {
+              "startScale": 1.035,
+              "endScale": 1,
+              "startX": 0,
+              "endX": 0,
+              "startY": 0,
+              "endY": -8
+            },
+            "treatmentColor": "#06111f00",
+            "ambientOpacity": 0.05,
+            "vignette": 0.06,
+            "overlay": "none",
+            "transitionFrames": 12,
+            "layerEnterFrames": 12,
+            "layerExitFrames": 8,
+            "layerStaggerFrames": 3,
+            "emphasisScale": 1.03,
+            "pulse": false,
+            "flashbackFrame": false,
+            "canvasTone": "transparent"
+          },
+          "chrome": {
+            "brandBug": true,
+            "chapterBadge": false,
+            "subtitleBar": true
+          },
+          "layers": [
+            {
+              "id": "s09-t2",
+              "kind": "text",
+              "box": {
+                "x": 0.08,
+                "y": 0.22,
+                "width": 0.84,
+                "height": 0.22
+              },
+              "text": "这是真正的负责\n还是害怕让别人失望？",
+              "variant": "headline",
+              "surface": "glass",
+              "align": "center",
+              "enter": "fade",
+              "fontSize": 64,
+              "fontWeight": 850,
+              "lineHeight": 1.16,
+              "color": "#FFF8E8",
+              "opacity": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

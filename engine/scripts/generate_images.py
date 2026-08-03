@@ -84,13 +84,11 @@ FDE_BRIGHT_STYLE_PREFIX = (
     "no UI screenshot, no source-document screenshot."
 )
 
-# SalesNail × WorkBuddy co-brand series: bright watercolor keyed to the two
-# partner logos — SalesNail blue (#3671DB / #75A7FF) and WorkBuddy jade
-# (#00C090) — with near-black ink accents on pale mint/cream paper.
-SALESNAIL_WORKBUDDY_STYLE_PREFIX = (
+# Partner co-brand series: a neutral bright watercolor family. Authorized
+# client colors and logos are supplied only through private project inputs.
+PARTNER_CO_BRAND_STYLE_PREFIX = (
     "Bright editorial watercolor and gouache illustration, cinematic 16:9 composition, "
-    "dominant SalesNail blue (#3671DB) and light sky blue (#75A7FF) palette "
-    "with WorkBuddy jade green-teal (#00C090) highlights, "
+    "dominant clear blue and pale teal palette with warm yellow highlights, "
     "high-key lighting, light and airy tonality, pale mint and cream paper visible throughout, "
     "near-black ink (#2C2C2C) foreground accents, crisp dark-light separation, "
     "generous white negative space, broad translucent washes, clean flat shapes, light dry-brush edges, "
@@ -108,7 +106,7 @@ STYLE_PREFIXES = {
     "sales-watercolor": STYLE_PREFIX,
     "sales-management-silhouette": MANAGEMENT_STYLE_PREFIX,
     "fde-bright-watercolor": FDE_BRIGHT_STYLE_PREFIX,
-    "salesnail-workbuddy-watercolor": SALESNAIL_WORKBUDDY_STYLE_PREFIX,
+    "partner-co-brand-watercolor": PARTNER_CO_BRAND_STYLE_PREFIX,
 }
 
 DEFAULT_IMAGE_SIZE = "1536x864"

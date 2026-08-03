@@ -394,7 +394,7 @@ class DistributedRevisionService:
             raise AppError("model_task_unregistered", f"model task is not pinned: {task}")
         if (
             task_snapshot.get("provider") != "azure_anthropic"
-            or task_snapshot.get("model") != "salesnail-cs-46"
+            or task_snapshot.get("model") != "case-video-claude"
             or task_snapshot.get("transport") != "anthropic_messages"
         ):
             raise AppError("model_route_missing", f"model task has an invalid pinned route: {task}")

@@ -1,0 +1,12 @@
+001 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+002 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+003 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+004 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+005 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+006 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+007 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+008 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+009 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+010 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+011 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate
+012 female zh-CN-Xiaochen:DragonHDLatestNeural rate=+7% pitch=+1% generate

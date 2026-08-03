@@ -125,7 +125,7 @@ Keep the pipeline-facing master at `video/case_video.mp4`. After QA, use the wra
 scripts/case-video publish output/<project>
 ```
 
-The default public name is `S001_标题.mp4`. Three-digit zero padding keeps a 100-video topic sorted correctly through S100. Known project names such as `fde_ep01_*`, `baijiu_ep30_*`, `sales_case02_*`, and `sales_management_case20_*` provide the series and sequence automatically.
+The default public name is `S001_标题.mp4`. Three-digit zero padding keeps a 100-video topic sorted correctly through S100. Known project names such as `fde_ep01_*`, `sales_case02_*`, and `sales_management_case20_*` provide the series and sequence automatically.
 
 Batch staging discovers only projects that contain `video/case_video.mp4`:
 

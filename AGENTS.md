@@ -14,7 +14,7 @@ docs/knowledge-base/production-principles.md
 workflows/new-case-video.md or workflows/revise-video.md
 ```
 
-Use `.agents/skills/produce-case-video/SKILL.md` for sales-column (`销售不复杂`) production, revision, rendering, and QA tasks. Use `.agents/skills/produce-fde-video/SKILL.md` for FDE-column (`FDE不复杂`) production — it shares the same rendering pipeline but has its own narration guide, column identity, and content rules. Use `.agents/skills/produce-xiaohongshu-video/SKILL.md` for Xiaohongshu-first 2-3 minute vertical case videos (小红书竖屏短版) — primarily the 女性领导力 100 series; it inherits the vertical canvas contract and adds Xiaohongshu narration structure, pacing, cover design, and series matrix validation. Read the Budweiser workflow only for that historical case implementation or details not yet promoted into the project knowledge base.
+Use `.agents/skills/produce-case-video/SKILL.md` for sales-column (`销售不复杂`) production, revision, rendering, and QA tasks. Use `.agents/skills/produce-fde-video/SKILL.md` for FDE-column (`FDE不复杂`) production — it shares the same rendering pipeline but has its own narration guide, column identity, and content rules. Use `.agents/skills/produce-xiaohongshu-video/SKILL.md` for Xiaohongshu-first 2-3 minute vertical case videos (小红书竖屏短版) — primarily the 女性领导力 100 series; it inherits the vertical canvas contract and adds Xiaohongshu narration structure, pacing, cover design, and series matrix validation.
 
 For new narration or video generation, do not inspect or imitate old generated narration, timelines, storyboards, rendered videos, QA frames, or other completed `output/<project>/` artifacts as examples. Many historical outputs are known to be wrong. Read the production Skill and current source materials, then generate from the current workflow; only read an existing project's artifacts when the user explicitly asks to revise or audit that project.
 
@@ -60,11 +60,11 @@ case source/materials
 - The subtitle-bar label must remain on one line; widen or scale the label area rather than wrapping `销售不复杂`.
 - Prefer setting `storyboard.brand` to `销售不复杂` for sales-case videos, keeping per-scene `kicker` for the local chapter label.
 
-## SalesNail × WorkBuddy 联名视频
+## 联合品牌视频
 
-- SalesNail 小红书系列（`salesnail_sn<NNN>_video`）是 SalesNail × WorkBuddy 联合推广；视频右上角常驻 SalesNail × WorkBuddy 双 Logo 标识，从封面帧到结尾一直显示。
-- 联名系列使用专属明亮水彩家族 `salesnail-workbuddy-watercolor`：SalesNail 蓝（#3671DB/#75A7FF）主调 + WorkBuddy 青绿（#00C090）高光，取色自两个 Logo；chrome 经 `visualTheme` 的 `salesnail-workbuddy` 分支自动切换。
-- 完整联名规范见 `docs/knowledge-base/salesnail-workbuddy-collab.md`；Logo 权威拷贝在 `input/salesnail/SalesNail.svg` 和 `input/salesnail/workbuddy-logo-WhgOvEF7.png`，项目内放 `brand/` 目录并在 schema-v2 plan 顶层声明 `coBrand`。
+- 需要联合品牌时，在项目私有的 `brand/` 目录提供已获授权的合作方 Logo，并在 schema-v2 plan 顶层声明 `coBrand`。
+- 联合品牌视频使用项目声明的 `visualTheme` 和 `stylePrefix`；品牌色只从已授权的项目资产或品牌规范中读取，不写入公共示例。
+- 公开仓库不包含任何客户 Logo、品牌字体或合作方原始素材。
 
 ## Narration Style
 
@@ -94,7 +94,7 @@ case source/materials
 - Generate full narration with the repository command:
 
 ```bash
-scripts/case-video tts output/medical_device_case_video --gender female --single-voice --force
+scripts/case-video tts output/<project> --gender female --single-voice --force
 ```
 
 The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `narration.tts.plan.txt`, and `narration.timeline.json`.
@@ -106,9 +106,7 @@ The Azure generator writes `audio/narration_azure.wav`, `narration.tts.txt`, `na
 - Use abstract visual prompts. Do not send restricted PDF source text, long excerpts, or sample-video voice data to external providers.
 - Sales videos use the approved blue/yellow watercolor family: bright cobalt/sky blue, cadmium yellow highlights, high contrast, cream paper, translucent watercolor/gouache washes, dry-brush edges, clear foreground subject, and semi-abstract low-detail background.
 - FDE (AI-adoption) series videos use the bright variant of that watercolor family (`fde-bright-watercolor`): higher-key luminous sky/light cobalt blue, generous cream-paper negative space, sunny cadmium-yellow highlights, thin translucent washes, and light backgrounds without deep navy or heavy shadow areas.
-- Custom-column videos (e.g. the E.Q.STAR 蒙淇星 family-growth column) may define a client brand family such as `montessori-bright-watercolor`: high-key cream paper, warm cadmium-yellow highlights, fresh grass-green accents, near-black foreground elements, generous negative space, no deep navy or heavy shadows. Carry the custom image style via the top-level `stylePrefix` in `image_prompts.json` and route Remotion chrome colors (`brandSurface`, `emphasis`, `networkEmphasis`) through `visualTheme` in `engine/remotion/src/theme.ts`, keeping legacy defaults unchanged.
-- The baijiu column (`杯中故事`) uses `baijiu-bright-watercolor`: high-key cream-paper bright watercolor, warm amber/sorghum-gold highlights, light cobalt sky accents, generous negative space, no deep navy or heavy shadows; chrome routes through the `baijiu` branch of `visualTheme` (deep sorghum-amber `brandSurface`, amber `emphasis`/`networkEmphasis`).
-- PPG PMC brand stories use `ppg-bright-watercolor`: high-key cream-paper bright industrial watercolor, clear sky/light steel-blue tones with soft zinc-grey and pale cadmium-yellow highlights, generous negative space, no deep navy, heavy shadows, or red tones; chrome routes through the `ppg` branch of `visualTheme` (deep steel-blue `brandSurface`, steel-blue `emphasis`/`networkEmphasis`). Brand stories about real historical figures may omit character portraits entirely (the Chinese-portrait contract applies to generated portraits); carry person presence with name cards, counters, and quote cards instead.
+- Custom-column videos may define a project-specific visual family. Carry the style through the top-level `stylePrefix` in `image_prompts.json` and route Remotion chrome colors through `visualTheme` in `engine/remotion/src/theme.ts`, keeping the public defaults unchanged.
 - The 女性领导力 100 (women's leadership, Xiaohongshu vertical) series uses `women-leadership-five-color-watercolor`, established by WL-002: high-key cream paper with leaf green `#59A55D`, warm yellow `#EFDB56`, mist blue `#7D9DC6`, warm orange `#ECA23F`, and terracotta red `#CA4D2A`; near-black ink foreground accents, generous negative space, and no deep navy or heavy shadows. Chrome routes through the five-color `women-leadership` theme branch. The earlier red-watercolor family is retired for all new and revised production. Full spec lives in `input/women_leadership_100/series_blueprint.md` §5.1.
 - Character portraits in every series (sales, sales-management, FDE) must depict Chinese people; generation prompts must explicitly declare a Chinese subject along with the pure-white background and half-body framing, and render readiness blocks portrait prompts missing any of the three.
 - Sales-management videos use the local warm manager-silhouette family by default: near-black foreground silhouettes, deep navy layers, cobalt blue, burnt orange/gray-peach backlight, cream-to-amber glow, cut-paper/screen-print feel, clean negative space, and no detailed faces. Do not convert manager videos into the sales watercolor style unless the user explicitly asks.
@@ -183,9 +181,9 @@ All future generated videos should be produced inside this repository. The old C
 
 This repository adopts the local, offline mode of [TERMITE_PROTOCOL.md](TERMITE_PROTOCOL.md) v5.1. The protocol governs agent collaboration and handoff; it does not replace the video-production workflow above.
 
-- At the start of each substantive task, or when the user says `白蚁协议`, run `scripts/field-arrive.sh "<task summary>"`, then read `.birth`, `BLACKBOARD.md`, and any matching `ALARM.md`/`WIP.md` before making changes.
-- Treat `BLACKBOARD.md` as the human-readable shared state, `signals/active/*.yaml` as actionable work signals, and `DECISIONS.md` as the durable record of choices. Trust the repository and verification output over stale blackboard text; correct drift when found.
+- At the start of each substantive task, or when the user says `白蚁协议`, run `scripts/field-arrive.sh "<task summary>"`, then read `.birth`, `BLACKBOARD.md`, and any matching local `ALARM.md`/`WIP.md` before making changes.
+- Treat `BLACKBOARD.md` as the human-readable shared state, optional local signals as actionable work signals, and `DECISIONS.md` as the durable record of choices. Trust the repository and verification output over stale blackboard text; correct drift when found.
 - Select a role before acting: scout for investigation/review, worker for planned implementation, soldier for an alarm or failing build/test, and nurse for documentation or test maintenance. Work only within that role's permissions.
-- Human instructions take priority. For material work, leave a durable trace: update the relevant signal/blackboard or decision record, and use a clear commit message. If work is incomplete, write `WIP.md`; if changes exceed 50 lines, make a `[WIP]` commit before continuing when appropriate.
+- Human instructions take priority. For material work, leave a durable trace: update the blackboard or decision record, and use a clear commit message. Keep unfinished work state local; do not commit private operational handoff files.
 - Stop and read `ALARM.md` before touching an affected area. Do not silently delete protocol, blackboard, decision, or other Markdown control files.
 - Runtime files (`.birth*`, `.field-breath`, `.pheromone`, optional `.termite.db*`) stay local and are ignored. This project does not enable external telemetry or audit export unless the user explicitly asks.

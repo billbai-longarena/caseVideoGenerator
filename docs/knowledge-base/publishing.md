@@ -11,7 +11,7 @@ output/<project>/video/
 
 publish/
 ├── FDE不复杂/S001_标题.mp4          # 一个主题的全部网站上传文件
-├── 杯中故事/S030_标题.mp4
+├── 主题名称/S030_标题.mp4
 ├── _masters/<主题>/S001_标题_master.mp4 # 可选 master 发布视图
 ├── manifest.json
 ├── manifest.csv
@@ -32,7 +32,7 @@ publish/
 常用项目目录会自动推断栏目和集数，例如：
 
 - `fde_ep01_*` → `publish/FDE不复杂/S001_标题.mp4`
-- `baijiu_ep30_*` → `publish/杯中故事/S030_标题.mp4`
+- `custom_ep30_*` → `publish/主题名称/S030_标题.mp4`
 - `sales_case02_*` → `publish/销售不复杂/S002_标题.mp4`
 - `sales_management_case20_*` → `publish/销售管理/S020_标题.mp4`
 
@@ -86,7 +86,7 @@ scripts/case-video publish output/<project> --include-master
 
 ```bash
 scripts/case-video publish-batch output --pattern 'fde_ep*'
-scripts/case-video publish-batch output --pattern 'fde_ep*' --pattern 'baijiu_ep*'
+scripts/case-video publish-batch output --pattern 'fde_ep*' --pattern 'custom_ep*'
 ```
 
 不传 `--pattern` 时会扫描 `output/` 下一层所有带 `video/case_video.mp4` 的项目。建议首次先加 `--dry-run`，确认历史实验项目没有进入队列。

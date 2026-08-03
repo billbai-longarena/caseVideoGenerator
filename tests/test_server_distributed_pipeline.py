@@ -138,8 +138,8 @@ def test_distributed_worker_rebuilds_workspace_and_preserves_strict_model_routes
 
     narration = by_task["narration.compose"]
     assert narration["provider"] == "azure_anthropic"
-    assert narration["model"] == "salesnail-cs-46"
-    assert narration["route_snapshot"]["deployment"] == "salesnail-cs-46"
+    assert narration["model"] == "case-video-claude"
+    assert narration["route_snapshot"]["deployment"] == "case-video-claude"
     assert narration["route_snapshot"]["transport"] == "anthropic_messages"
 
     workspace = repository.get_current_artifact_revision(
@@ -333,13 +333,13 @@ def test_distributed_worker_completes_pinned_model_revision_request(
     assert captured[0]["issues"] == [
         {"issue_id": "human-1", "severity": "warning", "message": "开场偏慢"}
     ]
-    assert captured[0]["actor"] == "azure-anthropic:salesnail-cs-46"
+    assert captured[0]["actor"] == "azure-anthropic:case-video-claude"
 
     model_runs = repository.list_model_runs("ten_distributed", job_id)
     narration_rewrite = next(item for item in model_runs if item["task"] == "narration.rewrite")
     assert narration_rewrite["stage_run_id"] == stage_run_id
     assert narration_rewrite["provider"] == "azure_anthropic"
-    assert narration_rewrite["model"] == "salesnail-cs-46"
+    assert narration_rewrite["model"] == "case-video-claude"
     assert narration_rewrite["route_snapshot"]["transport"] == "anthropic_messages"
     editorial_review = next(item for item in model_runs if item["task"] == "editorial.review")
     assert editorial_review["stage_run_id"] == stage_run_id

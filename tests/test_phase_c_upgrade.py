@@ -14,7 +14,7 @@ def _manifest(job_id: str) -> dict[str, object]:
         "task": "narration.compose",
         "route_family": "narration",
         "provider": "azure_anthropic",
-        "model": "salesnail-cs-46",
+        "model": "case-video-claude",
         "transport": "anthropic_messages",
         "prompt_version": "v1",
         "prompt_sha256": "1" * 64,
@@ -36,12 +36,12 @@ def _manifest(job_id: str) -> dict[str, object]:
         "model_routes": {
             "narration": {
                 "provider": "azure_anthropic",
-                "model": "salesnail-cs-46",
+                "model": "case-video-claude",
                 "transport": "anthropic_messages",
             },
             "remotion": {
                 "provider": "azure_anthropic",
-                "model": "salesnail-cs-46",
+                "model": "case-video-claude",
                 "transport": "anthropic_messages",
             },
             "general": {
@@ -103,10 +103,10 @@ def _seed(database: Database) -> None:
             "stage_run_id": stage["stage_run_id"],
             "task": "narration.compose",
             "provider": "azure_anthropic",
-            "model": "salesnail-cs-46",
+            "model": "case-video-claude",
             "route_snapshot": {
                 "provider": "azure_anthropic",
-                "model": "salesnail-cs-46",
+                "model": "case-video-claude",
                 "transport": "anthropic_messages",
             },
             "prompt_version": "v1",

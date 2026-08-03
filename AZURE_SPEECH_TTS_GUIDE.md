@@ -187,21 +187,22 @@ ffprobe -v error -show_entries stream=codec_name,sample_rate,channels,duration -
 
 ## 7. 在 casevideo 项目中生成全片旁白
 
-推荐使用统一 TTS 入口，默认走 Azure Speech，并按空行分隔的段落交替使用 Yunfan 男声和 Xiaochen 女声：
+推荐使用统一 TTS 入口，默认走 Azure Speech，并按空行分隔的段落生成旁白：
 
 ```bash
-.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
-  --engine azure \
-  --project output/medical_device_case_video
+scripts/case-video tts output/<project> \
+  --gender female \
+  --single-voice \
+  --force
 ```
 
 需要女声先开场：
 
 ```bash
-.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_tts.py \
-  --engine azure \
-  --project output/medical_device_case_video \
-  --gender female
+scripts/case-video tts output/<project> \
+  --gender female \
+  --single-voice \
+  --force
 ```
 
 需要全片单一音色时，加 `--single-voice`。直接指定 `--voice` 也会使用单音色；同时提供 `--alternate-voice` 才会恢复双音色交替。
@@ -209,10 +210,10 @@ ffprobe -v error -show_entries stream=codec_name,sample_rate,channels,duration -
 需要直接指定完整 Azure voice name 时，也可以调用底层脚本：
 
 ```bash
-.venv/bin/python output/budweiser_apac_story_video/tts_compare/generate_azure_full.py \
-  --project output/medical_device_case_video \
-  --voice 'zh-CN-Xiaochen:DragonHDLatestNeural' \
-  --single-voice
+scripts/case-video tts output/<project> \
+  --gender female \
+  --single-voice \
+  --force
 ```
 
 脚本会生成：

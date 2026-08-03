@@ -209,8 +209,8 @@ def load_settings() -> Settings:
         else "AZURE_ANTHROPIC_API_KEY"
     )
     anthropic_deployment = (
-        os.getenv("CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT", "salesnail-cs-46").strip()
-        or "salesnail-cs-46"
+        os.getenv("CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT", "case-video-claude").strip()
+        or "case-video-claude"
     )
     anthropic_version = (
         os.getenv("CASE_VIDEO_AZURE_ANTHROPIC_VERSION")
@@ -246,7 +246,7 @@ def load_settings() -> Settings:
 
     narration_route = ModelRoute(
         provider=os.getenv("CASE_VIDEO_NARRATION_PROVIDER", "azure_anthropic"),
-        model=os.getenv("CASE_VIDEO_NARRATION_MODEL", "salesnail-cs-46"),
+        model=os.getenv("CASE_VIDEO_NARRATION_MODEL", "case-video-claude"),
         task_family="narration",
         endpoint=anthropic_endpoint,
         api_key_env=anthropic_api_key_env,
@@ -255,7 +255,7 @@ def load_settings() -> Settings:
     )
     remotion_route = ModelRoute(
         provider=os.getenv("CASE_VIDEO_REMOTION_PROVIDER", "azure_anthropic"),
-        model=os.getenv("CASE_VIDEO_REMOTION_MODEL", "salesnail-cs-46"),
+        model=os.getenv("CASE_VIDEO_REMOTION_MODEL", "case-video-claude"),
         task_family="remotion",
         endpoint=anthropic_endpoint,
         api_key_env=anthropic_api_key_env,

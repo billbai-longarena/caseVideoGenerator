@@ -43,8 +43,8 @@ def manifest(job_id: str) -> dict[str, object]:
         "created_at": now,
         "updated_at": now,
         "model_routes": {
-            "narration": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
-            "remotion": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
+            "narration": {"provider": "azure_anthropic", "model": "case-video-claude"},
+            "remotion": {"provider": "azure_anthropic", "model": "case-video-claude"},
             "general": {"provider": "openai", "model": "gpt-5.5"},
         },
     }
@@ -307,7 +307,7 @@ def test_staged_artifacts_are_not_promoted_when_stage_commit_fails(
                     id="mdl_orphaned_stage",
                     task="editorial_compose",
                     provider="azure_anthropic",
-                    model="salesnail-cs-46",
+                    model="case-video-claude",
                     route_snapshot={"transport": "anthropic_messages"},
                     prompt_version="editorial-v2",
                     schema_version="editorial-v2",

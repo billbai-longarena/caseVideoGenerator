@@ -111,7 +111,7 @@ class ServerUiTest(unittest.TestCase):
         self.assertIn('id="editorial-history"', editorial)
         self.assertIn('id="editorial-diff"', editorial)
         self.assertIn('id="editorial-state" class="badge neutral">加载中</span>', editorial)
-        self.assertIn("Azure Anthropic `salesnail-cs-46`", editorial)
+        self.assertIn("Azure Anthropic `case-video-claude`", editorial)
         self.assertIn('id="scene-filter"', visual)
         self.assertIn('id="visual-readiness"', visual)
         self.assertIn('id="model-visual"', visual)
@@ -149,7 +149,7 @@ class ServerUiTest(unittest.TestCase):
         self.assertEqual(payload["job"]["default_duration_seconds"], {"min": 240, "max": 420})
         routes = payload["model_routes"]
         self.assertEqual(routes["narration"]["provider"], "azure_anthropic")
-        self.assertEqual(routes["narration"]["model"], "salesnail-cs-46")
+        self.assertEqual(routes["narration"]["model"], "case-video-claude")
         self.assertEqual(routes["narration"]["transport"], "anthropic_messages")
         self.assertEqual(routes["remotion"]["provider"], "azure_anthropic")
         self.assertEqual(routes["general"]["model"], "gpt-5.5")

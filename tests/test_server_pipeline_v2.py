@@ -101,8 +101,8 @@ class FullPipelineV2Test(unittest.TestCase):
         for item in succeeded:
             if item["task"] in claude_tasks:
                 self.assertEqual(item["provider"], "azure_anthropic")
-                self.assertEqual(item["model"], "salesnail-cs-46")
-                self.assertEqual(item["deployment"], "salesnail-cs-46")
+                self.assertEqual(item["model"], "case-video-claude")
+                self.assertEqual(item["deployment"], "case-video-claude")
                 self.assertEqual(item["transport"], "anthropic_messages")
             else:
                 self.assertEqual(item["provider"], "openai")

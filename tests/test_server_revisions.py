@@ -386,7 +386,7 @@ class RevisionApiTest(unittest.TestCase):
         ]
         succeeded = {item["task"]: item for item in runs if item["status"] == "succeeded"}
         self.assertEqual(succeeded["narration.rewrite"]["provider"], "azure_anthropic")
-        self.assertEqual(succeeded["narration.rewrite"]["model"], "salesnail-cs-46")
+        self.assertEqual(succeeded["narration.rewrite"]["model"], "case-video-claude")
         self.assertEqual(succeeded["narration.rewrite"]["transport"], "anthropic_messages")
         self.assertEqual(succeeded["editorial.review"]["provider"], "openai")
         self.assertEqual(succeeded["editorial.review"]["model"], "gpt-5.5")

@@ -84,10 +84,10 @@ class ModelGateway:
     def _validate_route_contract(self, route: ModelRoute) -> None:
         provider = route.provider.lower()
         if route.task_family in {"narration", "remotion"}:
-            if provider != "azure_anthropic" or route.model != "salesnail-cs-46":
+            if provider != "azure_anthropic" or route.model != "case-video-claude":
                 raise ModelGatewayError(
                     "model_route_invalid",
-                    f"{route.task_family} must use Azure Anthropic salesnail-cs-46",
+                    f"{route.task_family} must use Azure Anthropic case-video-claude",
                 )
             if route.endpoint:
                 parsed = urlparse(route.endpoint)
@@ -105,10 +105,10 @@ class ModelGateway:
                         "model_route_invalid",
                         f"{route.task_family} must use an Azure Anthropic Messages endpoint",
                     )
-            if route.request_model != "salesnail-cs-46":
+            if route.request_model != "case-video-claude":
                 raise ModelGatewayError(
                     "model_route_invalid",
-                    f"{route.task_family} must request the Azure Anthropic deployment salesnail-cs-46",
+                    f"{route.task_family} must request the Azure Anthropic deployment case-video-claude",
                 )
             return
 

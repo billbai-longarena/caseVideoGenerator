@@ -361,8 +361,8 @@ class VisualAdapterTest(unittest.TestCase):
         plan = self.plan_v2()
         plan["coBrand"] = {  # type: ignore[assignment]
             "logos": [
-                {"src": "brand/salesnail.svg", "alt": "SalesNail"},
-                {"src": "brand/workbuddy.png", "alt": "WorkBuddy"},
+                {"src": "brand/partner-a.svg", "alt": "Partner A"},
+                {"src": "brand/partner-b.png", "alt": "Partner B"},
             ]
         }
         storyboard = build_rich_storyboard(
@@ -377,8 +377,8 @@ class VisualAdapterTest(unittest.TestCase):
             storyboard["coBrand"],
             {
                 "logos": [
-                    {"src": "brand/salesnail.svg", "alt": "SalesNail"},
-                    {"src": "brand/workbuddy.png", "alt": "WorkBuddy"},
+                    {"src": "brand/partner-a.svg", "alt": "Partner A"},
+                    {"src": "brand/partner-b.png", "alt": "Partner B"},
                 ],
                 "separator": "×",
             },

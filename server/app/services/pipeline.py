@@ -658,7 +658,7 @@ class CaseVideoPipeline:
             narration=output["narration"],
             change_summary=output.get("change_summary", "生成标题与旁白初稿"),
             author_type="model",
-            actor="azure-anthropic:salesnail-cs-46",
+            actor="azure-anthropic:case-video-claude",
             input_hash=sha256_text(canonical_json(case_model)),
             enforce_concurrency=False,
         )
@@ -671,7 +671,7 @@ class CaseVideoPipeline:
                 "narration_chars": len(re.sub(r"\s+", "", output["narration"])),
                 "route": {
                     "provider": "azure_anthropic",
-                    "deployment": "salesnail-cs-46",
+                    "deployment": "case-video-claude",
                     "transport": "anthropic_messages",
                 },
             }
@@ -765,7 +765,7 @@ class CaseVideoPipeline:
                 feedback=str(active_request.get("feedback") or ""),
                 issues=copy.deepcopy(issues),
                 change_summary=str(active_request.get("change_summary") or "模型修订标题与旁白"),
-                actor="azure-anthropic:salesnail-cs-46",
+                actor="azure-anthropic:case-video-claude",
             )
             revision_id = str(revision["metadata"]["revision_id"])
             self._finish_model_revision_request(
@@ -784,7 +784,7 @@ class CaseVideoPipeline:
                     "remaining_blockers": final["blockers"],
                     "rewrite_route": {
                         "provider": "azure_anthropic",
-                        "deployment": "salesnail-cs-46",
+                        "deployment": "case-video-claude",
                         "transport": "anthropic_messages",
                     },
                     "review_route": {"provider": "openai", "model": "gpt-5.5"},
@@ -841,7 +841,7 @@ class CaseVideoPipeline:
                 narration=rewrite["narration"],
                 change_summary=rewrite.get("change_summary", f"自动修订第 {attempt} 次"),
                 author_type="model",
-                actor="azure-anthropic:salesnail-cs-46",
+                actor="azure-anthropic:case-video-claude",
                 review=independent_review,
                 input_hash=sha256_text(canonical_json({"attempt": attempt, "issues": blockers})),
                 enforce_concurrency=False,
@@ -863,7 +863,7 @@ class CaseVideoPipeline:
                 "remaining_blockers": final["blockers"],
                 "rewrite_route": {
                     "provider": "azure_anthropic",
-                    "deployment": "salesnail-cs-46",
+                    "deployment": "case-video-claude",
                     "transport": "anthropic_messages",
                 },
                 "review_route": {"provider": "openai", "model": "gpt-5.5"},
@@ -959,7 +959,7 @@ class CaseVideoPipeline:
                 "scene_count": len(plan["scenes"]),
                 "route": {
                     "provider": "azure_anthropic",
-                    "deployment": "salesnail-cs-46",
+                    "deployment": "case-video-claude",
                     "transport": "anthropic_messages",
                 },
             }
@@ -1021,7 +1021,7 @@ class CaseVideoPipeline:
                 issues=copy.deepcopy(issues),
                 scene_ids=[str(scene_id) for scene_id in scene_ids],
                 change_summary=str(active_request.get("change_summary") or "模型修订视觉计划"),
-                actor="azure-anthropic:salesnail-cs-46",
+                actor="azure-anthropic:case-video-claude",
             )
             revision_id = str(revision["metadata"]["revision_id"])
             self._finish_model_revision_request(
@@ -1040,7 +1040,7 @@ class CaseVideoPipeline:
                     "remaining_blockers": final["blockers"],
                     "route": {
                         "provider": "azure_anthropic",
-                        "deployment": "salesnail-cs-46",
+                        "deployment": "case-video-claude",
                         "transport": "anthropic_messages",
                     },
                 }
@@ -1092,7 +1092,7 @@ class CaseVideoPipeline:
                 image_prompts=current["files"].get("image_prompts.json"),
                 change_summary=f"自动修复视觉计划第 {attempt} 次",
                 author_type="model",
-                actor="azure-anthropic:salesnail-cs-46",
+                actor="azure-anthropic:case-video-claude",
                 input_hash=sha256_text(canonical_json({"attempt": attempt, "issues": blockers})),
                 enforce_concurrency=False,
             )
@@ -1107,7 +1107,7 @@ class CaseVideoPipeline:
                 "remaining_blockers": final["blockers"],
                 "route": {
                     "provider": "azure_anthropic",
-                    "deployment": "salesnail-cs-46",
+                    "deployment": "case-video-claude",
                     "transport": "anthropic_messages",
                 },
             }
@@ -1809,7 +1809,7 @@ class CaseVideoPipeline:
             image_prompts=prompts,
             change_summary="根据代表帧审片执行一次受限导演修订",
             author_type="model",
-            actor="azure-anthropic:salesnail-cs-46",
+            actor="azure-anthropic:case-video-claude",
             input_hash=sha256_text(canonical_json({"revision": current["revision"], "issues": review["issues"]})),
             enforce_concurrency=False,
             invalidate_stage_runs=False,

@@ -32,10 +32,7 @@ MANIFEST_VERSION = 1
 RESERVED_TOPIC_FOLDERS = {"_masters"}
 
 SERIES_LABELS = {
-    "baijiu": "杯中故事",
-    "buxa": "BUXA",
     "fde": "FDE不复杂",
-    "montessori": "蒙淇星",
     "sales": "销售不复杂",
     "sales-management": "销售管理",
 }
@@ -148,10 +145,7 @@ def infer_series_and_sequence(project_name: str) -> tuple[str | None, int | None
         (r"^sales_management_case(\d+)", "sales-management"),
         (r"^sales_case(\d+)", "sales"),
         (r"^fde_ep(\d+)", "fde"),
-        (r"^baijiu_ep(\d+)", "baijiu"),
-        (r"^montessori_ep(\d+)", "montessori"),
         (r"^case(\d+)", "sales"),
-        (r"^buxa_(\d+)", "buxa"),
     )
     lowered = project_name.lower()
     for pattern, series in rules:

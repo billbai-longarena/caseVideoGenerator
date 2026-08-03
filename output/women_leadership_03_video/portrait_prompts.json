@@ -1,0 +1,20 @@
+{
+  "version": "2",
+  "stylePrefix": "",
+  "size": "1024x1024",
+  "outputDir": "images/generated",
+  "prompts": [
+    {
+      "asset_id": "person-zhao",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "1024x1024",
+      "fullPrompt": "A Chinese woman, age 27, management consulting senior consultant, shoulder-length black hair, simple light business suit, intelligent restrained expression with subtle fatigue and determination, chest-up half-body portrait, centered, pure white seamless background, no floor, no cast shadow, women-leadership-five-color-watercolor editorial watercolor and gouache style using leaf green #59A55D, warm yellow #EFDB56, mist blue #7D9DC6, warm orange #ECA23F, terracotta red #CA4D2A as restrained accents, near-black ink details, clean silhouette, no text, no letters, no numerals, no logo, no watermark."
+    },
+    {
+      "asset_id": "person-patrick",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "1024x1024",
+      "fullPrompt": "A Chinese man, early 40s, senior management consulting partner, short black hair, deep gray business suit, calm direct but non-threatening expression, chest-up half-body portrait, centered, pure white seamless background, no floor, no cast shadow, women-leadership-five-color-watercolor editorial watercolor and gouache style using leaf green #59A55D, warm yellow #EFDB56, mist blue #7D9DC6, warm orange #ECA23F, terracotta red #CA4D2A as restrained accents, near-black ink details, clean silhouette, no text, no letters, no numerals, no logo, no watermark."
+    }
+  ]
+}

@@ -31,4 +31,4 @@ scripts/case-video render output/<project>
 scripts/case-video qa output/<project>
 ```
 
-百威目录下的 `VIDEO_PRODUCTION_WORKFLOW.md` 现在是历史案例实现记录，不再作为项目总入口。
+历史案例目录中的旧工作流不再作为项目总入口；新的通用规则以 `docs/` 和 `workflows/` 为准。

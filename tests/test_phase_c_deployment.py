@@ -101,10 +101,10 @@ def test_compose_declares_full_phase_c_topology_and_strict_model_routes() -> Non
 
     environment = services["api"]["environment"]
     assert environment["CASE_VIDEO_NARRATION_PROVIDER"] == "azure_anthropic"
-    assert environment["CASE_VIDEO_NARRATION_MODEL"] == "salesnail-cs-46"
+    assert environment["CASE_VIDEO_NARRATION_MODEL"] == "case-video-claude"
     assert environment["CASE_VIDEO_REMOTION_PROVIDER"] == "azure_anthropic"
-    assert environment["CASE_VIDEO_REMOTION_MODEL"] == "salesnail-cs-46"
-    assert environment["CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT"] == "salesnail-cs-46"
+    assert environment["CASE_VIDEO_REMOTION_MODEL"] == "case-video-claude"
+    assert environment["CASE_VIDEO_AZURE_ANTHROPIC_DEPLOYMENT"] == "case-video-claude"
     assert environment["CASE_VIDEO_GENERAL_PROVIDER"] == "openai"
     assert environment["CASE_VIDEO_GENERAL_MODEL"] == "gpt-5.5"
     assert environment["CASE_VIDEO_GENERAL_REQUEST_MODEL"] == "gpt-5.5"

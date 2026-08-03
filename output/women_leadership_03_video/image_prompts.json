@@ -1,0 +1,87 @@
+{
+  "version": "2",
+  "prompts": [
+    {
+      "asset_id": "bg-client-room",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "A modern consulting client meeting room with a central projection screen and long table, presentation interrupted mid-flow, mist-blue data atmosphere with a small terracotta-red error accent, empty room, the key projection area anchored in the middle vertical band, large clean negative space.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-data-misplaced",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Abstract evidence metaphor: one stack of mist-blue project papers sliding into the wrong terracotta-red presentation folder, clean directional movement between two distinct document groups, no actual charts or writing, centered vertical composition.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-achievement-office",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Bright consulting office with abstract warm-yellow award papers and an upward sequence of neat project folders, disciplined high-performance atmosphere, no people, cream-paper openness and a calm center focal area.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-overload-night",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Late-night consulting desk with three open project folders, overlapping schedules shown only as abstract colored strips, pale city night suggested in mist blue, warm-orange pressure accents, still high-key and airy, no people.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-project-collision",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Three project tracks converging and colliding at one Friday checkpoint, abstract paper sheets, version layers and deadline markers compressed together, terracotta-red collision point, warm-orange pressure lines, no words or numbers.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-closed-office",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Quiet partner office with a closed door, two empty chairs and project schedule papers on a table, soft warm-yellow desk light, mist-blue calm space, intimate conversation geometry, no people.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-commitment-table",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Top-down editorial view of many commitment papers being reorganized into clean columns on a table, clutter gradually becoming order, warm-yellow insight and first leaf-green boundary lines, no readable writing.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-resource-board",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Bright resource-planning room with four abstract project cards on a central board: two clearly retained in leaf green, one deferred in warm yellow, one waiting for support in mist blue, no words, numbers or people.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-boundary-lines",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Abstract transformation from three crowded task lines into two clear leaf-green boundary lines with generous breathing space, warm-yellow insight glow, cream-paper background, elegant screenshot-worthy simplicity.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "bg-closing-space",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "864x1536",
+      "prompt": "Open planner or notebook with one intentionally blank protected space, soft morning mist blue and leaf green watercolor, calm capacity and boundary metaphor, large clean center negative space, no writing.",
+      "negative_prompt": "readable text, Chinese characters, English letters, numerals, logos, watermark, UI, presentation screenshot, source document, detailed faces, recognizable people, dark navy background, heavy shadows, crowded horizontal composition"
+    },
+    {
+      "asset_id": "person-zhao",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "1024x1024",
+      "fullPrompt": "A Chinese woman, age 27, management consulting senior consultant, shoulder-length black hair, simple light business suit, intelligent restrained expression with subtle fatigue and determination, chest-up half-body portrait, centered, pure white seamless background, no floor, no cast shadow, women-leadership-five-color-watercolor editorial watercolor and gouache style using leaf green #59A55D, warm yellow #EFDB56, mist blue #7D9DC6, warm orange #ECA23F, terracotta red #CA4D2A as restrained accents, near-black ink details, clean silhouette, no text, no letters, no numerals, no logo, no watermark."
+    },
+    {
+      "asset_id": "person-patrick",
+      "style_family": "women-leadership-five-color-watercolor",
+      "size": "1024x1024",
+      "fullPrompt": "A Chinese man, early 40s, senior management consulting partner, short black hair, deep gray business suit, calm direct but non-threatening expression, chest-up half-body portrait, centered, pure white seamless background, no floor, no cast shadow, women-leadership-five-color-watercolor editorial watercolor and gouache style using leaf green #59A55D, warm yellow #EFDB56, mist blue #7D9DC6, warm orange #ECA23F, terracotta red #CA4D2A as restrained accents, near-black ink details, clean silhouette, no text, no letters, no numerals, no logo, no watermark."
+    }
+  ]
+}

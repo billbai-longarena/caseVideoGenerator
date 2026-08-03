@@ -24,8 +24,6 @@ class PrepareVideoPublishTests(unittest.TestCase):
     def test_infers_known_series_and_sequence(self) -> None:
         self.assertEqual(infer_series_and_sequence("fde_ep01_fmcg_excel_revert"), ("fde", 1))
         self.assertEqual(infer_series_and_sequence("sales_management_case20_video"), ("sales-management", 20))
-        self.assertEqual(infer_series_and_sequence("baijiu_ep30_story"), ("baijiu", 30))
-        self.assertEqual(infer_series_and_sequence("buxa_007_two_markets"), ("buxa", 7))
 
     def test_sanitizes_cross_platform_filename_characters(self) -> None:
         self.assertEqual(sanitize_component('客户/总部：谁说"停"?'), "客户／总部：谁说“停”？")

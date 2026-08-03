@@ -69,8 +69,8 @@ def manifest(job_id: str, project_name: str, *, budget: int | None = None) -> di
         },
         "approval_checkpoints": {"visual_contract": None},
         "model_routes": {
-            "narration": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
-            "remotion": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
+            "narration": {"provider": "azure_anthropic", "model": "case-video-claude"},
+            "remotion": {"provider": "azure_anthropic", "model": "case-video-claude"},
             "general": {"provider": "openai", "model": "gpt-5.5"},
         },
         "task_registry": {"test.task": {"version": "v1"}},

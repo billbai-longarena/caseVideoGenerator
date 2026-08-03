@@ -1141,7 +1141,7 @@
       });
       const revisionRequest = data && data.revision_request;
       if (response.status === 202 && revisionRequest && revisionRequest.request_id) {
-        announce(`模型修订已入队，等待 Azure Anthropic salesnail-cs-46 完成。`);
+        announce(`模型修订已入队，等待 Azure Anthropic case-video-claude 完成。`);
         return pollModelRevision(revisionRequest.request_id);
       }
       return renderReview(data, response);
@@ -1325,8 +1325,8 @@
         const outcome = result.model_revision_request && result.model_revision_request.outcome;
         toast(
           outcome === "no_change"
-            ? "Azure Anthropic salesnail-cs-46 已完成修订，内容哈希未变化；gpt-5.5 已独立审查。"
-            : "Azure Anthropic salesnail-cs-46 已生成新版本，gpt-5.5 已独立审查。"
+            ? "Azure Anthropic case-video-claude 已完成修订，内容哈希未变化；gpt-5.5 已独立审查。"
+            : "Azure Anthropic case-video-claude 已生成新版本，gpt-5.5 已独立审查。"
         );
       } catch (error) { toast(errorMessage(error), "error"); }
       finally { setBusy(button, false); }
@@ -1639,8 +1639,8 @@
         const outcome = result.model_revision_request && result.model_revision_request.outcome;
         toast(
           outcome === "no_change"
-            ? "Azure Anthropic salesnail-cs-46 已完成视觉修订，内容哈希未变化。"
-            : "Azure Anthropic salesnail-cs-46 已生成视觉计划新版本。"
+            ? "Azure Anthropic case-video-claude 已完成视觉修订，内容哈希未变化。"
+            : "Azure Anthropic case-video-claude 已生成视觉计划新版本。"
         );
       } catch (error) { toast(errorMessage(error), "error"); }
       finally { setBusy(button, false); }

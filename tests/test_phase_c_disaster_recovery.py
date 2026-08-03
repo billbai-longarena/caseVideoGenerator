@@ -33,8 +33,8 @@ def manifest(job_id: str) -> dict[str, object]:
         "created_at": now,
         "updated_at": now,
         "model_routes": {
-            "narration": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
-            "remotion": {"provider": "azure_anthropic", "model": "salesnail-cs-46"},
+            "narration": {"provider": "azure_anthropic", "model": "case-video-claude"},
+            "remotion": {"provider": "azure_anthropic", "model": "case-video-claude"},
             "general": {"provider": "openai", "model": "gpt-5.5"},
         },
     }

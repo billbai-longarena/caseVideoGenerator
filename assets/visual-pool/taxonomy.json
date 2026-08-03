@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "description": "Generic public taxonomy for reusable visual-asset tooling. Project-specific catalogs and media stay local.",
+  "dimensions": {
+    "settings": {
+      "fallback": "unspecified-setting",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "production-floor",
+          "label": "生产现场",
+          "aliases": ["产线", "工厂", "车间"],
+          "keywords": ["production line", "factory", "plant", "workshop", "产线", "工厂", "车间"],
+          "priority": 2
+        },
+        {
+          "id": "corporate-boardroom",
+          "label": "会议室",
+          "aliases": ["会议室", "董事会"],
+          "keywords": ["boardroom", "conference room", "meeting room", "会议室", "董事会"],
+          "priority": 1
+        },
+        {
+          "id": "title-stage",
+          "label": "标题舞台",
+          "aliases": ["标题页"],
+          "keywords": ["title stage", "title card", "标题舞台", "标题页"],
+          "priority": 1
+        },
+        {
+          "id": "abstract-editorial",
+          "label": "抽象编辑画面",
+          "aliases": ["抽象"],
+          "keywords": ["abstract editorial", "metaphor", "抽象", "隐喻"],
+          "priority": 1
+        },
+        {
+          "id": "other-specialized-site",
+          "label": "其他专业现场",
+          "aliases": [],
+          "keywords": ["laboratory", "hospital", "campus", "warehouse", "现场"],
+          "priority": 0
+        },
+        {
+          "id": "unspecified-setting",
+          "label": "未指定场景",
+          "aliases": [],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "activities": {
+      "fallback": "unspecified-activity",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "sales-visit",
+          "label": "销售拜访",
+          "aliases": ["销售拜访", "客户拜访"],
+          "keywords": ["salesperson visits", "sales visit", "customer visit", "customer conversation", "销售拜访", "客户拜访"],
+          "priority": 2
+        },
+        {
+          "id": "meeting-review",
+          "label": "会议复盘",
+          "aliases": ["复盘", "会议"],
+          "keywords": ["review meeting", "meeting", "复盘", "会议"],
+          "priority": 1
+        },
+        {
+          "id": "metaphor-transition",
+          "label": "隐喻转场",
+          "aliases": ["隐喻", "转场"],
+          "keywords": ["metaphor", "transition", "隐喻", "转场"],
+          "priority": 1
+        },
+        {
+          "id": "unspecified-activity",
+          "label": "未指定动作",
+          "aliases": [],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "participants": {
+      "fallback": "unspecified-participant",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "salesperson",
+          "label": "销售人员",
+          "aliases": ["销售"],
+          "keywords": ["salesperson", "sales representative", "销售", "业务员"],
+          "priority": 1
+        },
+        {
+          "id": "manager",
+          "label": "管理者",
+          "aliases": ["经理", "主管"],
+          "keywords": ["manager", "director", "经理", "主管", "总监"],
+          "priority": 1
+        },
+        {
+          "id": "customer",
+          "label": "客户角色",
+          "aliases": ["客户"],
+          "keywords": ["customer", "client", "客户", "采购"],
+          "priority": 1
+        },
+        {
+          "id": "team",
+          "label": "团队",
+          "aliases": ["团队"],
+          "keywords": ["team", "people", "团队", "同事"],
+          "priority": 0
+        },
+        {
+          "id": "no-people",
+          "label": "无人场景",
+          "aliases": ["无人"],
+          "keywords": ["no people", "无人", "没有人物"],
+          "priority": 2
+        },
+        {
+          "id": "unspecified-participant",
+          "label": "未指定人物",
+          "aliases": [],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "storyFunctions": {
+      "fallback": "unspecified-story-function",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "evidence",
+          "label": "证据",
+          "aliases": ["证据"],
+          "keywords": ["evidence", "证据", "数据"],
+          "priority": 1
+        },
+        {
+          "id": "discovery",
+          "label": "发现",
+          "aliases": ["发现"],
+          "keywords": ["discovery", "discover", "发现", "线索"],
+          "priority": 1
+        },
+        {
+          "id": "turning-point",
+          "label": "转折",
+          "aliases": ["转折"],
+          "keywords": ["turning point", "pivot", "转折", "改变"],
+          "priority": 1
+        },
+        {
+          "id": "unspecified-story-function",
+          "label": "未指定叙事功能",
+          "aliases": [],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "objects": {
+      "fallback": "unspecified-object",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "document",
+          "label": "文档",
+          "aliases": ["文档", "报告"],
+          "keywords": ["document", "report", "deck", "文档", "报告", "方案"],
+          "priority": 1
+        },
+        {
+          "id": "equipment",
+          "label": "设备",
+          "aliases": ["设备"],
+          "keywords": ["equipment", "machine", "device", "设备", "机器"],
+          "priority": 1
+        },
+        {
+          "id": "unspecified-object",
+          "label": "未指定物件",
+          "aliases": [],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "moods": {
+      "fallback": "neutral",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "tense",
+          "label": "紧张",
+          "aliases": ["紧张"],
+          "keywords": ["tense", "pressure", "紧张", "压力"],
+          "priority": 1
+        },
+        {
+          "id": "hopeful",
+          "label": "希望",
+          "aliases": ["希望"],
+          "keywords": ["hopeful", "optimistic", "希望", "明亮"],
+          "priority": 1
+        },
+        {
+          "id": "neutral",
+          "label": "中性",
+          "aliases": ["中性"],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "industries": {
+      "fallback": "general-business",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "manufacturing",
+          "label": "制造业",
+          "aliases": ["制造业", "工业"],
+          "keywords": ["manufacturing", "industrial", "制造", "工业"],
+          "priority": 1
+        },
+        {
+          "id": "technology",
+          "label": "科技",
+          "aliases": ["科技"],
+          "keywords": ["technology", "software", "科技", "软件"],
+          "priority": 1
+        },
+        {
+          "id": "general-business",
+          "label": "通用商业",
+          "aliases": ["通用"],
+          "keywords": [],
+          "priority": -1
+        }
+      ]
+    },
+    "visualFamilies": {
+      "fallback": "editorial-default",
+      "maxMatches": 5,
+      "values": [
+        {
+          "id": "sales-watercolor",
+          "label": "销售水彩",
+          "aliases": ["sales-watercolor-blue-yellow"],
+          "keywords": ["sales-watercolor", "blue-and-yellow watercolor", "销售水彩"],
+          "priority": 1
+        },
+        {
+          "id": "sales-management-silhouette",
+          "label": "管理者剪影",
+          "aliases": ["manager-silhouette-warm"],
+          "keywords": ["sales-management-silhouette", "manager silhouette", "管理者剪影"],
+          "priority": 1
+        },
+        {
+          "id": "fde-bright-watercolor",
+          "label": "明亮水彩",
+          "aliases": [],
+          "keywords": ["fde-bright-watercolor", "bright watercolor", "明亮水彩"],
+          "priority": 1
+        },
+        {
+          "id": "women-leadership-five-color-watercolor",
+          "label": "五色水彩",
+          "aliases": [],
+          "keywords": ["women-leadership-five-color-watercolor", "women-leadership", "五色水彩"],
+          "priority": 1
+        },
+        {
+          "id": "editorial-default",
+          "label": "默认编辑风格",
+          "aliases": [],
+          "keywords": ["editorial-default"],
+          "priority": -1
+        }
+      ]
+    }
+  },
+  "projectProfiles": {}
+}

@@ -1,0 +1,92 @@
+[DOCUMENT]
+DOCUMENT_TYPE: XIAOHONGSHU_PRODUCTION_PARAMETERS
+SCHEMA_VERSION: 1
+APPROVAL_STATUS: APPROVED
+PROJECT_DIR: output/women_leadership_03_video
+EPISODE_ID: WL-003
+SOURCE_FILES: input/women_leadership_100/series_blueprint.md; input/women_leadership_100/S01_选题_01-10.md
+PLANNING_SCOPE: 标题候选、故事事件、理论金句、竖屏视频与图片/TTS参数预案；当前不生成后续资产
+
+[APPROVAL]
+USER_APPROVAL_REQUIRED: YES
+APPROVED_AT: 2026-08-01
+APPROVED_BY: user
+PENDING_DECISIONS: NONE
+LOCKED_AFTER_APPROVAL: PRIMARY_TITLE; COVER_TITLE; PERSON_1-3; CORE_EVENT_CHAIN; RESULT_BEHAVIOR; THEORY_GOLD_SENTENCE; VISUAL_FAMILY; CANVAS; TARGET_DURATION; VOICE
+
+[MATRIX]
+ROLE_CODE: A1 高潜力员工
+STAGE_CODE: B2 挣扎期
+CHALLENGE_CODE: C3 艰难对话与冲突管理
+THEORY_CODES: G1 角色一致性理论 + P3 压力应激模式
+ARC_CODE: E1 坠落与重生
+INDUSTRY: 咨询/专业服务
+PROTAGONIST_AGE: 27
+ANTI_REPETITION_RESULT: PASS；A1+C3+E1 与 WL-001、WL-002 不重复，咨询行业增加覆盖
+
+[TITLE_AND_HOOK]
+SOURCE_TITLE: 从来不说“不”的人
+PRIMARY_TITLE: 她从不说“不”，直到当众放错数据
+ALTERNATE_TITLES: 从来不说“不”的人
+COVER_TITLE: 她从不说“不”，直到当众放错数据
+HOOK_EVENT: 周五下午客户汇报中，赵梦琪把A项目的数据放进B项目PPT，客户项目负责人当场指出
+HOOK_DIRECTION: 前3秒直接进入投影屏数据错位与客户项目负责人的具体质问，不出现栏目介绍或背景铺垫
+
+[PEOPLE_AND_EVENT]
+PERSON_1: 赵梦琪；27岁；管理咨询公司高级顾问；连续两年最高绩效；用过度承诺维护关系安全
+PERSON_2: Patrick Liu；咨询公司合伙人；在事故后关门追问她最后一次拒绝请求的时间
+PERSON_3: NONE_NOT_NEEDED；本片低于3分钟，赵梦琪与Patrick两条人物线足以完成因果推进；客户项目负责人仅承担现场触发，不扩写独立人物线
+CORE_EVENT_CHAIN: 同一事故链——赵梦琪同时承担三个客户项目并长期凌晨两点下班；周五客户汇报放错数据；客户项目负责人当场质问；Patrick会后关门追问；赵梦琪沉默三分钟
+TURNING_BEHAVIOR: 赵梦琪查看自己的任务与承诺记录，第一次把维护关系和无限接活区分开，并准备在资源会议中明确边界
+RESULT_BEHAVIOR: 下周资源排期会上，赵梦琪保留两个核心项目，明确拒绝第四项任务，并要求延期或增加人手
+
+[THEORY_AND_CTA]
+THEORY_GOLD_SENTENCE: 压力会把“照料与结盟”推向过度承诺；真正可靠的关系，经得起一句清楚的“不”。
+THEORY_FRAME_DIRECTION: 独立收藏帧；72px以上奶油色大字；深色glass承载；从三条拥挤任务线收束为两条清晰边界线
+CLOSING_CTA: 收藏这条，下次你又想把所有请求都接下来时，先问自己：这是真正的负责，还是害怕让别人失望？
+
+[NARRATION]
+LANGUAGE: 中文
+TARGET_CHARACTERS: 650-720字
+TARGET_DURATION: 2分15秒-2分45秒；硬范围2分-3分
+STRUCTURE: 0-5秒事故钩子；5-30秒人物与过载；30-75秒汇报事故；75-110秒关门追问与三分钟沉默；110-140秒边界行动和结果；理论金句；收藏评论CTA
+FORBIDDEN_PATTERNS: 抽象集体表述；“不是……而是……”及近似句式；老师讲课式理论段；前5秒栏目介绍；无人物归属的反应
+
+[VIDEO]
+CANVAS: 1080x1920
+FPS: 30
+VISUAL_MODE: editorial only
+SCENE_TARGET: 8-9
+BEAT_TARGET: 24-28
+BEAT_DURATION: 4-6秒；语义空窗不得超过12秒
+COVER_MAX_DURATION: 2.0秒；中心1:1裁切内完整可读
+SUBTITLE_LABEL: 女性领导力
+
+[VISUALS]
+VISUAL_FAMILY: women-leadership-five-color-watercolor；WL-002定案；女性领导力新制作与修订唯一视觉家族
+PALETTE: 叶绿#59A55D；暖黄#EFDB56；雾蓝#7D9DC6；暖橙#ECA23F；陶土红#CA4D2A
+STYLE_DIRECTION: 高明度奶油纸、透明水彩/水粉、干笔边缘、近黑墨色前景、大量留白；红色表达错误和过载，雾蓝表达数据与工作，暖橙表达压力，暖黄表达洞察，绿色表达边界与恢复
+BACKGROUND_SIZE: 864x1536
+BACKGROUND_COUNT: 8-10张项目本地新图
+PORTRAIT_SIZE: 1024x1024
+PORTRAIT_COUNT: 2张项目本地新图
+PORTRAIT_CONTRACT: 中国人物；纯白背景；半身或胸像；人物与语义面板均显式box；并行显示至少保留0.012归一化间距
+TEXT_SURFACE: #FFF8E8或#F7E7C7浅色文字；有边界的深色glass/solid卡片；关键正文禁止裸压水彩背景
+TREATMENT_COLOR: transparent；不得使用不透明全屏蒙层遮住背景
+ASSET_FORBIDDENS: 背景中禁止文字、数字、字母、Logo、水印、UI截图、源文档截图、清晰人脸和故事人物；禁止横图裁成竖图；禁止用共享池默认填充新场景
+
+[TTS]
+ENGINE: Azure Speech TTS
+VOICE: zh-CN-Xiaochen:DragonHDLatestNeural
+PROFILE: dragon-broadcast
+RATE: +7%
+PITCH: +1%
+PARAGRAPH_GAP: 0.45秒
+VOICE_MODE: female; single-voice; whole-paragraph synthesis
+
+[EXECUTION_HANDOFF]
+EXECUTION_BLOCKED_UNTIL: APPROVAL_STATUS=APPROVED 且所有待定项已清空
+EXECUTOR_MUST_READ: 本文件；produce-xiaohongshu-video/SKILL.md；vertical-mobile-video.md；editorial-component-contract.md；new-xiaohongshu-case-video.md；series_blueprint.md；S01_选题_01-10.md
+EXECUTOR_MUST_PRESERVE: 用户批准的标题、人物配置、事故链、结果行为、理论金句、视觉家族、画布、时长、TTS声音与所有硬性禁用项
+STOP_AND_ESCALATE_IF: 批准项互相冲突；来源无法支持关键事实；硬校验无法满足；需要改变标题、人物、理论、视觉家族、画布、时长或声音
+DO_NOT_GENERATE_YET: title.txt；narration.txt；narration_long.txt；TTS；image_prompts.json；portrait_prompts.json；storyboard_plan.json；rich_storyboard.json；图片；音频；视频

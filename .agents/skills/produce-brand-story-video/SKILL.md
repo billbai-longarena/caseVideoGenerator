@@ -71,7 +71,7 @@ Brand story videos DO use:
 
 ## Run The Director Loop
 
-Same as the case video skill's director loop. The only difference: the visual family for PPG PMC brand stories should be determined per-project based on the brand's visual identity guidelines, not the sales watercolor or FDE bright-watercolor families.
+Same as the case video skill's director loop. The only difference: each brand story's visual family should be determined per-project from an authorized private brand guide, not assumed from the sales watercolor or FDE bright-watercolor families.
 
 ## Character Portraits — Required When Dialogue Layers Are Used
 
